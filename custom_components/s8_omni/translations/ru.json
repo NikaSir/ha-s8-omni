@@ -1,0 +1,23 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "S8 OMNI",
+        "description": "Локальное подключение S8 OMNI по Tuya LAN.",
+        "data": {
+          "host": "IP-адрес",
+          "device_id": "Device ID",
+          "local_key": "Local Key",
+          "protocol_version": "Версия протокола",
+          "scan_interval": "Интервал опроса, с"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Не удалось подключиться к S8 OMNI."
+    },
+    "abort": {
+      "already_configured": "Это устройство уже настроено."
+    }
+  }
+}
