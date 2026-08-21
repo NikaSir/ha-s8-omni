@@ -1,0 +1,89 @@
+import voluptuous as vol
+import tinytuya
+
+from homeassistant import config_entries
+from homeassistant.const import CONF_HOST
+from homeassistant.core import callback
+
+from .const import (
+    CONF_DEVICE_ID,
+    CONF_LOCAL_KEY,
+    CONF_PROTOCOL_VERSION,
+    CONF_SCAN_INTERVAL,
+    DEFAULT_PROTOCOL_VERSION,
+    DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+)
+
+
+class S8OmniConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+    VERSION = 1
+
+    async def async_step_user(self, user_input=None):
+        errors = {}
+        if user_input is not None:
+            try:
+                device = tinytuya.Device(
+                    dev_id=user_input[CONF_DEVICE_ID],
+                    address=user_input[CONF_HOST],
+                    local_key=user_input[CONF_LOCAL_KEY],
+                    version=float(user_input[CONF_PROTOCOL_VERSION]),
+                )
+                result = await self.hass.async_add_executor_job(device.status)
+                if not isinstance(result, dict) or "dps" not in result:
+                    raise RuntimeError(str(result))
+            except Exception:
+                errors["base"] = "cannot_connect"
+            else:
+                await self.async_set_unique_id(user_input[CONF_DEVICE_ID])
+                self._abort_if_unique_id_configured()
+                return self.async_create_entry(title="Пылесос S8 OMNI", data=user_input)
+
+        return self.async_show_form(
+            step_id="user",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_HOST): str,
+                    vol.Required(CONF_DEVICE_ID): str,
+                    vol.Required(CONF_LOCAL_KEY): str,
+                    vol.Required(
+                        CONF_PROTOCOL_VERSION,
+                        default=DEFAULT_PROTOCOL_VERSION,
+                    ): vol.In(["3.1", "3.2", "3.3"]),
+                    vol.Optional(
+                        CONF_SCAN_INTERVAL,
+                        default=DEFAULT_SCAN_INTERVAL,
+                    ): vol.All(vol.Coerce(int), vol.Range(min=3, max=60)),
+                }
+            ),
+            errors=errors,
+        )
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry):
+        return S8OmniOptionsFlow(config_entry)
+
+
+class S8OmniOptionsFlow(config_entries.OptionsFlow):
+    def __init__(self, entry):
+        self.entry = entry
+
+    async def async_step_init(self, user_input=None):
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+        current = self.entry.options.get(
+            CONF_SCAN_INTERVAL,
+            self.entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+        )
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_SCAN_INTERVAL,
+                        default=current,
+                    ): vol.All(vol.Coerce(int), vol.Range(min=3, max=60))
+                }
+            ),
+        )

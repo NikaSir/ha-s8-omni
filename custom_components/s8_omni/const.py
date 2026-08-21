@@ -1,0 +1,37 @@
+DOMAIN = "s8_omni"
+VERSION = "v1.00_b001"
+
+CONF_DEVICE_ID = "device_id"
+CONF_LOCAL_KEY = "local_key"
+CONF_PROTOCOL_VERSION = "protocol_version"
+CONF_SCAN_INTERVAL = "scan_interval"
+
+DEFAULT_PROTOCOL_VERSION = "3.3"
+DEFAULT_SCAN_INTERVAL = 5
+
+DP_POWER_GO = 1
+DP_PAUSE = 2
+DP_MODE = 4
+DP_STATUS = 5
+DP_CLEAN_TIME = 6
+DP_CLEAN_AREA = 7
+DP_BATTERY = 8
+DP_SUCTION = 9
+DP_WATER = 10
+DP_SIDE_BRUSH_LIFE = 17
+DP_MAIN_BRUSH_LIFE = 19
+DP_FILTER_LIFE = 21
+DP_DND = 25
+DP_VOLUME = 26
+DP_RESUME_CLEANING = 27
+DP_FAULT = 28
+DP_CUSTOM_MODE = 39
+DP_WORK_MODE = 41
+DP_CHILD_LOCK = 47
+DP_DUST = 134
+DP_ROLL_CLEAN = 135
+DP_ROLL_DRY = 136
+
+SUCTION_OPTIONS = ["gentle", "normal", "strong"]
+WATER_OPTIONS = ["low", "normal", "high"]
+MODE_OPTIONS = ["smart", "zone", "pose", "part", "chargego", "wallfollow", "selectroom"]
