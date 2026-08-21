@@ -4,6 +4,10 @@ All notable project changes are recorded here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `v1.00_b002`: add the fourth verified DP10 / `cistern` water level `closed` (application label: «Закрыто»). The value was captured from Tuya `Get Status Reporting Log` during a live device test.
+
 ### Added
 
 - Standalone `s8_omni` Home Assistant integration skeleton.
@@ -17,5 +21,5 @@ All notable project changes are recorded here.
 
 ### Known limitations
 
-- Stop command is intentionally not implemented in `v1.00_b001`.
+- Stop command is intentionally not implemented in `v1.00_b001` / `v1.00_b002`.
 - Consumable/map reset writes are intentionally deferred pending verification.
