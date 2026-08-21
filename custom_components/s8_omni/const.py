@@ -1,5 +1,5 @@
 DOMAIN = "s8_omni"
-VERSION = "v1.00_b001"
+VERSION = "v1.00_b002"
 
 CONF_DEVICE_ID = "device_id"
 CONF_LOCAL_KEY = "local_key"
@@ -33,5 +33,7 @@ DP_ROLL_CLEAN = 135
 DP_ROLL_DRY = 136
 
 SUCTION_OPTIONS = ["gentle", "normal", "strong"]
-WATER_OPTIONS = ["low", "normal", "high"]
+# DP10 / Tuya code `cistern` is verified to expose four levels.
+# `closed` was captured from Get Status Reporting Log on 2026-08-21.
+WATER_OPTIONS = ["closed", "low", "normal", "high"]
 MODE_OPTIONS = ["smart", "zone", "pose", "part", "chargego", "wallfollow", "selectroom"]
