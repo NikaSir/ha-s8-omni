@@ -8,7 +8,7 @@ The S8 OMNI integration owns and ships its canonical Home Assistant UI.
 
 The route is registered by the integration through Home Assistant's custom-panel API. No Lovelace YAML, LocalTuya command, cloud request or direct Tuya DP write is required by the panel.
 
-Dashboard version: `v0.2.1`.
+Dashboard version: `v0.3.0`.
 
 ## UX target
 
@@ -19,6 +19,16 @@ The layout is mobile-first, has no intentional horizontal scrolling, uses large 
 The visual model is deliberately appliance-specific rather than a generic Lovelace entity list. The Overview contains a compact robot-to-dock scene, factual battery/mode/telemetry indicators and one-handed Start/Pause/Home controls. Motion is state-driven and respects `prefers-reduced-motion`.
 
 A sticky top application bar provides **Меню**, which fires Home Assistant's native `hass-toggle-menu` event. This opens the normal Home Assistant sidebar instead of navigating to a hard-coded dashboard path, so the panel remains compatible with the user's sidebar/menu organization.
+
+## v0.3.0 daily-use polish
+
+The v0.3.0 pass is based on live iPhone Pro Max review rather than desktop-only layout assumptions.
+
+- suction and water use large segmented touch controls instead of compact browser selects;
+- the stale Tuya `mode=chargego` value is not presented as «Возврат на базу» after the normalized robot state is already charging/charged; the raw mode remains factual in Diagnostics;
+- user-facing screens avoid protocol terms such as DP numbers, `generic vacuum.state`, LocalTuya and frontend implementation notes;
+- the Station view gains an explicit live-operation banner while dust collection, cleaning or drying is active;
+- dashboard version shown in the UI is kept aligned with shipped panel metadata.
 
 ## Views
 
@@ -40,8 +50,8 @@ A sticky top application bar provides **Меню**, which fires Home Assistant's
 ### Cleaning
 
 - Start / Pause / Home;
-- current cleaning mode;
-- verified suction and water controls;
+- current state/mode context;
+- verified suction and water controls as large segmented buttons;
 - volume;
 - Do Not Disturb toggle;
 - reserved Map / Rooms area.
@@ -54,6 +64,7 @@ Room/zone selection is intentionally not implemented until the integration expos
 - inferred dock presence only when it is factually supported;
 - battery;
 - dust collection, roller cleaning and drying states;
+- prominent live-operation banner when the station is active;
 - state-driven station activity indicator.
 
 The panel does **not** create station write commands. Controls will be added only after their write semantics are verified and exposed by `ha-s8-omni` as entities/services.
