@@ -8,9 +8,10 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.4.1",
+    "dashboard_version": "v0.4.2",
     "navigation": {
       "header_back": "explicit_parent_route",
+      "header_action": "refresh",
       "primary_navigation": "fixed_bottom_bar",
       "browser_history_back": false,
       "views": ["overview", "cleaning", "station", "maintenance", "diagnostics"]
@@ -21,6 +22,7 @@
     "battery_entity_unique_id_suffix": "battery",
     "vacuum_entity_unique_id_suffix": "vacuum",
     "connection_entity_unique_id_suffix": "local_connection",
+    "refresh_entity_unique_id_suffix": "refresh",
     "quick_actions": [
       "vacuum.start",
       "vacuum.return_to_base"
