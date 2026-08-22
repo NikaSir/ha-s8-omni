@@ -24,8 +24,8 @@ from .status import (
     STATION_STATUS_OPTIONS,
     composite_attributes,
     composite_status,
-    station_status,
     robot_status,
+    station_status,
 )
 
 
@@ -88,7 +88,7 @@ class S8Sensor(S8OmniEntity, SensorEntity):
 
 
 class S8RobotStatusSensor(S8OmniEntity, SensorEntity):
-    _attr_name = "Статус робота"
+    _attr_translation_key = "robot_status"
     _attr_device_class = SensorDeviceClass.ENUM
     _attr_options = ROBOT_STATUS_OPTIONS
 
@@ -106,7 +106,7 @@ class S8RobotStatusSensor(S8OmniEntity, SensorEntity):
 
 
 class S8StationStatusSensor(S8OmniEntity, SensorEntity):
-    _attr_name = "Статус станции"
+    _attr_translation_key = "station_status"
     _attr_device_class = SensorDeviceClass.ENUM
     _attr_options = STATION_STATUS_OPTIONS
 
@@ -127,7 +127,7 @@ class S8StationStatusSensor(S8OmniEntity, SensorEntity):
 
 
 class S8CompositeStatusSensor(S8OmniEntity, SensorEntity):
-    _attr_name = "Составной статус"
+    _attr_translation_key = "composite_status"
     _attr_device_class = SensorDeviceClass.ENUM
     _attr_options = COMPOSITE_STATUS_OPTIONS
 
