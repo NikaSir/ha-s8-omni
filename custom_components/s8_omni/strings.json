@@ -10,14 +10,46 @@
           "local_key": "Local Key",
           "protocol_version": "Protocol version",
           "scan_interval": "Polling interval, s"
+        },
+        "data_description": {
+          "local_key": "The device Local Key. It is stored in the Home Assistant config entry and is never sent to the cloud by this integration."
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure S8 OMNI connection",
+        "description": "Update the local connection parameters. Home Assistant verifies the new values against the robot before saving them.",
+        "data": {
+          "host": "IP address",
+          "device_id": "Device ID",
+          "local_key": "Local Key",
+          "protocol_version": "Protocol version"
+        },
+        "data_description": {
+          "device_id": "The Device ID must remain the same for this config entry.",
+          "local_key": "Use this field after the robot has been re-paired and Tuya has issued a new Local Key."
         }
       }
     },
     "error": {
-      "cannot_connect": "Unable to connect to S8 OMNI."
+      "cannot_connect": "Unable to connect to S8 OMNI with these parameters."
     },
     "abort": {
-      "already_configured": "This device is already configured."
+      "already_configured": "This device is already configured.",
+      "reconfigure_successful": "S8 OMNI connection settings were updated successfully.",
+      "wrong_device": "The Device ID does not match this S8 OMNI config entry."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "S8 OMNI options",
+        "data": {
+          "scan_interval": "Polling interval, s"
+        },
+        "data_description": {
+          "scan_interval": "How often Home Assistant polls the robot over the local network. The integration reloads automatically after this value changes."
+        }
+      }
     }
   }
 }
