@@ -51,5 +51,64 @@
         }
       }
     }
+  },
+  "entity": {
+    "sensor": {
+      "robot_status": {
+        "name": "Robot status",
+        "state": {
+          "idle": "Idle",
+          "cleaning": "Cleaning",
+          "zone_cleaning": "Zone cleaning",
+          "room_cleaning": "Room cleaning",
+          "paused": "Cleaning paused",
+          "going_to_position": "Going to position",
+          "position_reached": "Position reached",
+          "position_not_reached": "Position not reached",
+          "returning_to_dock": "Returning to dock",
+          "charging": "Charging",
+          "charged": "Charged",
+          "sleeping": "Sleeping",
+          "error": "Error",
+          "wall_following": "Wall following",
+          "manual_control": "Manual control",
+          "repositioning": "Repositioning",
+          "creating_map": "Creating map",
+          "unknown": "Unknown"
+        }
+      },
+      "station_status": {
+        "name": "Station status",
+        "state": {
+          "idle": "Idle",
+          "dust_collection": "Dust collection",
+          "roller_cleaning": "Mop/roller cleaning",
+          "drying": "Drying",
+          "multiple_operations": "Multiple operations",
+          "unknown": "Unknown"
+        }
+      },
+      "composite_status": {
+        "name": "Composite status",
+        "state": {
+          "idle": "Idle",
+          "cleaning": "Cleaning",
+          "zone_cleaning": "Zone cleaning",
+          "room_cleaning": "Room cleaning",
+          "paused": "Cleaning paused",
+          "returning_to_dock": "Returning to dock",
+          "charging": "Charging",
+          "charged": "At dock · Charged",
+          "sleeping": "Sleeping",
+          "repositioning": "Repositioning",
+          "docked_dust_collection": "At dock · Dust collection",
+          "docked_roller_cleaning": "At dock · Mop/roller cleaning",
+          "docked_drying": "At dock · Drying",
+          "docked_station_active": "At dock · Station active",
+          "error": "Error",
+          "unknown": "Unknown"
+        }
+      }
+    }
   }
 }
