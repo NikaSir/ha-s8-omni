@@ -1,0 +1,27 @@
+{
+  "panel": {
+    "id": "s8_omni",
+    "title": "Пылесос",
+    "path": "/dashboard-s8-omni",
+    "icon": "mdi:robot-vacuum",
+    "owner": "ha-s8-omni",
+    "expose_in_generated_ui": true,
+    "preferred_view": "overview",
+    "dashboard_version": "v0.1.0"
+  },
+  "generated_ui": {
+    "summary_entity_unique_id_suffix": "composite_status",
+    "battery_entity_unique_id_suffix": "battery",
+    "vacuum_entity_unique_id_suffix": "vacuum",
+    "quick_actions": [
+      "vacuum.start",
+      "vacuum.return_to_base"
+    ],
+    "details_path": "/dashboard-s8-omni"
+  },
+  "ownership": {
+    "direct_tuya_dp_writes_from_ui": false,
+    "station_commands_require_public_integration_api": true,
+    "map_requires_public_integration_api": true
+  }
+}
