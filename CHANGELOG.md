@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Added
 
+- `v1.00_b011`: add Home Assistant **Download diagnostics** support with sanitized integration/coordinator state.
+- `v1.00_b011`: redact Host, Device ID and Local Key from exported diagnostics; exclude raw map/path/command/timer payloads and redact known connection identifiers from exception text.
 - `v1.00_b010` / dashboard `v0.4.3`: adopt the NikaS canonical **full-width fixed bottom Tab Bar**; remove floating-card geometry from the primary section navigation.
 - `v1.00_b010` / dashboard `v0.4.3`: keep the active section visually inside the shared bottom bar, preserve iOS Safe Area, and reserve enough page-bottom clearance so the last card scrolls fully above navigation.
 - `v1.00_b009` / dashboard `v0.4.2`: add a public **Обновить сейчас** button entity and expose it in the unified Header.
@@ -26,7 +28,7 @@ All notable project changes are recorded here.
 
 ### Known limitations
 
-- Stop command is intentionally not implemented through `v1.00_b010`.
+- Stop command is intentionally not implemented through `v1.00_b011`.
 - Consumable/map reset writes are intentionally deferred pending verification.
 - DND schedule, cleaning timers and raw map/control payloads are intentionally deferred pending verification.
 - Station DP134/135/136 remain read-only until station write semantics are verified end-to-end.
