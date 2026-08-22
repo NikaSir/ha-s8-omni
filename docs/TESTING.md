@@ -1,4 +1,4 @@
-# v1.00_b011 acceptance checklist
+# v1.00_b012 acceptance checklist
 
 Before device-side testing, back up Home Assistant and disable **only S8 OMNI** in LocalTuya to avoid two local Tuya clients contending for the device.
 
@@ -12,8 +12,9 @@ Before device-side testing, back up Home Assistant and disable **only S8 OMNI** 
 - [x] Start cleaning and Return to base are confirmed on the physical robot.
 - [x] Station dust collection, roller/mop cleaning and drying have been observed.
 - [x] Dashboard renders on iPhone Pro Max portrait across all five main views.
-- [x] Explicit Back route is `/dashboard-actions`.
+- [x] Explicit root Back route is `/dashboard-actions`.
 - [x] Header Refresh uses an integration-owned Home Assistant button entity.
+- [x] Sanitized Home Assistant Download diagnostics is implemented.
 
 ## Remaining protocol acceptance
 
@@ -24,19 +25,19 @@ Before device-side testing, back up Home Assistant and disable **only S8 OMNI** 
 5. Keep Stop unimplemented unless a controlled test proves unambiguous semantics.
 6. Keep station writes, DND schedule, cleaning timer, map/room payloads and consumable resets out of public UI until verified.
 
-## Dashboard v0.4.3 — NikaS navigation acceptance
+## Dashboard v0.5.0 — NikaS navigation acceptance
 
 Control viewport: **iPhone Pro Max · portrait**.
 
-### Header
+### Root Header
 
 - [ ] Header is visible on Overview, Cleaning, Station, Maintenance and Diagnostics.
-- [ ] Left control is `mdi:arrow-left` and explicitly navigates to `/dashboard-actions`.
+- [ ] Left control is `mdi:arrow-left` and explicitly navigates to `/dashboard-actions` on all five root views.
 - [ ] Center title is **S8 OMNI** without a second large device title in the hero.
 - [ ] Right control is `mdi:refresh` and invokes only the integration-owned **Обновить сейчас** entity.
 - [ ] Header remains compact and respects iOS top Safe Area.
 - [ ] Back and Refresh touch targets are approximately 44×44 pt or larger.
-- [ ] Back never uses `history.back()`.
+- [ ] Root Back never uses `history.back()`.
 - [ ] Hold/double tap on Header performs no robot/station action.
 
 ### Canonical bottom Tab Bar
@@ -51,6 +52,26 @@ Control viewport: **iPhone Pro Max · portrait**.
 - [ ] No primary top-tab navigation exists.
 - [ ] All tab touch targets remain comfortably usable one-handed.
 
+### Cleaning root versus child settings
+
+- [ ] Root **Cleaning** contains state/hero, Start/Pause/Home and factual cleaning time/area.
+- [ ] Root **Cleaning** does **not** contain editable suction controls.
+- [ ] Root **Cleaning** does **not** contain editable water controls.
+- [ ] Root **Cleaning** does **not** contain the volume slider.
+- [ ] Root **Cleaning** does **not** contain the DND toggle.
+- [ ] Root **Cleaning** contains one clear **Настройки уборки** drill-down entry.
+- [ ] Overview **Настроить** opens the same canonical Cleaning settings child screen.
+- [ ] Child Header title is **Настройки уборки** with secondary context `S8 OMNI · Уборка`.
+- [ ] Child Back returns to root **Cleaning**, not `/dashboard-actions`.
+- [ ] Child screen contains suction segmented controls: Тихий / Нормальный / Сильный.
+- [ ] Child screen contains water segmented controls: Закрыто / Низкий / Средний / Высокий.
+- [ ] Child screen contains volume and DND controls.
+- [ ] Existing entity/service writes are unchanged: select/number/switch entities only.
+- [ ] Bottom Tab Bar remains visible on the child screen with **Уборка** active.
+- [ ] Selecting another root tab from the child screen closes the drill-down and opens that root view.
+- [ ] Returning to Cleaning after switching tabs opens the Cleaning root, not stale child settings.
+- [ ] No duplicated full settings form appears on Overview or root Cleaning.
+
 ### Refresh behavior
 
 - [ ] Pressing Refresh requests an immediate local coordinator refresh.
@@ -61,28 +82,26 @@ Control viewport: **iPhone Pro Max · portrait**.
 
 ### Mobile geometry
 
-- [ ] No horizontal scroll.
+- [ ] No horizontal scroll on root views or Cleaning settings.
 - [ ] No clipped labels on iPhone Pro Max portrait.
 - [ ] Main Start/Pause/Home actions remain one-hand reachable.
+- [ ] Cleaning settings segmented controls remain comfortable at portrait width.
 - [ ] Critical buttons are not packed too closely.
 - [ ] Long press on entity-backed rows opens native Home Assistant more-info.
 
 ### Daily-use behavior
 
-- [ ] Dashboard version in Diagnostics/Header is `v0.4.3`.
+- [ ] Dashboard version in Diagnostics/Header is `v0.5.0`.
 - [ ] With DP5 `charge_done`/`charging` and sticky DP4 `chargego`, daily UI shows base/charging state rather than «Возврат на базу».
 - [ ] Diagnostics still shows factual raw DP4 `chargego` when present.
-- [ ] Suction has Тихий / Нормальный / Сильный segmented choices.
-- [ ] Water has Закрыто / Низкий / Средний / Высокий segmented choices.
-- [ ] Segment selection uses only the existing Home Assistant select entity.
 - [ ] Active station operation gets a prominent live-operation banner.
 
-## v1.00_b011 — Download diagnostics acceptance
+## Download diagnostics acceptance
 
 From **Settings → Devices & services → S8 OMNI → Download diagnostics**:
 
 - [ ] Diagnostics download is available for the S8 OMNI config entry.
-- [ ] Integration version is `v1.00_b011`; dashboard version remains `v0.4.3`.
+- [ ] Integration version is `v1.00_b012`; dashboard version is `v0.5.0`.
 - [ ] Host/IP is replaced by a redaction marker.
 - [ ] Device ID is replaced by a redaction marker.
 - [ ] Local Key is replaced by a redaction marker.
@@ -119,5 +138,6 @@ If any identifier or secret appears unredacted, do not share the file; stop and 
 - [x] Map/room controls remain deferred until a stable integration API exists.
 - [x] Consumable percentages are not invented.
 - [x] Diagnostics exporter deliberately excludes raw map/path/command/timer payloads.
+- [x] Cleaning settings drill-down reuses existing public HA entities and introduces no new device write contract.
 
 Stop testing additional write commands if any command behaves unexpectedly; collect Home Assistant logs before further changes.

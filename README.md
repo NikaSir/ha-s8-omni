@@ -2,7 +2,7 @@
 
 Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum and OMNI station, built from verified Tuya LAN datapoints.
 
-> Current development line: **v1.00_b011** (`1.0.0b11`). This is an early test build.
+> Current development line: **v1.00_b012** (`1.0.0b12`). This is an early test build.
 
 ## Scope
 
@@ -23,23 +23,24 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 
 `ha-s8-omni` owns its full appliance UI instead of exposing a loose collection of Lovelace entities as the primary experience.
 
-Dashboard **v0.4.3** follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2** and is mobile-first for **iPhone Pro Max portrait**:
+Dashboard **v0.5.0** follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2** and is mobile-first for **iPhone Pro Max portrait**:
 
 - persistent compact header with explicit **← Назад**, geometrically centered **S8 OMNI** title and **Обновить** action;
-- Back explicitly navigates to **`/dashboard-actions`** and never uses browser-history back;
+- Back explicitly navigates to **`/dashboard-actions`** and never uses browser-history back on the five root views;
 - Refresh calls the public Home Assistant `button` entity owned by `ha-s8-omni`; the frontend does not write Tuya DP directly;
 - **full-width fixed bottom Tab Bar** is the sole primary navigation between Overview, Cleaning, Station, Maintenance and Diagnostics;
 - the bottom bar spans the useful viewport width, has no floating-card geometry and respects iOS Safe Area;
-- the active tab remains visually inside the shared Tab Bar rather than becoming a detached floating card;
 - page content reserves enough bottom clearance for the final card to scroll completely above the Tab Bar;
-- Overview with composite robot + station state, robot/dock visual context, battery, telemetry health and one-handed Start/Pause/Home controls;
-- Cleaning controls with large segmented choices for suction and water, plus volume and DND;
-- user-facing state semantics suppress the stale Tuya `chargego` mode after the robot is already charging/charged;
-- Station view with independent dust collection / roller cleaning / drying state and a prominent live-operation banner;
-- Maintenance view with factual remaining resource in minutes;
-- Diagnostics with normalized and raw state context;
-- no duplicate large S8 OMNI title inside the hero card; the hero starts from current state instead;
-- reserved architecture for future Map / Rooms support.
+- Overview keeps composite robot + station state, robot/dock visual context, battery, telemetry health and one-handed Start/Pause/Home controls;
+- the root **Cleaning** tab is operational: state, Start/Pause/Home and factual cleaning metrics;
+- editable suction, water, volume and DND controls live one level lower on the **Cleaning settings** drill-down screen and are not duplicated on the root Cleaning tab;
+- Overview **Настроить** and Cleaning **Настройки уборки** open the same canonical drill-down;
+- drill-down Back returns to the Cleaning root view while the bottom Tab Bar remains available for switching root sections;
+- Station view keeps independent dust collection / roller cleaning / drying state and a prominent live-operation banner;
+- Maintenance view keeps factual remaining resource in minutes;
+- Diagnostics keeps normalized and raw state context;
+- no duplicate large S8 OMNI title appears inside the hero card;
+- Map / Rooms remains reserved until a stable public integration API exists.
 
 User-facing screens avoid protocol/DP implementation wording; raw Tuya and integration-contract details remain in Diagnostics and documentation.
 
