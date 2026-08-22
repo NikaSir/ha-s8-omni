@@ -11,6 +11,7 @@ from .const import (
     DOMAIN,
     PANEL_ICON,
     PANEL_ID,
+    PANEL_PARENT_PATH,
     PANEL_PATH,
     PANEL_STATIC_URL,
     PANEL_TITLE,
@@ -20,7 +21,7 @@ from .coordinator import S8OmniCoordinator
 
 PLATFORMS = ["vacuum", "sensor", "binary_sensor", "switch", "select", "number"]
 FRONTEND_DIR = Path(__file__).parent / "frontend"
-PANEL_MODULE = f"{PANEL_STATIC_URL}/s8-omni-panel-v4.js?v={DASHBOARD_VERSION}"
+PANEL_MODULE = f"{PANEL_STATIC_URL}/s8-omni-panel-v5.js?v={DASHBOARD_VERSION}"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -50,7 +51,7 @@ async def _async_register_panel(hass: HomeAssistant, entry: ConfigEntry) -> None
         sidebar_title=PANEL_TITLE,
         sidebar_icon=PANEL_ICON,
         require_admin=False,
-        # The panel applies iOS bottom/side safe-area insets to its own navigation.
+        # The panel applies iOS top/bottom/side safe-area insets to its app shell.
         handle_safe_area=True,
         config={
             "entry_id": entry.entry_id,
@@ -58,6 +59,7 @@ async def _async_register_panel(hass: HomeAssistant, entry: ConfigEntry) -> None
             "owner": "ha-s8-omni",
             "integration_version": VERSION,
             "dashboard_version": DASHBOARD_VERSION,
+            "parent_path": PANEL_PARENT_PATH,
             "preferred_view": "overview",
             "expose_in_generated_ui": True,
         },
