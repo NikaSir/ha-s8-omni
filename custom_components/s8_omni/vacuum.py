@@ -57,7 +57,11 @@ class S8OmniVacuum(S8OmniEntity, StateVacuumEntity):
     def state(self):
         if self.dp(DP_FAULT, 0) not in (0, "0", None, False):
             return "error"
-        return STATUS_MAP.get(str(self.dp(DP_STATUS)), "idle")
+        raw = self.dp(DP_STATUS)
+        if raw is None:
+            return None
+        # Unknown raw Tuya states must remain unknown; never coerce them to idle.
+        return STATUS_MAP.get(str(raw))
 
     @property
     def battery_level(self):
