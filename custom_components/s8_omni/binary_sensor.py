@@ -46,5 +46,10 @@ class S8Binary(S8OmniEntity, BinarySensorEntity):
         self._attr_entity_category = desc.category
 
     @property
+    def available(self):
+        return super().available and self.coordinator.data is not None and self.desc.dp in self.coordinator.data
+
+    @property
     def is_on(self):
-        return bool(self.dp(self.desc.dp, False))
+        value = self.dp(self.desc.dp)
+        return None if value is None else bool(value)
