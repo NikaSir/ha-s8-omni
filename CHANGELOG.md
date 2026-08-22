@@ -6,6 +6,9 @@ All notable project changes are recorded here.
 
 ### Added
 
+- `v1.00_b015` / dashboard `v0.5.3`: harden the integration-owned frontend into one autonomous production bundle: `s8-omni-panel.js`.
+- `v1.00_b015` / dashboard `v0.5.3`: register the stable bundle name through `module_url` and use the dashboard version query string only for cache busting.
+- `v1.00_b015` / dashboard `v0.5.3`: add CI assertions that the production panel module exists, contains no historical-version runtime imports and is the only JavaScript file shipped in the production frontend directory.
 - `v1.00_b014` / dashboard `v0.5.2`: add compact **Робот** and **Станция** status cards below the frequent Overview actions so the first screen remains concise while still showing both subsystem states.
 - `v1.00_b014` / dashboard `v0.5.2`: robot summary shows normalized state plus factual dock context; station summary shows normalized state plus active station operation or an explicit telemetry warning.
 - `v1.00_b013` / dashboard `v0.5.1`: split the first two root tabs by responsibility: **Overview** now owns composite system state/health and frequent actions, while **Cleaning** owns the active cleaning workflow, session metrics and the entry to cleaning settings.
@@ -28,6 +31,7 @@ All notable project changes are recorded here.
 
 ### Fixed
 
+- `v1.00_b015`: remove the production runtime chain `v10 → v9 → ... → v2`; panel startup no longer depends on historical frontend files or their browser-cache state.
 - `v1.00_b013`: Overview and Cleaning no longer repeat the same large robot/station status and cleaning information blocks.
 - `v1.00_b012`: cleaning profile controls are no longer duplicated on the root Cleaning tab.
 - `v1.00_b010`: the bottom navigation no longer renders as a centered/floating rounded card; it spans the full useful viewport width with zero outer radius.
@@ -38,7 +42,7 @@ All notable project changes are recorded here.
 
 ### Known limitations
 
-- Stop command is intentionally not implemented through `v1.00_b014`.
+- Stop command is intentionally not implemented through `v1.00_b015`.
 - Consumable/map reset writes are intentionally deferred pending verification.
 - DND schedule, cleaning timers and raw map/control payloads are intentionally deferred pending verification.
 - Station DP134/135/136 remain read-only until station write semantics are verified end-to-end.

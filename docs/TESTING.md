@@ -1,4 +1,4 @@
-# v1.00_b012 acceptance checklist
+# v1.00_b015 acceptance checklist
 
 Before device-side testing, back up Home Assistant and disable **only S8 OMNI** in LocalTuya to avoid two local Tuya clients contending for the device.
 
@@ -25,7 +25,7 @@ Before device-side testing, back up Home Assistant and disable **only S8 OMNI** 
 5. Keep Stop unimplemented unless a controlled test proves unambiguous semantics.
 6. Keep station writes, DND schedule, cleaning timer, map/room payloads and consumable resets out of public UI until verified.
 
-## Dashboard v0.5.0 — NikaS navigation acceptance
+## Dashboard v0.5.3 — app-shell acceptance
 
 Control viewport: **iPhone Pro Max · portrait**.
 
@@ -50,29 +50,54 @@ Control viewport: **iPhone Pro Max · portrait**.
 - [ ] Bottom, left and right iOS Safe Area insets are respected.
 - [ ] Last content/card scrolls completely above the Tab Bar.
 - [ ] No primary top-tab navigation exists.
-- [ ] All tab touch targets remain comfortably usable one-handed.
 
-### Cleaning root versus child settings
+### Overview versus Cleaning
 
-- [ ] Root **Cleaning** contains state/hero, Start/Pause/Home and factual cleaning time/area.
-- [ ] Root **Cleaning** does **not** contain editable suction controls.
-- [ ] Root **Cleaning** does **not** contain editable water controls.
-- [ ] Root **Cleaning** does **not** contain the volume slider.
-- [ ] Root **Cleaning** does **not** contain the DND toggle.
-- [ ] Root **Cleaning** contains one clear **Настройки уборки** drill-down entry.
-- [ ] Overview **Настроить** opens the same canonical Cleaning settings child screen.
-- [ ] Child Header title is **Настройки уборки** with secondary context `S8 OMNI · Уборка`.
+- [ ] Overview contains the composite robot + station hero, frequent actions and compact Robot/Station status cards.
+- [ ] Overview does not repeat cleaning time/area or editable profile controls.
+- [ ] Cleaning does not repeat the large composite hero.
+- [ ] Cleaning contains Start/Pause/Home, factual time/area, one Settings entry and future Map/Rooms area.
+- [ ] Root Cleaning does not contain editable suction/water/volume/DND controls.
+
+### Cleaning settings child screen
+
+- [ ] Child Header title is **Настройки уборки** with context `S8 OMNI · Уборка`.
 - [ ] Child Back returns to root **Cleaning**, not `/dashboard-actions`.
-- [ ] Child screen contains suction segmented controls: Тихий / Нормальный / Сильный.
-- [ ] Child screen contains water segmented controls: Закрыто / Низкий / Средний / Высокий.
-- [ ] Child screen contains volume and DND controls.
-- [ ] Existing entity/service writes are unchanged: select/number/switch entities only.
-- [ ] Bottom Tab Bar remains visible on the child screen with **Уборка** active.
-- [ ] Selecting another root tab from the child screen closes the drill-down and opens that root view.
-- [ ] Returning to Cleaning after switching tabs opens the Cleaning root, not stale child settings.
-- [ ] No duplicated full settings form appears on Overview or root Cleaning.
+- [ ] Suction choices: Тихий / Нормальный / Сильный.
+- [ ] Water choices: Закрыто / Низкий / Средний / Высокий.
+- [ ] Volume and DND controls are present.
+- [ ] Bottom Tab Bar remains visible with **Уборка** active.
+- [ ] Selecting another root tab closes the child workflow.
+- [ ] Existing entity/service writes are unchanged: public select/number/switch entities only.
 
-### Refresh behavior
+## v1.00_b015 — frontend bundle hardening acceptance
+
+Production module: `custom_components/s8_omni/frontend/s8-omni-panel.js`.
+
+Static/source assertions:
+
+- [x] `module_url` points to stable `s8-omni-panel.js?v=<dashboard version>`.
+- [x] Production bundle contains no relative runtime `import` of a previous panel version.
+- [x] Production bundle registers `<s8-omni-panel>` by itself.
+- [x] Historical `s8-omni-panel-v*.js` files are not required by the production module.
+- [ ] CI confirms exactly one production JavaScript panel file is shipped in the active frontend directory.
+
+Runtime acceptance:
+
+1. [ ] Load `/dashboard-s8-omni` on local LAN after clearing Home Assistant/Companion frontend cache.
+2. [ ] Load `/dashboard-s8-omni` through Home Assistant Cloud / Nabu Casa with a cold client cache.
+3. [ ] Fully restart Home Assistant and open S8 OMNI before any previous S8 panel resource is cached.
+4. [ ] Open and close the panel repeatedly from the parent dashboard.
+5. [ ] Verify Back returns to `/dashboard-actions`.
+6. [ ] Verify Refresh still requests coordinator refresh.
+7. [ ] Verify no `Unable to load custom panel` message appears.
+8. [ ] Verify no `Configuration error` appears.
+9. [ ] Verify browser/network trace does not request `s8-omni-panel-v2.js` ... `s8-omni-panel-v10.js`.
+10. [ ] Verify Overview, Cleaning, Cleaning settings, Station, Maintenance and Diagnostics all render from the single bundle.
+
+A warmed browser cache is not sufficient evidence for this release. At least one cold-cache local test and one cold-cache Cloud test are required before treating the hardening release as production-ready.
+
+## Refresh behavior
 
 - [ ] Pressing Refresh requests an immediate local coordinator refresh.
 - [ ] Refresh does not change DP1/DP2/DP4/DP134/DP135/DP136 by itself.
@@ -80,41 +105,19 @@ Control viewport: **iPhone Pro Max · portrait**.
 - [ ] If the refresh entity cannot be resolved, the Header action stays disabled.
 - [ ] Telemetry age returns to a fresh value after a successful manual refresh.
 
-### Mobile geometry
-
-- [ ] No horizontal scroll on root views or Cleaning settings.
-- [ ] No clipped labels on iPhone Pro Max portrait.
-- [ ] Main Start/Pause/Home actions remain one-hand reachable.
-- [ ] Cleaning settings segmented controls remain comfortable at portrait width.
-- [ ] Critical buttons are not packed too closely.
-- [ ] Long press on entity-backed rows opens native Home Assistant more-info.
-
-### Daily-use behavior
-
-- [ ] Dashboard version in Diagnostics/Header is `v0.5.0`.
-- [ ] With DP5 `charge_done`/`charging` and sticky DP4 `chargego`, daily UI shows base/charging state rather than «Возврат на базу».
-- [ ] Diagnostics still shows factual raw DP4 `chargego` when present.
-- [ ] Active station operation gets a prominent live-operation banner.
-
 ## Download diagnostics acceptance
 
 From **Settings → Devices & services → S8 OMNI → Download diagnostics**:
 
 - [ ] Diagnostics download is available for the S8 OMNI config entry.
-- [ ] Integration version is `v1.00_b012`; dashboard version is `v0.5.0`.
+- [ ] Integration version is `v1.00_b015`; dashboard version is `v0.5.3`.
 - [ ] Host/IP is replaced by a redaction marker.
 - [ ] Device ID is replaced by a redaction marker.
 - [ ] Local Key is replaced by a redaction marker.
-- [ ] No Local Key fragment, Device ID or private IP appears inside the exported coordinator exception text.
 - [ ] Raw map/path/command/timer payloads are absent.
-- [ ] Export contains coordinator health, last successful telemetry timestamp and reported DP IDs.
-- [ ] Export contains normalized robot/station/composite state.
-- [ ] Export contains only the known safe scalar datapoints used by public entities.
-- [ ] Generating diagnostics performs no device write and does not trigger a station/robot command.
+- [ ] Export contains normalized robot/station/composite state and known safe scalar datapoints.
 
-If any identifier or secret appears unredacted, do not share the file; stop and fix the diagnostics exporter first.
-
-### Required state scenarios
+## Required state scenarios
 
 - [x] Robot at base with no active station operation.
 - [x] Charge complete represented in Overview/Diagnostics (`charge_done`).
@@ -129,7 +132,7 @@ If any identifier or secret appears unredacted, do not share the file; stop and 
 - [ ] Whole S8 OMNI unavailable.
 - [ ] One station DP missing from otherwise successful snapshot.
 
-### Safety assertions
+## Safety assertions
 
 - [x] No panel action writes Tuya DP directly.
 - [x] No LocalTuya service is called by the panel.

@@ -2,7 +2,7 @@
 
 Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum and OMNI station, built from verified Tuya LAN datapoints.
 
-> Current development line: **v1.00_b012** (`1.0.0b12`). This is an early test build.
+> Current development line: **v1.00_b015** (`1.0.0b15`). This is an early test build.
 
 ## Scope
 
@@ -23,7 +23,7 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 
 `ha-s8-omni` owns its full appliance UI instead of exposing a loose collection of Lovelace entities as the primary experience.
 
-Dashboard **v0.5.0** follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2** and is mobile-first for **iPhone Pro Max portrait**:
+Dashboard **v0.5.3** follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2** and is mobile-first for **iPhone Pro Max portrait**:
 
 - persistent compact header with explicit **← Назад**, geometrically centered **S8 OMNI** title and **Обновить** action;
 - Back explicitly navigates to **`/dashboard-actions`** and never uses browser-history back on the five root views;
@@ -31,16 +31,25 @@ Dashboard **v0.5.0** follows **Home Assistant NikaS · Integration Dashboard UI 
 - **full-width fixed bottom Tab Bar** is the sole primary navigation between Overview, Cleaning, Station, Maintenance and Diagnostics;
 - the bottom bar spans the useful viewport width, has no floating-card geometry and respects iOS Safe Area;
 - page content reserves enough bottom clearance for the final card to scroll completely above the Tab Bar;
-- Overview keeps composite robot + station state, robot/dock visual context, battery, telemetry health and one-handed Start/Pause/Home controls;
-- the root **Cleaning** tab is operational: state, Start/Pause/Home and factual cleaning metrics;
-- editable suction, water, volume and DND controls live one level lower on the **Cleaning settings** drill-down screen and are not duplicated on the root Cleaning tab;
-- Overview **Настроить** and Cleaning **Настройки уборки** open the same canonical drill-down;
+- Overview owns composite robot + station state, frequent Start/Pause/Home controls and compact Robot/Station summaries;
+- the root **Cleaning** tab owns the cleaning workflow, time/area metrics and the entry to cleaning settings;
+- editable suction, water, volume and DND controls live one level lower on the **Настройки уборки** drill-down and are not duplicated on the root Cleaning tab;
 - drill-down Back returns to the Cleaning root view while the bottom Tab Bar remains available for switching root sections;
-- Station view keeps independent dust collection / roller cleaning / drying state and a prominent live-operation banner;
+- Station view keeps independent dust collection / roller cleaning / drying state;
 - Maintenance view keeps factual remaining resource in minutes;
 - Diagnostics keeps normalized and raw state context;
 - no duplicate large S8 OMNI title appears inside the hero card;
 - Map / Rooms remains reserved until a stable public integration API exists.
+
+### Production frontend bundle
+
+The production panel is shipped as one self-contained JavaScript file:
+
+`custom_components/s8_omni/frontend/s8-omni-panel.js`
+
+Home Assistant registers only that file through `module_url`, using `?v=<dashboard version>` for cache busting. The production bundle does **not** import previous UI versions at runtime. Historical UI implementations belong in Git history/tags/releases, not in the browser dependency chain.
+
+CI validates JavaScript syntax and rejects historical frontend imports or extra versioned production panel files.
 
 User-facing screens avoid protocol/DP implementation wording; raw Tuya and integration-contract details remain in Diagnostics and documentation.
 
