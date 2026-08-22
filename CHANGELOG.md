@@ -6,6 +6,9 @@ All notable project changes are recorded here.
 
 ### Added
 
+- `v1.00_b016` / dashboard `v0.5.4`: align the S8 OMNI Header and primary action row with **NikaS Integration Panel Template v1.0**: symmetric 52 px Header slots, 48 px narrow-mobile slots, icon-only Back, centered title and one Refresh action.
+- `v1.00_b016` / dashboard `v0.5.4`: make the three frequent actions use equal mobile columns with vertical icon/text composition so **Уборка / Пауза / Домой** fit the iPhone Pro Max portrait viewport without horizontal clipping.
+- `v1.00_b016` / dashboard `v0.5.4`: preserve Header + loading state + Bottom Tab Bar during frontend/entity-registry loading.
 - `v1.00_b015` / dashboard `v0.5.3`: harden the integration-owned frontend into one autonomous production bundle: `s8-omni-panel.js`.
 - `v1.00_b015` / dashboard `v0.5.3`: register the stable bundle name through `module_url` and use the dashboard version query string only for cache busting.
 - `v1.00_b015` / dashboard `v0.5.3`: add CI assertions that the production panel module exists, contains no historical-version runtime imports and is the only JavaScript file shipped in the production frontend directory.
@@ -31,6 +34,9 @@ All notable project changes are recorded here.
 
 ### Fixed
 
+- `v1.00_b016`: a failed local connection can no longer leave the last robot/station DP snapshot looking like the current state. The daily UI switches to **Нет связи / Нет данных**, keeps telemetry age visible, and disables device commands until local communication is confirmed again.
+- `v1.00_b016`: stale battery, mode, dock position, station operations and maintenance/control values are no longer presented as current while the local connection is disconnected or unconfirmed.
+- `v1.00_b016`: reduce mobile Header/button pressure and add explicit overflow protection for Header subtitle, Hero/state text, status cards, metrics and Bottom Tab Bar labels.
 - `v1.00_b015`: remove the production runtime chain `v10 → v9 → ... → v2`; panel startup no longer depends on historical frontend files or their browser-cache state.
 - `v1.00_b013`: Overview and Cleaning no longer repeat the same large robot/station status and cleaning information blocks.
 - `v1.00_b012`: cleaning profile controls are no longer duplicated on the root Cleaning tab.
@@ -42,7 +48,7 @@ All notable project changes are recorded here.
 
 ### Known limitations
 
-- Stop command is intentionally not implemented through `v1.00_b015`.
+- Stop command is intentionally not implemented through `v1.00_b016`.
 - Consumable/map reset writes are intentionally deferred pending verification.
 - DND schedule, cleaning timers and raw map/control payloads are intentionally deferred pending verification.
 - Station DP134/135/136 remain read-only until station write semantics are verified end-to-end.

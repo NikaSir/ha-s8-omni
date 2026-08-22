@@ -7,7 +7,7 @@ The S8 OMNI integration owns and ships its canonical Home Assistant UI.
 - Panel: `/dashboard-s8-omni`
 - Parent / Back from root views: `/dashboard-actions`
 
-Dashboard version: `v0.5.3`.
+Dashboard version: `v0.5.4`.
 
 The panel is registered through Home Assistant's custom-panel API. No Lovelace YAML, LocalTuya command, cloud request or direct Tuya DP write is required by the frontend.
 
@@ -15,11 +15,27 @@ The panel is registered through Home Assistant's custom-panel API. No Lovelace Y
 
 Primary viewport: **iPhone Pro Max, portrait**.
 
-The panel follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2**:
+The panel follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2** and **NikaS Integration Panel Template v1.0**:
 
-1. **Header** — compact persistent application header with explicit Back on the left, geometrically centered title and one global Refresh action on the right.
+1. **Header** — compact persistent application header with icon-only Back on the left, geometrically centered title and one global Refresh action on the right.
 2. **Content** — current system state or selected workflow.
 3. **Bottom Tab Bar** — full-width, fixed Overview / Cleaning / Station / Maintenance / Diagnostics navigation with iOS Safe Area handling.
+
+### Header geometry
+
+Canonical layout:
+
+```text
+52 px | minmax(0, 1fr) | 52 px
+```
+
+On mobile widths up to 480 CSS px:
+
+```text
+48 px | minmax(0, 1fr) | 48 px
+```
+
+The two side slots remain symmetric, so `S8 OMNI` stays centered against the viewport rather than the free space between controls. Back and Refresh remain at least 44×44 px touch targets. The subtitle is a single secondary line with ellipsis protection.
 
 On the five root views:
 
@@ -29,6 +45,22 @@ On the five root views:
 - browser history is not used as the root Back contract.
 
 The hero card does not repeat S8 OMNI as another large title. The Header identifies the application; the hero identifies **current state**.
+
+## iPhone fit contract
+
+At the primary iPhone Pro Max portrait width, the panel must not depend on horizontal overflow or clipped labels.
+
+Dashboard `v0.5.4` applies these mobile rules:
+
+- Header side controls reduce from 52 px to 48 px while preserving symmetric geometry;
+- the three frequent actions remain **three equal columns**;
+- each mobile action uses a vertical composition: icon above, primary label, short secondary label;
+- the actions no longer allocate a wider first column, so `Уборка / Пауза / Домой` follow the same geometry;
+- Hero, status cards, metrics and diagnostics use `minmax(0, 1fr)` and explicit overflow/wrapping protection;
+- Bottom Tab Bar keeps five equal columns, short labels and iOS Safe Area padding;
+- final content retains enough bottom clearance to scroll entirely above the fixed Tab Bar.
+
+At very narrow widths the text size is reduced, but primary navigation and command touch targets are not shrunk below the project minimum.
 
 ## View responsibilities
 
@@ -109,21 +141,57 @@ Diagnostics contains technical state:
 - integration/dashboard versions;
 - production bundle mode.
 
+## Current truth versus last-known data
+
+A Home Assistant state object may still contain the last successfully reported DP values after the next Tuya LAN poll has failed. Those cached values are useful for diagnostics but are **not current operational truth**.
+
+Dashboard `v0.5.4` therefore combines the public `local_connection` state with vacuum availability:
+
+- `local_connection = on` and the vacuum entity is available -> current operational state may be shown;
+- `local_connection = off` -> the system is treated as **disconnected**, regardless of the last cached robot/station values;
+- missing/unknown connection truth -> current robot/station values are treated as unconfirmed.
+
+While disconnected or unconfirmed:
+
+- Hero does not show the last robot state as current;
+- robot/station state, battery, mode, dock position and station operations become `Нет данных` / unknown in daily-use screens;
+- Start / Pause / Home are disabled;
+- cleaning settings and other device writes are disabled;
+- station and maintenance operational values are not presented as fresh;
+- telemetry age remains visible and continues to identify how old the last successful snapshot is;
+- raw technical values may remain visible in Diagnostics specifically as diagnostic context.
+
+This enforces the project rule: **unknown / unavailable / stale ≠ normal**.
+
+## Loading shell
+
+During panel/entity-registry loading, the shell remains visible:
+
+```text
+Header
+↓
+Loading state
+↓
+Bottom Tab Bar
+```
+
+A blank white screen is not an accepted loading state.
+
 ## Production frontend bundle
 
-Dashboard `v0.5.3` is the frontend hardening release.
+Dashboard `v0.5.3` introduced frontend bundling hardening; `v0.5.4` preserves it.
 
 Production runtime consists of exactly one integration-owned JavaScript entry point:
 
 ```text
 Home Assistant
     ↓
-/s8_omni/frontend/s8-omni-panel.js?v=v0.5.3
+/s8_omni/frontend/s8-omni-panel.js?v=v0.5.4
     ↓
 <s8-omni-panel>
 ```
 
-The registered bundle is **self-contained**. It does not import `s8-omni-panel-v2.js`, `v3.js`, or any other historical UI file at runtime.
+The registered bundle is **self-contained**. It does not import historical UI files at runtime.
 
 Historical frontend implementations belong in Git history/tags/releases. They are not browser dependencies and are not required to be present in browser cache.
 
@@ -152,9 +220,9 @@ The Tab Bar:
 
 ## State and safety contract
 
-`ha-s8-omni` owns normalized robot, station and composite status semantics. The panel consumes those entities rather than reinterpreting Tuya data independently.
+`ha-s8-omni` owns normalized robot, station and composite status semantics. The panel consumes those entities rather than writing or decoding Tuya control payloads independently.
 
-- Whole-device communication failure -> `unavailable`.
+- Whole-device communication failure -> unavailable/disconnected UI, never the previous DP snapshot as current.
 - Unknown/unrecognized DP5 -> normalized robot state `unknown`.
 - Missing individual station DP -> that station entity is unavailable.
 - No active station operation plus missing station DP -> station `unknown`, never idle by assumption.

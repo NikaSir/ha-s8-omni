@@ -8,16 +8,23 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.5.3",
+    "dashboard_version": "v0.5.4",
+    "template": "NikaS Integration Panel Template v1.0",
     "frontend": {
       "module": "s8-omni-panel.js",
       "bundle": "self_contained",
       "runtime_historical_imports": false,
       "cache_busting": "query_string_dashboard_version"
     },
+    "availability": {
+      "current_truth": ["local_connection", "vacuum"],
+      "stale_values_are_current": false,
+      "disable_device_actions_when_disconnected": true
+    },
     "navigation": {
       "header_back": "explicit_parent_route",
       "header_action": "refresh",
+      "header_grid": "52px_minmax_52px__48px_mobile",
       "primary_navigation": "full_width_fixed_bottom_tab_bar",
       "active_tab": "inside_shared_bar",
       "floating_tab_bar": false,
@@ -38,6 +45,13 @@
           "content_scope": "editable_cleaning_profile_only"
         }
       }
+    },
+    "mobile_fit": {
+      "primary_viewport": "iPhone Pro Max portrait",
+      "horizontal_scroll": false,
+      "quick_actions": "three_equal_columns_vertical_content",
+      "touch_target_min_px": 44,
+      "safe_area": true
     }
   },
   "generated_ui": {
