@@ -6,6 +6,9 @@ All notable project changes are recorded here.
 
 ### Added
 
+- `v1.00_b013` / dashboard `v0.5.1`: split the first two root tabs by responsibility: **Overview** now owns composite system state/health and frequent actions, while **Cleaning** owns the active cleaning workflow, session metrics and the entry to cleaning settings.
+- `v1.00_b013` / dashboard `v0.5.1`: remove the large composite robot/station hero and station-operation block from the Cleaning tab; remove cleaning time/area/suction/water and station detail blocks from Overview.
+- `v1.00_b013` / dashboard `v0.5.1`: keep the existing **Настройки уборки** drill-down as the only editable profile screen and preserve the canonical full-width fixed bottom Tab Bar.
 - `v1.00_b012` / dashboard `v0.5.0`: introduce a canonical **Cleaning settings** drill-down below the root Cleaning tab.
 - `v1.00_b012` / dashboard `v0.5.0`: keep the root Cleaning tab operational (state, Start/Pause/Home and cleaning metrics) while suction, water, volume and DND controls exist only on the child settings screen.
 - `v1.00_b012` / dashboard `v0.5.0`: Overview **Настроить** and Cleaning **Настройки уборки** open the same child screen; child Back returns to Cleaning while the fixed bottom Tab Bar still switches root sections.
@@ -23,6 +26,7 @@ All notable project changes are recorded here.
 
 ### Fixed
 
+- `v1.00_b013`: Overview and Cleaning no longer repeat the same large robot/station status and cleaning information blocks.
 - `v1.00_b012`: cleaning profile controls are no longer duplicated on the root Cleaning tab.
 - `v1.00_b010`: the bottom navigation no longer renders as a centered/floating rounded card; it spans the full useful viewport width with zero outer radius.
 - `v1.00_b008`: bottom navigation is fixed instead of relying on sticky positioning.
@@ -32,7 +36,7 @@ All notable project changes are recorded here.
 
 ### Known limitations
 
-- Stop command is intentionally not implemented through `v1.00_b012`.
+- Stop command is intentionally not implemented through `v1.00_b013`.
 - Consumable/map reset writes are intentionally deferred pending verification.
 - DND schedule, cleaning timers and raw map/control payloads are intentionally deferred pending verification.
 - Station DP134/135/136 remain read-only until station write semantics are verified end-to-end.
