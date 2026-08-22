@@ -42,6 +42,14 @@ jobs:
             python -m compileall -q custom_components
           fi
 
+      - name: Validate frontend JavaScript when present
+        shell: bash
+        run: |
+          while IFS= read -r -d '' file; do
+            echo "Checking $file"
+            node --check "$file"
+          done < <(find custom_components -type f -name '*.js' -print0 2>/dev/null || true)
+
       - name: Reject tracked credential/key files
         shell: bash
         run: |
