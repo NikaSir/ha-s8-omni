@@ -6,7 +6,9 @@ All notable project changes are recorded here.
 
 ### Added
 
-- `v1.00_b007` / dashboard `v0.4.0`: adopt the Home Assistant NikaS specialized-panel app shell with a persistent **← Назад** header and fixed bottom navigation.
+- `v1.00_b008` / dashboard `v0.4.1`: complete the Home Assistant NikaS application shell by making the existing five-section navigation a fixed, iOS-safe bottom bar that remains available during long vertical scrolling.
+- `v1.00_b008` / dashboard `v0.4.1`: keep explicit Header Back to `/dashboard-actions`, preserve the accepted `Обзор / Уборка / Станция / Сервис / Диагн.` navigation model, and reserve the hero for current appliance state rather than duplicate device naming.
+- `v1.00_b007` / dashboard `v0.4.0`: adopt the Home Assistant NikaS specialized-panel app shell with a persistent **← Назад** header.
 - `v1.00_b007` / dashboard `v0.4.0`: make Back explicitly navigate to `/dashboard-actions`; browser-history back is not used.
 - `v1.00_b007` / dashboard `v0.4.0`: publish the S8 OMNI parent route and navigation contract in `panel.json` and panel config metadata.
 - `v1.00_b007` / dashboard `v0.4.0`: remove duplicate S8 OMNI naming from the hero so the header identifies the application and the hero identifies current state.
@@ -36,6 +38,7 @@ All notable project changes are recorded here.
 
 ### Fixed
 
+- `v1.00_b008`: bottom navigation is now truly fixed instead of relying on `position: sticky`; the last content receives safe bottom clearance and the bar remains in the one-handed thumb zone.
 - `v1.00_b006`: dashboard version labels now reflect the shipped panel version instead of retaining the base `v0.2.0` string.
 - `v1.00_b006`: a sticky Tuya `mode=chargego` is no longer shown to the user as «Возврат на базу» after the robot is already charging or charged; raw DP4 remains visible in Diagnostics.
 - `v1.00_b004`: an unrecognized or missing robot status is no longer silently coerced to `idle`.
@@ -44,7 +47,7 @@ All notable project changes are recorded here.
 
 ### Known limitations
 
-- Stop command is intentionally not implemented through `v1.00_b007`.
+- Stop command is intentionally not implemented through `v1.00_b008`.
 - Consumable/map reset writes are intentionally deferred pending verification.
 - DND schedule, cleaning timers and raw map/control payloads are intentionally deferred pending verification.
 - Station DP134/135/136 remain read-only until station write semantics are verified end-to-end.
