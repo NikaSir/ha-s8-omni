@@ -7,7 +7,7 @@ The S8 OMNI integration owns and ships its canonical Home Assistant UI.
 - Panel: `/dashboard-s8-omni`
 - Parent / Back: `/dashboard-actions`
 
-Dashboard version: `v0.4.0`.
+Dashboard version: `v0.4.2`.
 
 The panel is registered through Home Assistant's custom-panel API. No Lovelace YAML, LocalTuya command, cloud request or direct Tuya DP write is required by the frontend.
 
@@ -17,18 +17,21 @@ Primary viewport: **iPhone Pro Max, portrait**.
 
 The panel follows the shared NikaS specialized-panel navigation model:
 
-1. **Header** — persistent application header with `mdi:arrow-left`, text **Назад**, centered **S8 OMNI** title and no device command bound to header gestures.
+1. **Header** — persistent application header with explicit Back on the left, centered **S8 OMNI** title and one global **Refresh** action on the right.
 2. **Content** — current robot/station state and the selected S8 OMNI workflow.
-3. **Bottom navigation** — persistent Overview / Cleaning / Station / Maintenance / Diagnostics navigation with iOS bottom safe-area handling.
+3. **Bottom navigation** — fixed Overview / Cleaning / Station / Maintenance / Diagnostics navigation with iOS bottom safe-area handling.
 
 Header and bottom navigation have separate responsibilities:
 
 - Header Back exits the S8 OMNI application.
+- Header Refresh requests an immediate local coordinator refresh through the public `button` entity owned by `ha-s8-omni`.
 - Bottom navigation switches sections inside S8 OMNI.
 
 Back uses the explicit fixed parent route `/dashboard-actions`. It does **not** call `history.back()` and does not depend on how the panel was opened.
 
-The hero card does not repeat S8 OMNI as another large title. The header identifies the application; the hero identifies **current state**. Integration/dashboard version remains available in Diagnostics.
+The Refresh action is not a robot/station command and does not write any Tuya control datapoint. It invokes the Home Assistant `button.press` service for the integration-owned **Обновить сейчас** entity.
+
+The hero card does not repeat S8 OMNI as another large title. The header identifies the application; the hero identifies **current state**. Integration/dashboard version remains available in Diagnostics and as compact header secondary text.
 
 ## Daily-use UX
 
@@ -124,11 +127,11 @@ The frontend never writes Tuya DP directly, never calls LocalTuya, never calls T
 
 Entity-backed status, metric and control rows support long press to open native Home Assistant `more-info`.
 
-Header and bottom-navigation elements are navigation only and do not invoke entity actions on hold or double tap.
+Header and bottom-navigation elements are navigation/global-panel controls only and do not invoke device-specific actions on hold or double tap.
 
 ## Navigation metadata
 
-Machine-readable metadata is published in repository root `panel.json`, including panel route, parent route, bottom-navigation contract and reusable entity suffixes for `ha-contract-generated-ui`.
+Machine-readable metadata is published in repository root `panel.json`, including panel route, parent route, header refresh action, fixed bottom-navigation contract and reusable entity suffixes for `ha-contract-generated-ui`.
 
 ## Current deferred capabilities
 

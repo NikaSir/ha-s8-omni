@@ -1,4 +1,4 @@
-# v1.00_b007 acceptance checklist
+# v1.00_b009 acceptance checklist
 
 Before device-side testing, back up Home Assistant and disable **only S8 OMNI** in LocalTuya to avoid two local Tuya clients contending for the device.
 
@@ -13,7 +13,8 @@ Before device-side testing, back up Home Assistant and disable **only S8 OMNI** 
 - [x] Start cleaning is confirmed on the physical robot.
 - [x] Return to base is confirmed on the physical robot.
 - [x] Station dust collection, roller/mop cleaning and drying have been observed.
-- [x] Dashboard `v0.2.x`/`v0.3.0` renders correctly on iPhone Pro Max portrait across all five main views.
+- [x] Dashboard renders correctly on iPhone Pro Max portrait across all five main views.
+- [x] Explicit Back route is `/dashboard-actions` and fixed bottom navigation is implemented in the NikaS app shell.
 
 ## Remaining protocol acceptance
 
@@ -33,21 +34,29 @@ Before device-side testing, back up Home Assistant and disable **only S8 OMNI** 
 5. After Tuya re-pair, enter the new Local Key and verify reconnect without removing the entry.
 6. Change polling interval and confirm automatic reload.
 
-## Dashboard v0.4.0 — NikaS app-shell acceptance
+## Dashboard v0.4.2 — NikaS app-shell acceptance
 
 Control viewport: **iPhone Pro Max · portrait**.
 
 ### Header
 
 - [ ] Header is visible on Overview, Cleaning, Station, Maintenance and Diagnostics.
-- [ ] Left control is `mdi:arrow-left` with **Назад** when width permits.
+- [ ] Left control is `mdi:arrow-left` and explicitly navigates to `/dashboard-actions`.
 - [ ] Center title is **S8 OMNI**.
+- [ ] Right control is `mdi:refresh` and invokes only the integration-owned **Обновить сейчас** Home Assistant button entity.
 - [ ] Header remains compact and respects the iOS top safe area.
-- [ ] Back touch target is at least approximately 44×44 pt.
-- [ ] Back explicitly navigates to `/dashboard-actions` regardless of entry path.
+- [ ] Back and Refresh touch targets are approximately 44×44 pt or larger.
 - [ ] Back never uses `history.back()`.
 - [ ] Hold/double tap on Header performs no robot/station action.
 - [ ] Hero does not repeat a large `S8 OMNI · vX` title; it begins from current state.
+
+### Refresh behavior
+
+- [ ] Pressing Refresh requests an immediate local coordinator refresh.
+- [ ] Refresh does not change DP1/DP2/DP4/DP134/DP135/DP136 by itself.
+- [ ] Refresh button shows temporary busy feedback and becomes usable again.
+- [ ] If the refresh entity cannot be resolved, the header action stays disabled instead of falling back to a raw/network write.
+- [ ] Telemetry age returns to a fresh value after a successful manual refresh.
 
 ### Bottom navigation
 
@@ -67,7 +76,7 @@ Control viewport: **iPhone Pro Max · portrait**.
 
 ### Daily-use behavior
 
-- [ ] Dashboard version in Diagnostics is `v0.4.0`.
+- [ ] Dashboard version in Diagnostics/header is `v0.4.2`.
 - [ ] With DP5 `charge_done`/`charging` and sticky DP4 `chargego`, daily UI shows base/charging state rather than «Возврат на базу».
 - [ ] Diagnostics still shows factual raw DP4 `chargego` when present.
 - [ ] Suction has Тихий / Нормальный / Сильный segmented choices.
@@ -107,5 +116,6 @@ Control viewport: **iPhone Pro Max · portrait**.
 - [x] No station write buttons appear while DP134/135/136 remain read-only.
 - [x] Map/room controls remain deferred until a stable integration API exists.
 - [x] Consumable percentages are not invented.
+- [x] Header Refresh is implemented through a public Home Assistant button entity rather than a frontend network/Tuya call.
 
 Stop testing additional write commands if any command behaves unexpectedly; collect Home Assistant logs before further changes.
