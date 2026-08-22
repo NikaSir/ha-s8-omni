@@ -160,7 +160,7 @@ if (S8OmniPanel && !S8OmniPanel.prototype.__s8CleaningDrilldownV050) {
 
     return `<section class="s8-settings-intro">
         <ha-icon icon="mdi:tune-variant"></ha-icon>
-        <div><strong>Параметры уборки</strong><span>Здесь меняется профиль уборки. На основной вкладке «Уборка» остаются только состояние и управление процессом.</span></div>
+        <div><strong>Параметры уборки</strong><span>Всасывание, подача воды, громкость и режим «Не беспокоить».</span></div>
       </section>
       <section class="card">
         <div class="section-title"><div><span class="eyebrow">Уборка</span><h2>Параметры</h2></div></div>
@@ -173,7 +173,7 @@ if (S8OmniPanel && !S8OmniPanel.prototype.__s8CleaningDrilldownV050) {
       </section>
       <section class="card">
         <div class="section-title"><div><span class="eyebrow">Поведение</span><h2>Автоматизация</h2></div></div>
-        ${dnd ? `<button class="toggle-row" data-toggle="do_not_disturb"><span><strong>Не беспокоить</strong><small>Переключатель режима без настройки расписания.</small></span><span class="toggle ${dnd.state === "on" ? "on" : ""}"></span></button>` : this._row("Не беспокоить", "Нет данных")}
+        ${dnd ? `<button class="toggle-row" data-toggle="do_not_disturb"><span><strong>Не беспокоить</strong><small>Включает или выключает режим «Не беспокоить».</small></span><span class="toggle ${dnd.state === "on" ? "on" : ""}"></span></button>` : this._row("Не беспокоить", "Нет данных")}
       </section>`;
   };
 
