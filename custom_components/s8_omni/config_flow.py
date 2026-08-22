@@ -91,7 +91,7 @@ class S8OmniConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "cannot_connect"
             else:
                 await self.async_set_unique_id(user_input[CONF_DEVICE_ID])
-                self._abort_if_unique_id_mismatch()
+                self._abort_if_unique_id_mismatch(reason="wrong_device")
                 return self.async_update_reload_and_abort(
                     entry,
                     data_updates=user_input,
