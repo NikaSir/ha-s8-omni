@@ -1,0 +1,112 @@
+# S8 OMNI native panel
+
+The S8 OMNI integration owns and ships its canonical Home Assistant UI.
+
+## Stable route
+
+`/dashboard-s8-omni`
+
+The route is registered by the integration through Home Assistant's custom-panel API. No Lovelace YAML, LocalTuya command, cloud request or direct Tuya DP write is required by the panel.
+
+Dashboard version: `v0.1.0`.
+
+## UX target
+
+Primary viewport: **iPhone Pro Max, portrait**.
+
+The layout is mobile-first, has no intentional horizontal scrolling, uses large touch targets and keeps the primary robot/station state and frequent commands near the top. Desktop and iPad widen the content without changing the information hierarchy.
+
+## Views
+
+### Overview
+
+- composite robot + station status;
+- robot status;
+- station status;
+- battery;
+- Start / Pause / Home;
+- current cleaning time and area;
+- station operation states;
+- explicit warning for unavailable/unknown/error.
+
+### Cleaning
+
+- Start / Pause / Home;
+- current cleaning mode;
+- verified suction and water controls;
+- volume;
+- Do Not Disturb toggle;
+- reserved Map / Rooms area.
+
+Room/zone selection is intentionally not implemented until the integration exposes a stable public API carrying the required room/zone payload.
+
+### Station
+
+- normalized station status;
+- inferred dock presence only when it is factually supported;
+- battery;
+- dust collection, roller cleaning and drying states.
+
+The panel does **not** create station write commands. Controls will be added only after their write semantics are verified and exposed by `ha-s8-omni` as entities/services.
+
+### Maintenance
+
+- filter resource in minutes;
+- edge/side brush resource in minutes;
+- main/roller brush resource in minutes;
+- fault state;
+- child lock.
+
+No percentage is derived because the integration does not yet have a verified maximum lifetime contract. Consumable reset buttons are deliberately absent until DP18/20/22 writes are verified end-to-end.
+
+### Diagnostics
+
+- device availability;
+- telemetry age;
+- normalized composite status;
+- normalized robot and station status;
+- raw Tuya status;
+- mode and fault;
+- station DP entity states;
+- integration/dashboard versions and stable route.
+
+Raw/technical values are confined to this view.
+
+## Composite status ownership
+
+`ha-s8-omni` now exposes normalized robot, station and composite status sensors. The panel consumes those entities rather than reinterpreting Tuya values independently.
+
+The composite sensor also exposes factual attributes including raw status, normalized robot status, station status, active station operations, missing station datapoints, dock-presence inference, battery, mode and fault.
+
+### Station multi-operation rule
+
+No arbitrary priority is invented when several station flags are active at once. The station state becomes `multiple_operations`, while `active_operations` lists all active operations. This prevents a drying flag, dust collection flag or cleaning flag from silently hiding another active operation.
+
+### Unknown/unavailable rule
+
+- Whole-device communication failure -> Home Assistant entity `unavailable`.
+- Successful robot snapshot with unknown/unrecognized DP5 -> normalized robot state `unknown`.
+- Missing individual station DP -> that DP entity is unavailable.
+- No active station operation plus one or more missing station DPs -> station state `unknown`, **not** `idle`.
+
+## Long press
+
+Rows carrying a real Home Assistant entity support long press to open native `more-info`.
+
+## Navigation contract
+
+Machine-readable metadata is published in repository root `panel.json` for `ha-contract-generated-ui` and other consumers.
+
+The generated central UI may show a compact vacuum status and frequent Start/Home actions, but detailed robot, station, maintenance and future map controls remain owned by this panel.
+
+## Current deferred capabilities
+
+The following remain intentionally absent until a verified integration API exists:
+
+- station write controls;
+- DND start/end time (DP33 payload);
+- scheduled cleaning (DP32 payload);
+- map and room payload parsing;
+- manual direction control;
+- consumable reset writes;
+- direct raw Tuya DP actions from UI.
