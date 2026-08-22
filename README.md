@@ -2,7 +2,7 @@
 
 Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum and OMNI station, built from verified Tuya LAN datapoints.
 
-> Current development line: **v1.00_b016** (`1.0.0b16`). This is an early test build.
+> Current development line: **v1.00_b017** (`1.0.0b17`). This is an early test build.
 
 ## Scope
 
@@ -55,6 +55,33 @@ When local communication is disconnected or cannot be confirmed:
 - Start / Pause / Home and editable controls are disabled;
 - telemetry age remains visible so the last successful update can be diagnosed;
 - raw/last-known context may still be inspected on the technical Diagnostics screen, but is not promoted as current operational state.
+
+### Panel lifecycle when the robot is offline
+
+Starting with `v1.00_b017`, the S8 OMNI application shell no longer depends on a successful first Tuya poll.
+
+Setup order is intentionally:
+
+```text
+register panel → set up HA entities → attempt local refresh
+```
+
+not:
+
+```text
+first device refresh → register panel
+```
+
+Therefore, if the robot is powered off or unreachable while Home Assistant starts:
+
+- the S8 OMNI config entry still loads;
+- **Пылесос** remains present in the sidebar;
+- `/dashboard-s8-omni` still opens;
+- the local-connection entity reports disconnected;
+- coordinator-backed data entities are unavailable rather than silently showing cached state as current;
+- regular coordinator polling continues and the UI recovers automatically when the robot returns.
+
+See [`docs/LIFECYCLE.md`](docs/LIFECYCLE.md).
 
 ### Production frontend bundle
 

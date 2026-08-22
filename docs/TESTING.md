@@ -1,4 +1,4 @@
-# v1.00_b016 acceptance checklist
+# v1.00_b017 acceptance checklist
 
 Before device-side testing, back up Home Assistant and disable **only S8 OMNI** in LocalTuya to avoid two local Tuya clients contending for the device.
 
@@ -96,11 +96,11 @@ Control viewport: **iPhone Pro Max · portrait**. Also inspect a narrow viewport
 - [ ] Selecting another root tab closes the child workflow.
 - [ ] Existing entity/service writes are unchanged: public select/number/switch entities only.
 
-## v1.00_b016 — disconnected / stale-state acceptance
+## v1.00_b016+ — disconnected / stale-state acceptance
 
 This is a mandatory regression test because a previous live screenshot showed the last `repositioning` snapshot while the robot was actually offline.
 
-### Controlled disconnect
+### Controlled disconnect while Home Assistant is already running
 
 1. Start with S8 OMNI online and confirm Header badge is **Локально**.
 2. Record current robot/station status and telemetry age.
@@ -136,6 +136,49 @@ Expected recovery:
 - [ ] battery/mode/dock/station operation values return;
 - [ ] appropriate device controls become enabled again;
 - [ ] telemetry age resets to a fresh value.
+
+## v1.00_b017 — offline startup / panel lifecycle acceptance
+
+This is the lifecycle regression test. The panel must be treated as Home Assistant application infrastructure, not as a side effect of a successful hardware poll.
+
+### Static/source assertions
+
+- [x] `async_setup_entry()` does not call `async_config_entry_first_refresh()`.
+- [x] panel registration occurs before the first `coordinator.async_refresh()` call.
+- [x] HA platform setup occurs before the first device refresh, so entities exist even with no initial data.
+- [x] CI enforces `panel registration → platform setup → non-gating refresh` order.
+
+### Controlled offline start
+
+1. Start with the integration configured and working.
+2. Power off or otherwise make **only S8 OMNI** locally unreachable.
+3. Fully restart Home Assistant while the robot remains unreachable.
+4. Do not turn the robot back on until Home Assistant startup has completed.
+
+Expected behavior after HA startup:
+
+- [ ] S8 OMNI config entry is **loaded**, not stuck in `Retrying setup` solely because the robot is offline;
+- [ ] **Пылесос** remains present in the Home Assistant sidebar;
+- [ ] `/dashboard-s8-omni` opens normally;
+- [ ] Header and Bottom Tab Bar are present;
+- [ ] the local-connection entity remains available and reports disconnected;
+- [ ] coordinator-backed robot/station/metric entities are unavailable or no-data, not stale-current;
+- [ ] Hero shows **Нет связи / Нет данных** semantics;
+- [ ] Start/Pause/Home and editable device controls are disabled;
+- [ ] no raw/stale value is promoted as current operational truth;
+- [ ] repeated coordinator polling continues while the robot is offline.
+
+### Recovery without reloading the integration
+
+5. Restore robot power/connectivity without restarting Home Assistant and without reloading/re-adding the integration.
+
+Expected behavior:
+
+- [ ] the next successful coordinator poll restores live entities automatically;
+- [ ] local connection becomes **Локально**;
+- [ ] Hero, robot/station cards and metrics repopulate from the new snapshot;
+- [ ] controls become available according to current state;
+- [ ] the sidebar panel did not disappear at any point.
 
 ## v1.00_b015+ — frontend bundle hardening acceptance
 
@@ -178,7 +221,7 @@ A warmed browser cache is not sufficient evidence. At least one cold-cache local
 From **Settings → Devices & services → S8 OMNI → Download diagnostics**:
 
 - [ ] Diagnostics download is available for the S8 OMNI config entry.
-- [ ] Integration version is `v1.00_b016`; dashboard version is `v0.5.4`.
+- [ ] Integration version is `v1.00_b017`; dashboard version is `v0.5.4`.
 - [ ] Host/IP is replaced by a redaction marker.
 - [ ] Device ID is replaced by a redaction marker.
 - [ ] Local Key is replaced by a redaction marker.
@@ -198,7 +241,8 @@ From **Settings → Devices & services → S8 OMNI → Download diagnostics**:
 - [ ] Robot fault.
 - [ ] Unknown/unrecognized robot status.
 - [ ] Whole S8 OMNI unavailable / disconnected with stale last-known DP values present.
-- [ ] Recovery after whole-device disconnect.
+- [ ] Home Assistant restart while S8 OMNI remains offline.
+- [ ] Recovery after whole-device disconnect without config-entry reload.
 - [ ] One station DP missing from otherwise successful snapshot.
 
 ## Safety assertions

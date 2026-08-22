@@ -83,6 +83,43 @@ jobs:
 
           echo "Standalone frontend bundle contract OK"
 
+      - name: Enforce offline-safe S8 OMNI panel lifecycle
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("custom_components/s8_omni/__init__.py")
+          text = path.read_text(encoding="utf-8")
+          try:
+              setup = text.split("async def async_setup_entry", 1)[1].split("async def async_unload_entry", 1)[0]
+          except IndexError as err:
+              raise SystemExit("Unable to locate S8 OMNI setup lifecycle") from err
+
+          if "async_config_entry_first_refresh" in setup:
+              raise SystemExit(
+                  "S8 OMNI setup must not gate panel/platform registration on async_config_entry_first_refresh()"
+              )
+
+          markers = [
+              "await _async_register_panel(hass, entry)",
+              "await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)",
+              "await coordinator.async_refresh()",
+          ]
+          positions = []
+          for marker in markers:
+              pos = setup.find(marker)
+              if pos < 0:
+                  raise SystemExit(f"Missing lifecycle marker: {marker}")
+              positions.append(pos)
+
+          if positions != sorted(positions):
+              raise SystemExit(
+                  "Lifecycle order must be panel registration -> platform setup -> non-gating device refresh"
+              )
+
+          print("Offline-safe panel lifecycle contract OK")
+          PY
+
       - name: Reject tracked credential/key files
         shell: bash
         run: |

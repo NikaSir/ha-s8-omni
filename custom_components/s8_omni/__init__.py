@@ -27,8 +27,13 @@ PANEL_MODULE = f"{PANEL_STATIC_URL}/s8-omni-panel.js?v={DASHBOARD_VERSION}"
 _LOGGER = logging.getLogger(__name__)
 
 
-async def _async_register_panel(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Serve and register the integration-owned native panel."""
+async def _async_register_panel(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Serve and register the integration-owned native panel.
+
+    Return True only when this call registered the panel. This lets setup clean up
+    safely after a real platform/setup exception without removing somebody else's
+    route in the unlikely event of a path collision.
+    """
     try:
         await hass.http.async_register_static_paths(
             [StaticPathConfig(PANEL_STATIC_URL, str(FRONTEND_DIR), True)]
@@ -42,7 +47,7 @@ async def _async_register_panel(hass: HomeAssistant, entry: ConfigEntry) -> None
             "Cannot register S8 OMNI panel at /%s because that route already exists",
             PANEL_PATH,
         )
-        return
+        return False
 
     await panel_custom.async_register_panel(
         hass=hass,
@@ -65,14 +70,35 @@ async def _async_register_panel(hass: HomeAssistant, entry: ConfigEntry) -> None
             "expose_in_generated_ui": True,
         },
     )
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up S8 OMNI without making panel lifetime depend on hardware reachability."""
     coordinator = S8OmniCoordinator(hass, entry)
-    await coordinator.async_config_entry_first_refresh()
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    await _async_register_panel(hass, entry)
+    domain_data = hass.data.setdefault(DOMAIN, {})
+    domain_data[entry.entry_id] = coordinator
+
+    # Application shell first: the panel and HA entities must exist even when the
+    # robot is powered off or unreachable during Home Assistant startup.
+    panel_registered = False
+    try:
+        panel_registered = await _async_register_panel(hass, entry)
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+        # This refresh is deliberately non-gating. S8OmniCoordinator converts local
+        # Tuya failures to UpdateFailed, so DataUpdateCoordinator records the failed
+        # poll and keeps the config entry loaded. Entities then become unavailable
+        # while the local-connection entity remains visible as disconnected.
+        await coordinator.async_refresh()
+    except Exception:
+        # Real integration/platform setup defects should still fail visibly. Clean
+        # up only resources created by this setup attempt.
+        domain_data.pop(entry.entry_id, None)
+        if panel_registered and not domain_data:
+            frontend.async_remove_panel(hass, PANEL_PATH, warn_if_unknown=False)
+        raise
+
     return True
 
 
