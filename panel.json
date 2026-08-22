@@ -8,11 +8,13 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.4.2",
+    "dashboard_version": "v0.4.3",
     "navigation": {
       "header_back": "explicit_parent_route",
       "header_action": "refresh",
-      "primary_navigation": "fixed_bottom_bar",
+      "primary_navigation": "full_width_fixed_bottom_tab_bar",
+      "active_tab": "inside_shared_bar",
+      "floating_tab_bar": false,
       "browser_history_back": false,
       "views": ["overview", "cleaning", "station", "maintenance", "diagnostics"]
     }
