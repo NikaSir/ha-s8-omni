@@ -2,16 +2,36 @@
 
 Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum and OMNI station, built from verified Tuya LAN datapoints.
 
-> Current development line: **v1.00_b003** (`1.0.0b3`). This is an early test build.
+> Current development line: **v1.00_b004** (`1.0.0b4`).
+
+## Native S8 OMNI panel
+
+The integration now owns and ships its canonical UI at:
+
+**`/dashboard-s8-omni`**
+
+The panel is designed mobile-first for iPhone Pro Max portrait use and is intended to behave like a dedicated vacuum application inside Home Assistant rather than a generic entity list.
+
+Current views:
+
+- **Overview** — composite robot + station status, battery, Start/Pause/Home and current station activity;
+- **Cleaning** — verified cleaning actions, suction, water, volume and DND;
+- **Station** — independent OMNI station status and operation telemetry;
+- **Maintenance** — brush/filter resource and fault information;
+- **Diagnostics** — raw status, normalized status, station DP availability and telemetry age.
+
+See [`docs/PANEL.md`](docs/PANEL.md). Machine-readable navigation metadata for `ha-contract-generated-ui` is published in [`panel.json`](panel.json).
 
 ## Scope
 
 - Local Tuya LAN communication, protocol 3.3 by default.
 - Robot status, battery, cleaning metrics and consumable lifetimes.
-- Start, pause and return-to-base commands using experimentally verified DP sequences.
-- Suction, water level, volume, Do Not Disturb and child lock controls.
+- Start, pause and return-to-base commands using verified DP sequences.
+- Suction, four-state water control, volume, Do Not Disturb and child lock controls.
 - Real OMNI station telemetry: dust collection, roller cleaning and roller drying.
-- Diagnostics including raw fault value and optional raw robot status.
+- Normalized robot status, station status and reusable **composite status**.
+- Explicit distinction between `unknown`, missing individual DP data and whole-device `unavailable`.
+- Last successful local telemetry timestamp and telemetry age diagnostics.
 - Reconfigure flow for IP address, Device ID, Local Key and protocol version without removing the integration entry.
 - Automatic integration reload when the polling interval is changed.
 
@@ -28,6 +48,7 @@ Do **not** keep S8 OMNI active in LocalTuya while testing this integration. Two 
 3. Restart Home Assistant.
 4. Go to **Settings → Devices & services → Add integration → S8 OMNI**.
 5. Enter the device IP address, Device ID, Local Key and protocol version (`3.3`).
+6. Open **Пылесос** in the sidebar or navigate directly to `/dashboard-s8-omni`.
 
 ### Manual
 
@@ -39,13 +60,19 @@ Use the S8 OMNI integration entry's **Reconfigure** action to update the IP addr
 
 The Local Key field uses a password-style input. Never paste Local Keys, cloud credentials or temporary access tokens into screenshots or public issues.
 
+## UI ownership and safety
+
+The native panel never writes Tuya DPs directly. All actions go through Home Assistant entities/services provided by `ha-s8-omni`.
+
+Station write controls, room/zone payloads, maps, DND schedule payloads and consumable reset buttons are deliberately absent until the integration exposes verified public APIs for them.
+
 ## Current limitations
 
-- `Stop` is intentionally not exposed yet. The observed physical/API behavior is not sufficiently unambiguous for a safe standalone implementation.
+- `Stop` is intentionally not exposed yet because its physical/API semantics are not sufficiently unambiguous.
 - Map/brush/filter reset commands are not implemented yet because their write semantics have not been verified end-to-end.
 - Station DP 134/135/136 are read-only in this build.
 - DND schedule, cleaning timers, map operations and manual-direction control are not exposed until their payloads are verified.
-- Unknown/unavailable device state is not silently treated as normal.
+- No percentage is invented for consumable life when only verified remaining minutes are available.
 
 ## Verified DP contract
 
