@@ -3,11 +3,17 @@
     "id": "s8_omni",
     "title": "Пылесос",
     "path": "/dashboard-s8-omni",
+    "parent_path": "/dashboard-actions",
     "icon": "mdi:robot-vacuum",
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.3.0"
+    "dashboard_version": "v0.4.0",
+    "navigation": {
+      "header_back": "explicit_parent_route",
+      "bottom_navigation": true,
+      "browser_history_back": false
+    }
   },
   "generated_ui": {
     "summary_entity_unique_id_suffix": "composite_status",

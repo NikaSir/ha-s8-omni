@@ -2,33 +2,46 @@
 
 The S8 OMNI integration owns and ships its canonical Home Assistant UI.
 
-## Stable route
+## Stable routes
 
-`/dashboard-s8-omni`
+- Panel: `/dashboard-s8-omni`
+- Parent / Back: `/dashboard-actions`
 
-The route is registered by the integration through Home Assistant's custom-panel API. No Lovelace YAML, LocalTuya command, cloud request or direct Tuya DP write is required by the panel.
+Dashboard version: `v0.4.0`.
 
-Dashboard version: `v0.3.0`.
+The panel is registered through Home Assistant's custom-panel API. No Lovelace YAML, LocalTuya command, cloud request or direct Tuya DP write is required by the frontend.
 
-## UX target
+## Home Assistant NikaS app shell
 
 Primary viewport: **iPhone Pro Max, portrait**.
 
-The layout is mobile-first, has no intentional horizontal scrolling, uses large touch targets and keeps the primary robot/station state and frequent commands near the top. Desktop and iPad widen the content without changing the information hierarchy.
+The panel follows the shared NikaS specialized-panel navigation model:
 
-The visual model is deliberately appliance-specific rather than a generic Lovelace entity list. The Overview contains a compact robot-to-dock scene, factual battery/mode/telemetry indicators and one-handed Start/Pause/Home controls. Motion is state-driven and respects `prefers-reduced-motion`.
+1. **Header** — persistent application header with `mdi:arrow-left`, text **Назад**, centered **S8 OMNI** title and no device command bound to header gestures.
+2. **Content** — current robot/station state and the selected S8 OMNI workflow.
+3. **Bottom navigation** — persistent Overview / Cleaning / Station / Maintenance / Diagnostics navigation with iOS bottom safe-area handling.
 
-A sticky top application bar provides **Меню**, which fires Home Assistant's native `hass-toggle-menu` event. This opens the normal Home Assistant sidebar instead of navigating to a hard-coded dashboard path, so the panel remains compatible with the user's sidebar/menu organization.
+Header and bottom navigation have separate responsibilities:
 
-## v0.3.0 daily-use polish
+- Header Back exits the S8 OMNI application.
+- Bottom navigation switches sections inside S8 OMNI.
 
-The v0.3.0 pass is based on live iPhone Pro Max review rather than desktop-only layout assumptions.
+Back uses the explicit fixed parent route `/dashboard-actions`. It does **not** call `history.back()` and does not depend on how the panel was opened.
 
-- suction and water use large segmented touch controls instead of compact browser selects;
-- the stale Tuya `mode=chargego` value is not presented as «Возврат на базу» after the normalized robot state is already charging/charged; the raw mode remains factual in Diagnostics;
-- user-facing screens avoid protocol terms such as DP numbers, `generic vacuum.state`, LocalTuya and frontend implementation notes;
-- the Station view gains an explicit live-operation banner while dust collection, cleaning or drying is active;
-- dashboard version shown in the UI is kept aligned with shipped panel metadata.
+The hero card does not repeat S8 OMNI as another large title. The header identifies the application; the hero identifies **current state**. Integration/dashboard version remains available in Diagnostics.
+
+## Daily-use UX
+
+The appliance UI remains mobile-first and device-specific:
+
+- composite robot + station state;
+- compact robot-to-dock visual scene;
+- battery, local-connection and telemetry-age context;
+- one-handed Start / Pause / Home actions;
+- segmented suction and water controls using public Home Assistant select entities;
+- stale Tuya `mode=chargego` is not shown as a current user action after the robot is already charging/charged;
+- station live-operation emphasis during dust collection, cleaning or drying;
+- raw DP/protocol detail stays out of daily screens.
 
 ## Views
 
@@ -38,7 +51,7 @@ The v0.3.0 pass is based on live iPhone Pro Max review rather than desktop-only 
 - visual robot/dock position context;
 - robot status;
 - station status;
-- battery with factual level indicator;
+- battery;
 - local connection health;
 - telemetry age;
 - Start / Pause / Home;
@@ -61,13 +74,12 @@ Room/zone selection is intentionally not implemented until the integration expos
 ### Station
 
 - normalized station status;
-- inferred dock presence only when it is factually supported;
+- inferred dock presence only when factually supported;
 - battery;
 - dust collection, roller cleaning and drying states;
-- prominent live-operation banner when the station is active;
-- state-driven station activity indicator.
+- prominent live-operation banner while the station is active.
 
-The panel does **not** create station write commands. Controls will be added only after their write semantics are verified and exposed by `ha-s8-omni` as entities/services.
+The panel does **not** create station write commands. Controls are added only after their write semantics are verified and exposed by `ha-s8-omni` as entities/services.
 
 ### Maintenance
 
@@ -77,15 +89,14 @@ The panel does **not** create station write commands. Controls will be added onl
 - fault state;
 - child lock.
 
-No percentage is derived because the integration does not yet have a verified maximum lifetime contract. Consumable reset buttons are deliberately absent until DP18/20/22 writes are verified end-to-end.
+No percentage is derived because the integration does not yet have a verified maximum-lifetime contract. Consumable resets remain absent until DP18/20/22 writes are verified end-to-end.
 
 ### Diagnostics
 
 - local Tuya LAN connection health;
 - device availability;
 - telemetry age;
-- normalized composite status;
-- normalized robot and station status;
+- normalized composite, robot and station status;
 - missing station DP list;
 - DP5 raw status;
 - DP4 mode;
@@ -97,38 +108,29 @@ No percentage is derived because the integration does not yet have a verified ma
 
 Raw/technical values are confined to this view.
 
-## Composite status ownership
+## State and safety contract
 
-`ha-s8-omni` exposes normalized robot, station and composite status sensors. The panel consumes those entities rather than reinterpreting Tuya values independently.
+`ha-s8-omni` owns normalized robot, station and composite status semantics. The panel consumes those entities rather than reinterpreting Tuya data independently.
 
-The composite sensor also exposes factual attributes including raw status, normalized robot status, station status, active station operations, missing station datapoints, dock-presence inference, battery, mode, fault, DP1/DP2 command-state context and raw station flags.
+- Whole-device communication failure -> `unavailable`.
+- Unknown/unrecognized DP5 -> normalized robot state `unknown`.
+- Missing individual station DP -> that station entity is unavailable.
+- No active station operation plus missing station DP -> station `unknown`, never idle by assumption.
+- Multiple simultaneous station operations -> `multiple_operations`; no arbitrary priority hides another operation.
 
-### Station multi-operation rule
-
-No arbitrary priority is invented when several station flags are active at once. The station state becomes `multiple_operations`, while `active_operations` lists all active operations. This prevents a drying flag, dust collection flag or cleaning flag from silently hiding another active operation.
-
-### Unknown/unavailable rule
-
-- Whole-device communication failure -> Home Assistant data entities become `unavailable`, while the diagnostic local-connection entity reports disconnected.
-- Successful robot snapshot with unknown/unrecognized DP5 -> normalized robot state `unknown`.
-- Missing individual station DP -> that DP entity is unavailable.
-- No active station operation plus one or more missing station DPs -> station state `unknown`, **not** `idle`.
+The frontend never writes Tuya DP directly, never calls LocalTuya, never calls Tuya cloud APIs and never exposes unverified station/map/reset controls.
 
 ## Long press
 
-Rows, metrics and status elements carrying a real Home Assistant entity support long press to open native `more-info`.
+Entity-backed status, metric and control rows support long press to open native Home Assistant `more-info`.
 
-## Navigation contract
+Header and bottom-navigation elements are navigation only and do not invoke entity actions on hold or double tap.
 
-Machine-readable metadata is published in repository root `panel.json` for `ha-contract-generated-ui` and other consumers.
+## Navigation metadata
 
-The generated central UI may show a compact vacuum status and frequent Start/Home actions, but detailed robot, station, maintenance and future map controls remain owned by this panel.
-
-The panel's **Меню** button opens the Home Assistant navigation drawer. It is intentionally not a hard-coded link to `/dashboard-house`, `/dashboard-actions` or another central dashboard, because the Home Assistant sidebar is the navigation authority.
+Machine-readable metadata is published in repository root `panel.json`, including panel route, parent route, bottom-navigation contract and reusable entity suffixes for `ha-contract-generated-ui`.
 
 ## Current deferred capabilities
-
-The following remain intentionally absent until a verified integration API exists:
 
 - station write controls;
 - DND start/end time (DP33 payload);
