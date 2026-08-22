@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.5.3";
+const UI_VERSION = "v0.5.4";
 
 const ROBOT_LABELS = {
   idle: "Ожидание",
@@ -231,42 +231,55 @@ class S8OmniPanel extends HTMLElement {
     return unit ? `${stateObj.state} ${unit}` : stateObj.state;
   }
 
+  _connectionState() {
+    const stateObj = this._state("local_connection");
+    if (!stateObj || stateObj.state === "unknown" || stateObj.state === "unavailable") return "unknown";
+    return stateObj.state === "on" ? "connected" : "disconnected";
+  }
+
   _snapshot() {
     const vacuum = this._state("vacuum");
     const compositeObj = this._state("composite_status");
     const attrs = compositeObj?.attributes || {};
-    const unavailable = !vacuum || vacuum.state === "unavailable";
-    const robot = unavailable ? "unknown" : this._stateValue("robot_status", "unknown");
-    const station = unavailable ? "unknown" : this._stateValue("station_status", "unknown");
-    const composite = unavailable ? "unknown" : this._stateValue("composite_status", "unknown");
-    const battery = this._numeric("battery") ?? Number(vacuum?.attributes?.battery_level);
-    const batteryValue = Number.isFinite(battery) ? Math.max(0, Math.min(100, battery)) : null;
-    const stationOperations = Array.isArray(attrs.station_operations) ? attrs.station_operations : [];
+    const connection = this._connectionState();
+    const vacuumUnavailable = !vacuum || vacuum.state === "unavailable";
+    const unavailable = connection === "disconnected" || vacuumUnavailable;
+    const unreliable = unavailable || connection === "unknown";
+    const robot = unreliable ? "unknown" : this._stateValue("robot_status", "unknown");
+    const station = unreliable ? "unknown" : this._stateValue("station_status", "unknown");
+    const composite = unreliable ? "unknown" : this._stateValue("composite_status", "unknown");
+    const rawBattery = this._numeric("battery") ?? Number(vacuum?.attributes?.battery_level);
+    const batteryValue = !unreliable && Number.isFinite(rawBattery) ? Math.max(0, Math.min(100, rawBattery)) : null;
+    const stationOperations = !unreliable && Array.isArray(attrs.station_operations) ? attrs.station_operations : [];
     return {
       vacuum,
       compositeObj,
       attrs,
+      connection,
+      connected: connection === "connected",
       unavailable,
+      unreliable,
       robot,
       station,
       composite,
       battery: batteryValue,
       age: this._stateValue("telemetry_age"),
-      mode: this._stateValue("mode", attrs.mode ?? null),
-      onDock: attrs.robot_on_dock,
+      mode: unreliable ? null : this._stateValue("mode", attrs.mode ?? null),
+      onDock: unreliable ? null : attrs.robot_on_dock,
       stationOperations,
-      missingStationDps: Array.isArray(attrs.missing_station_dps) ? attrs.missing_station_dps : [],
+      missingStationDps: !unreliable && Array.isArray(attrs.missing_station_dps) ? attrs.missing_station_dps : [],
     };
   }
 
   _connectionLabel() {
-    const stateObj = this._state("local_connection");
-    if (!stateObj) return "Нет данных";
-    if (stateObj.state === "unavailable" || stateObj.state === "unknown") return "Неизвестно";
-    return stateObj.state === "on" ? "Локально" : "Нет связи";
+    const state = this._connectionState();
+    if (state === "connected") return "Локально";
+    if (state === "disconnected") return "Нет связи";
+    return "Связь неизвестна";
   }
 
   _modeLabel(snap) {
+    if (snap.unreliable) return "Нет данных";
     if (snap.robot === "charging" || snap.robot === "charged") return "На базе";
     return this._label(MODE_LABELS, snap.mode, "Нет данных");
   }
@@ -325,29 +338,32 @@ class S8OmniPanel extends HTMLElement {
       .header-action {
         width: 52px;
         height: 52px;
+        min-width: 44px;
+        min-height: 44px;
         border: 0;
         border-radius: 16px;
         display: grid;
         place-items: center;
         background: var(--card-background-color);
         color: var(--primary-text-color);
-        box-shadow: var(--ha-card-box-shadow, 0 4px 16px rgba(0,0,0,.09));
+        box-shadow: var(--ha-card-box-shadow, 0 3px 12px rgba(0,0,0,.07));
       }
       .header-action.refresh { color: var(--primary-color); }
       .header-action:active { transform: scale(.97); }
       .header-action:disabled { opacity: .38; }
       .header-action ha-icon { --mdc-icon-size: 29px; }
       .header-action.loading ha-icon { animation: spin .8s linear infinite; }
-      .header-title { min-width: 0; text-align: center; display: flex; flex-direction: column; gap: 2px; }
+      .header-title { min-width: 0; text-align: center; display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
       .header-title strong { font-size: 24px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .header-title span { color: var(--secondary-text-color); font-size: 12px; font-weight: 650; }
+      .header-title span { color: var(--secondary-text-color); font-size: 12px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .content { width: min(100%, 920px); margin: 0 auto; padding: 14px 12px 24px; }
       .card {
         background: var(--card-background-color);
+        border: 1px solid color-mix(in srgb, var(--divider-color) 70%, transparent);
         border-radius: 24px;
         padding: 18px;
         margin-bottom: 14px;
-        box-shadow: 0 10px 30px rgba(0,0,0,.06);
+        box-shadow: 0 6px 18px rgba(0,0,0,.04);
       }
       .hero {
         position: relative;
@@ -368,11 +384,12 @@ class S8OmniPanel extends HTMLElement {
       .eyebrow { display: block; color: var(--secondary-text-color); font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
       h1,h2,h3,p { margin: 0; }
       .hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; position: relative; z-index: 1; }
-      .hero h1 { margin-top: 5px; font-size: clamp(33px, 8vw, 46px); line-height: 1.03; letter-spacing: -.03em; }
+      .hero h1 { margin-top: 5px; font-size: clamp(33px, 8vw, 46px); line-height: 1.03; letter-spacing: -.03em; overflow-wrap: anywhere; }
       .hero-hint { margin-top: 8px; color: var(--secondary-text-color); font-size: 16px; line-height: 1.3; }
-      .connection-badge { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 7px; min-height: 38px; padding: 0 13px; border-radius: 999px; background: var(--secondary-background-color); color: var(--secondary-text-color); font-size: 14px; font-weight: 800; }
-      .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success-color, #43a047); }
+      .connection-badge { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 7px; min-height: 38px; max-width: 130px; padding: 0 13px; border-radius: 999px; background: var(--secondary-background-color); color: var(--secondary-text-color); font-size: 14px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .dot { width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%; background: var(--success-color, #43a047); }
       .connection-badge.bad .dot { background: var(--error-color, #db4437); }
+      .connection-badge.unknown .dot { background: var(--disabled-color, #9e9e9e); }
       .scene {
         position: relative;
         z-index: 1;
@@ -386,28 +403,30 @@ class S8OmniPanel extends HTMLElement {
       .scene-label { position: absolute; top: 16px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--secondary-text-color); }
       .scene-label.robot { left: 16px; }
       .scene-label.station { right: 16px; }
-      .scene-state { position: absolute; top: 35px; font-size: 15px; font-weight: 800; }
+      .scene-state { position: absolute; top: 35px; max-width: 43%; font-size: 15px; font-weight: 800; line-height: 1.15; }
       .scene-state.robot { left: 16px; }
       .scene-state.station { right: 16px; text-align: right; }
       .track { position: absolute; left: 14%; right: 23%; top: 69%; border-top: 2px dashed color-mix(in srgb, var(--secondary-text-color) 25%, transparent); }
       .track::before { content: ""; position: absolute; left: 0; top: -5px; width: 8px; height: 8px; border-radius: 50%; background: color-mix(in srgb, var(--primary-color) 55%, white); }
       .dock { position: absolute; right: 8%; bottom: 26px; width: 66px; height: 86px; border-radius: 16px 16px 20px 20px; background: color-mix(in srgb, var(--secondary-background-color) 90%, var(--primary-text-color) 10%); border: 1px solid var(--divider-color); display: grid; place-items: center; color: var(--secondary-text-color); }
       .dock ha-icon { --mdc-icon-size: 32px; }
-      .robot-orb { position: absolute; right: 15%; bottom: 20px; width: 86px; height: 86px; border-radius: 50%; background: var(--card-background-color); border: 1px solid var(--divider-color); box-shadow: 0 10px 20px rgba(0,0,0,.08); display: grid; place-items: center; color: var(--primary-color); }
+      .robot-orb { position: absolute; right: 15%; bottom: 20px; width: 86px; height: 86px; border-radius: 50%; background: var(--card-background-color); border: 1px solid var(--divider-color); box-shadow: 0 8px 18px rgba(0,0,0,.07); display: grid; place-items: center; color: var(--primary-color); }
       .robot-orb.away { right: auto; left: 33%; }
+      .robot-orb.unknown { right: auto; left: calc(50% - 43px); opacity: .58; color: var(--secondary-text-color); }
       .robot-orb ha-icon { --mdc-icon-size: 42px; }
       .hero-metrics { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 9px; margin-top: 12px; }
-      .hero-metrics > div { min-height: 74px; border-radius: 18px; padding: 12px; background: var(--secondary-background-color); }
+      .hero-metrics > div { min-width: 0; min-height: 74px; border-radius: 18px; padding: 12px; background: var(--secondary-background-color); }
       .hero-metrics span { display: block; color: var(--secondary-text-color); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; }
-      .hero-metrics strong { display: block; margin-top: 5px; font-size: 18px; line-height: 1.1; }
+      .hero-metrics strong { display: block; margin-top: 5px; font-size: 18px; line-height: 1.1; overflow-wrap: anywhere; }
       .battery-bar { height: 5px; border-radius: 999px; background: var(--divider-color); margin-top: 10px; overflow: hidden; }
       .battery-bar i { display: block; height: 100%; border-radius: inherit; background: var(--primary-color); }
       .trust-banner { display: flex; gap: 11px; align-items: flex-start; padding: 13px 15px; margin: 0 0 14px; border-radius: 18px; background: color-mix(in srgb, var(--error-color, #db4437) 10%, var(--card-background-color)); border: 1px solid color-mix(in srgb, var(--error-color, #db4437) 35%, transparent); }
       .trust-banner ha-icon { color: var(--error-color, #db4437); --mdc-icon-size: 24px; }
       .trust-banner strong { display: block; font-size: 14px; }
       .trust-banner span { display: block; color: var(--secondary-text-color); font-size: 12px; margin-top: 2px; }
-      .quick-actions { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: 9px; margin-bottom: 14px; }
+      .quick-actions { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 9px; margin-bottom: 14px; }
       .action {
+        min-width: 0;
         min-height: 78px;
         border: 1px solid color-mix(in srgb, var(--divider-color) 82%, transparent);
         border-radius: 22px;
@@ -419,28 +438,30 @@ class S8OmniPanel extends HTMLElement {
         background: var(--card-background-color);
         color: var(--primary-text-color);
         text-align: left;
+        overflow: hidden;
       }
       .action.primary { background: var(--primary-color); color: var(--text-primary-color, white); border-color: transparent; }
       .action:disabled { opacity: .38; }
       .action-icon { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: color-mix(in srgb, currentColor 10%, transparent); }
       .action ha-icon { --mdc-icon-size: 24px; }
-      .action strong { display: block; font-size: 16px; line-height: 1.05; }
-      .action span { display: block; margin-top: 3px; font-size: 12px; opacity: .72; line-height: 1.15; }
+      .action strong { display: block; font-size: 16px; line-height: 1.05; overflow-wrap: anywhere; }
+      .action span { min-width: 0; display: block; margin-top: 3px; font-size: 12px; opacity: .72; line-height: 1.15; }
       .section-title { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
       .section-title h2 { margin-top: 4px; font-size: 27px; letter-spacing: -.02em; }
       .text-link { border: 0; background: transparent; color: var(--primary-color); font-weight: 800; padding: 10px 0; }
       .status-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
-      .status-card { min-height: 116px; border: 0; border-radius: 21px; padding: 15px; background: var(--secondary-background-color); color: var(--primary-text-color); text-align: left; display: grid; grid-template-columns: 48px minmax(0,1fr); gap: 12px; align-items: center; }
+      .status-card { min-width: 0; min-height: 116px; border: 0; border-radius: 21px; padding: 15px; background: var(--secondary-background-color); color: var(--primary-text-color); text-align: left; display: grid; grid-template-columns: 48px minmax(0,1fr); gap: 12px; align-items: center; overflow: hidden; }
       .status-icon { width: 48px; height: 48px; border-radius: 16px; display: grid; place-items: center; background: var(--card-background-color); color: var(--primary-color); }
       .status-icon ha-icon { --mdc-icon-size: 27px; }
+      .status-copy { min-width: 0; }
       .status-copy strong { display: block; font-size: 17px; }
-      .status-copy b { display: block; margin-top: 4px; font-size: 16px; }
-      .status-copy span { display: block; margin-top: 4px; color: var(--secondary-text-color); font-size: 12px; line-height: 1.25; }
+      .status-copy b { display: block; margin-top: 4px; font-size: 16px; overflow-wrap: anywhere; }
+      .status-copy span { display: block; margin-top: 4px; color: var(--secondary-text-color); font-size: 12px; line-height: 1.25; overflow-wrap: anywhere; }
       .metric-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
-      .metric { min-height: 118px; border-radius: 21px; padding: 15px; background: var(--secondary-background-color); display: grid; grid-template-columns: 42px minmax(0,1fr); grid-template-rows: auto auto; align-content: center; column-gap: 10px; }
+      .metric { min-width: 0; min-height: 118px; border-radius: 21px; padding: 15px; background: var(--secondary-background-color); display: grid; grid-template-columns: 42px minmax(0,1fr); grid-template-rows: auto auto; align-content: center; column-gap: 10px; }
       .metric ha-icon { grid-row: 1 / span 2; align-self: center; color: var(--primary-color); --mdc-icon-size: 29px; }
       .metric span { color: var(--secondary-text-color); font-size: 13px; align-self: end; }
-      .metric strong { font-size: 22px; align-self: start; }
+      .metric strong { font-size: 22px; align-self: start; overflow-wrap: anywhere; }
       .drill-entry { width: 100%; min-height: 78px; border: 0; border-radius: 20px; padding: 14px; display: grid; grid-template-columns: 48px minmax(0,1fr) 26px; gap: 12px; align-items: center; background: var(--secondary-background-color); color: var(--primary-text-color); text-align: left; }
       .drill-entry .icon { width: 48px; height: 48px; border-radius: 16px; display: grid; place-items: center; background: var(--card-background-color); color: var(--primary-color); }
       .drill-entry strong { display: block; font-size: 17px; }
@@ -472,7 +493,7 @@ class S8OmniPanel extends HTMLElement {
       .station-hero { display: grid; grid-template-columns: 92px minmax(0,1fr); gap: 16px; align-items: center; }
       .station-device { width: 92px; height: 122px; border-radius: 24px; background: var(--secondary-background-color); border: 1px solid var(--divider-color); display: grid; place-items: center; color: var(--primary-color); }
       .station-device ha-icon { --mdc-icon-size: 42px; }
-      .station-hero h2 { font-size: 38px; line-height: 1; margin-top: 6px; }
+      .station-hero h2 { font-size: 38px; line-height: 1; margin-top: 6px; overflow-wrap: anywhere; }
       .station-hero p { margin-top: 9px; color: var(--secondary-text-color); line-height: 1.35; }
       .operation-list { display: grid; gap: 9px; }
       .operation { min-height: 72px; border-radius: 20px; padding: 12px; background: var(--secondary-background-color); display: grid; grid-template-columns: 48px minmax(0,1fr) 12px; gap: 12px; align-items: center; }
@@ -481,17 +502,17 @@ class S8OmniPanel extends HTMLElement {
       .operation span { display: block; margin-top: 3px; color: var(--secondary-text-color); font-size: 12px; }
       .operation i { width: 9px; height: 9px; border-radius: 50%; background: var(--divider-color); }
       .operation.active i { background: var(--primary-color); box-shadow: 0 0 0 5px color-mix(in srgb, var(--primary-color) 14%, transparent); }
-      .resource { min-height: 96px; border-radius: 22px; padding: 15px; margin-bottom: 10px; background: var(--card-background-color); display: grid; grid-template-columns: 58px minmax(0,1fr) auto; gap: 13px; align-items: center; box-shadow: 0 8px 22px rgba(0,0,0,.05); }
+      .resource { min-height: 96px; border: 1px solid color-mix(in srgb, var(--divider-color) 70%, transparent); border-radius: 22px; padding: 15px; margin-bottom: 10px; background: var(--card-background-color); display: grid; grid-template-columns: 58px minmax(0,1fr) auto; gap: 13px; align-items: center; box-shadow: 0 5px 16px rgba(0,0,0,.035); }
       .resource .icon { width: 58px; height: 58px; border-radius: 18px; display: grid; place-items: center; background: color-mix(in srgb, var(--primary-color) 12%, var(--secondary-background-color)); color: var(--primary-color); }
       .resource strong { font-size: 16px; }
       .resource span { display: block; margin-top: 4px; color: var(--secondary-text-color); font-size: 12px; }
       .resource b { font-size: 22px; white-space: nowrap; }
       .diagnostic-strip { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; padding: 13px; margin-bottom: 14px; border: 1px solid color-mix(in srgb, var(--success-color, #43a047) 45%, var(--divider-color)); border-radius: 22px; }
       .diagnostic-strip span { display: block; color: var(--secondary-text-color); font-size: 11px; }
-      .diagnostic-strip strong { display: block; margin-top: 6px; font-size: 14px; }
+      .diagnostic-strip strong { display: block; margin-top: 6px; font-size: 14px; overflow-wrap: anywhere; }
       .info-list { margin-top: 3px; }
       .info-row > span:first-child { color: var(--primary-text-color); font-size: 14px; }
-      .info-row > strong { text-align: right; }
+      .info-row > strong { text-align: right; overflow-wrap: anywhere; }
       nav {
         position: fixed;
         left: 0;
@@ -504,38 +525,58 @@ class S8OmniPanel extends HTMLElement {
         padding: 7px max(7px, env(safe-area-inset-right)) calc(7px + env(safe-area-inset-bottom)) max(7px, env(safe-area-inset-left));
         background: color-mix(in srgb, var(--card-background-color) 96%, transparent);
         border-top: 1px solid color-mix(in srgb, var(--divider-color) 72%, transparent);
-        box-shadow: 0 -4px 18px rgba(0,0,0,.07);
+        box-shadow: 0 -3px 14px rgba(0,0,0,.05);
         backdrop-filter: blur(18px) saturate(135%);
         -webkit-backdrop-filter: blur(18px) saturate(135%);
       }
-      nav button { min-height: 58px; border: 0; border-radius: 18px; background: transparent; color: var(--secondary-text-color); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 5px 2px; }
+      nav button { min-width: 0; min-height: 58px; border: 0; border-radius: 18px; background: transparent; color: var(--secondary-text-color); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 5px 2px; overflow: hidden; }
       nav button ha-icon { --mdc-icon-size: 25px; }
-      nav button span { font-size: 11px; }
+      nav button span { max-width: 100%; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       nav button.active { background: color-mix(in srgb, var(--primary-color) 10%, transparent); color: var(--primary-color); }
       .loading { min-height: 60vh; display: grid; place-items: center; text-align: center; color: var(--secondary-text-color); }
       .loading ha-icon { --mdc-icon-size: 54px; color: var(--primary-color); }
       @keyframes spin { to { transform: rotate(360deg); } }
-      @media (max-width: 430px) {
+      @media (max-width: 480px) {
+        main { padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
+        .app-header {
+          grid-template-columns: 48px minmax(0,1fr) 48px;
+          gap: 8px;
+          min-height: calc(68px + env(safe-area-inset-top));
+          padding: max(8px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left));
+        }
+        .header-action { width: 48px; height: 48px; border-radius: 15px; }
+        .header-action ha-icon { --mdc-icon-size: 27px; }
+        .header-title strong { font-size: 22px; }
+        .header-title span { font-size: 11px; }
         .content { padding-left: 11px; padding-right: 11px; }
         .card { border-radius: 22px; padding: 17px; }
-        .hero h1 { font-size: 37px; }
-        .quick-actions { grid-template-columns: 1.32fr 1fr 1fr; }
-        .action { padding: 9px; grid-template-columns: 40px minmax(0,1fr); }
-        .action-icon { width: 40px; height: 40px; }
-        .action strong { font-size: 15px; }
-        .status-card { min-height: 108px; grid-template-columns: 44px minmax(0,1fr); padding: 13px; }
+        .hero h1 { font-size: clamp(34px, 9vw, 39px); }
+        .connection-badge { min-height: 36px; max-width: 118px; padding: 0 11px; font-size: 13px; }
+        .quick-actions { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+        .action { min-height: 88px; padding: 9px 5px; grid-template-columns: 1fr; grid-template-rows: 38px auto; justify-items: center; align-content: center; gap: 6px; text-align: center; }
+        .action-icon { width: 38px; height: 38px; border-radius: 13px; }
+        .action ha-icon { --mdc-icon-size: 22px; }
+        .action strong { font-size: 14px; line-height: 1.05; }
+        .action > span:last-child > span { margin-top: 3px; font-size: 11px; line-height: 1.05; }
+        .status-card { min-height: 108px; grid-template-columns: 44px minmax(0,1fr); padding: 13px; gap: 10px; }
         .status-icon { width: 44px; height: 44px; }
         .segments.four .segment { font-size: 11px; }
+        nav { padding-left: max(5px, env(safe-area-inset-left)); padding-right: max(5px, env(safe-area-inset-right)); gap: 1px; }
+        nav button { min-height: 58px; border-radius: 16px; padding-left: 1px; padding-right: 1px; }
+        nav button span { font-size: 10.5px; }
       }
       @media (max-width: 360px) {
-        .header-title strong { font-size: 21px; }
-        .header-title span { font-size: 11px; }
+        .header-title strong { font-size: 20px; }
+        .header-title span { font-size: 10px; }
         .hero-metrics { grid-template-columns: 1fr 1fr; }
         .hero-metrics > div:last-child { grid-column: 1 / -1; }
-        .quick-actions { grid-template-columns: 1fr 1fr; }
-        .quick-actions .action.primary { grid-column: 1 / -1; }
+        .quick-actions { gap: 6px; }
+        .action { min-height: 84px; padding-left: 3px; padding-right: 3px; }
+        .action strong { font-size: 13px; }
+        .action > span:last-child > span { font-size: 10px; }
         .status-grid { grid-template-columns: 1fr; }
         .segments.four { grid-template-columns: repeat(2,1fr); }
+        nav button span { font-size: 10px; }
       }
       @media (prefers-reduced-motion: reduce) {
         *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
@@ -561,39 +602,58 @@ class S8OmniPanel extends HTMLElement {
   }
 
   _trustBanner(snap) {
-    if (!snap.unavailable && snap.composite !== "unknown" && snap.composite !== "error") return "";
-    const title = snap.unavailable ? "S8 OMNI недоступен" : snap.composite === "error" ? "Требуется внимание" : "Состояние не подтверждено";
-    const text = snap.unavailable ? "Нет актуальной локальной телеметрии." : snap.composite === "error" ? "Проверьте ошибку робота в Диагностике." : "Часть данных отсутствует или неизвестна.";
-    return `<div class="trust-banner"><ha-icon icon="mdi:alert-circle-outline"></ha-icon><div><strong>${title}</strong><span>${text}</span></div></div>`;
+    if (!snap.unreliable && snap.composite !== "unknown" && snap.composite !== "error") return "";
+    const age = snap.age === null ? null : this._formatDuration(snap.age);
+    const title = snap.unavailable ? "S8 OMNI недоступен" : snap.unreliable ? "Связь не подтверждена" : snap.composite === "error" ? "Требуется внимание" : "Состояние не подтверждено";
+    const text = snap.unavailable
+      ? `Нет актуальной локальной телеметрии.${age ? ` Последние данные: ${age} назад.` : ""}`
+      : snap.unreliable
+        ? "Текущие значения не считаются достоверными до восстановления локальной связи."
+        : snap.composite === "error"
+          ? "Проверьте ошибку робота в Диагностике."
+          : "Часть данных отсутствует или неизвестна.";
+    return `<div class="trust-banner"><ha-icon icon="mdi:alert-circle-outline"></ha-icon><div><strong>${escapeHtml(title)}</strong><span>${escapeHtml(text)}</span></div></div>`;
   }
 
   _hero() {
     const snap = this._snapshot();
-    const compositeLabel = this._label(COMPOSITE_LABELS, snap.composite, "Состояние неизвестно");
-    const robotLabel = this._label(ROBOT_LABELS, snap.robot, "Нет данных");
-    const stationLabel = this._label(STATION_LABELS, snap.station, "Нет данных");
+    const compositeLabel = snap.unavailable ? "Нет связи" : this._label(COMPOSITE_LABELS, snap.composite, "Состояние неизвестно");
+    const robotLabel = snap.unavailable ? "Нет данных" : this._label(ROBOT_LABELS, snap.robot, "Нет данных");
+    const stationLabel = snap.unavailable ? "Нет данных" : this._label(STATION_LABELS, snap.station, "Нет данных");
     const connection = this._connectionLabel();
-    const connectionBad = connection !== "Локально";
-    const icon = snap.robot === "charging" ? "mdi:battery-charging" : snap.robot === "charged" ? "mdi:battery-check" : "mdi:robot-vacuum";
-    const away = snap.onDock === false;
+    const connectionClass = snap.connection === "connected" ? "" : snap.connection === "disconnected" ? "bad" : "unknown";
+    const icon = snap.unavailable ? "mdi:robot-vacuum" : snap.robot === "charging" ? "mdi:battery-charging" : snap.robot === "charged" ? "mdi:battery-check" : "mdi:robot-vacuum";
+    const away = !snap.unreliable && snap.onDock === false;
+    const unknownPosition = snap.unreliable || snap.onDock === null || snap.onDock === undefined;
     const battery = snap.battery === null ? "—" : `${Math.round(snap.battery)}%`;
     const age = snap.age === null ? "—" : this._formatDuration(snap.age);
+    const hint = snap.unavailable
+      ? "Нет актуальной локальной телеметрии"
+      : snap.unreliable
+        ? "Текущая связь с роботом не подтверждена"
+        : snap.robot === "charged"
+          ? "Робот на станции, заряд завершён"
+          : snap.robot === "charging"
+            ? "Робот на станции и заряжается"
+            : snap.composite === "cleaning"
+              ? "Выполняется уборка"
+              : "Робот и станция работают как единая система";
     return `
       <section class="card hero" data-more="composite_status">
         <div class="hero-top">
           <div>
             <span class="eyebrow">Состояние</span>
             <h1>${escapeHtml(compositeLabel)}</h1>
-            <p class="hero-hint">${snap.robot === "charged" ? "Робот на станции, заряд завершён" : snap.robot === "charging" ? "Робот на станции и заряжается" : snap.composite === "cleaning" ? "Выполняется уборка" : "Робот и станция работают как единая система"}</p>
+            <p class="hero-hint">${escapeHtml(hint)}</p>
           </div>
-          <div class="connection-badge ${connectionBad ? "bad" : ""}"><i class="dot"></i>${escapeHtml(connection)}</div>
+          <div class="connection-badge ${connectionClass}"><i class="dot"></i>${escapeHtml(connection)}</div>
         </div>
         <div class="scene">
           <span class="scene-label robot">Робот</span><b class="scene-state robot">${escapeHtml(robotLabel)}</b>
           <span class="scene-label station">Станция</span><b class="scene-state station">${escapeHtml(stationLabel)}</b>
           <div class="track"></div>
           <div class="dock"><ha-icon icon="mdi:home-automation"></ha-icon></div>
-          <div class="robot-orb ${away ? "away" : ""}"><ha-icon icon="${icon}"></ha-icon></div>
+          <div class="robot-orb ${unknownPosition ? "unknown" : away ? "away" : ""}"><ha-icon icon="${icon}"></ha-icon></div>
         </div>
         <div class="hero-metrics">
           <div data-more="battery"><span>АКБ</span><strong>${battery}</strong><div class="battery-bar"><i style="width:${snap.battery ?? 0}%"></i></div></div>
@@ -606,9 +666,9 @@ class S8OmniPanel extends HTMLElement {
   _quickActions() {
     const snap = this._snapshot();
     const vacuum = snap.vacuum;
-    const available = this._available(vacuum);
-    const cleaning = vacuum?.state === "cleaning";
-    const paused = vacuum?.state === "paused";
+    const available = snap.connected && !snap.unreliable && this._available(vacuum);
+    const cleaning = available && vacuum?.state === "cleaning";
+    const paused = available && vacuum?.state === "paused";
     return `
       <div class="quick-actions">
         <button class="action primary" data-action="start" ${available && !cleaning ? "" : "disabled"}>
@@ -628,12 +688,22 @@ class S8OmniPanel extends HTMLElement {
 
   _overview() {
     const snap = this._snapshot();
-    const robotLabel = this._label(ROBOT_LABELS, snap.robot, "Нет данных");
-    const stationLabel = this._label(STATION_LABELS, snap.station, "Нет данных");
-    const robotContext = snap.onDock === true ? "На базе" : snap.onDock === false ? "Не на базе" : "Положение неизвестно";
-    const operation = snap.stationOperations.length
-      ? snap.stationOperations.map((item) => STATION_OPERATION_LABELS[item] || item).join(" · ")
-      : snap.missingStationDps.length ? "Часть телеметрии станции отсутствует" : "Активных операций нет";
+    const robotLabel = snap.unavailable ? "Недоступен" : this._label(ROBOT_LABELS, snap.robot, "Нет данных");
+    const stationLabel = snap.unavailable ? "Нет данных" : this._label(STATION_LABELS, snap.station, "Нет данных");
+    const robotContext = snap.unavailable
+      ? "Нет актуальной телеметрии"
+      : snap.onDock === true
+        ? "На базе"
+        : snap.onDock === false
+          ? "Не на базе"
+          : "Положение неизвестно";
+    const operation = snap.unavailable
+      ? "Нет актуальной телеметрии"
+      : snap.stationOperations.length
+        ? snap.stationOperations.map((item) => STATION_OPERATION_LABELS[item] || item).join(" · ")
+        : snap.missingStationDps.length
+          ? "Часть телеметрии станции отсутствует"
+          : "Активных операций нет";
     return `${this._hero()}${this._trustBanner(snap)}${this._quickActions()}
       <section class="card">
         <div class="section-title"><div><span class="eyebrow">Система</span><h2>Статусы</h2></div></div>
@@ -651,8 +721,9 @@ class S8OmniPanel extends HTMLElement {
   }
 
   _cleaning() {
-    const cleanTime = this._stateValue("clean_time");
-    const cleanArea = this._stateValue("clean_area");
+    const snap = this._snapshot();
+    const cleanTime = snap.unreliable ? null : this._stateValue("clean_time");
+    const cleanArea = snap.unreliable ? null : this._stateValue("clean_area");
     return `${this._quickActions()}
       <section class="card">
         <div class="section-title"><div><span class="eyebrow">Текущая задача</span><h2>Уборка</h2></div></div>
@@ -674,7 +745,7 @@ class S8OmniPanel extends HTMLElement {
 
   _segmentControl(key, labels, columnsClass, title, hint) {
     const stateObj = this._state(key);
-    const value = this._available(stateObj) ? stateObj.state : null;
+    const value = this._available(stateObj) && this._connectionState() === "connected" ? stateObj.state : null;
     const options = Object.entries(labels);
     return `<div class="segment-group" data-more="${key}">
       <div class="segment-label"><strong>${title}</strong><span>${hint}</span></div>
@@ -683,14 +754,16 @@ class S8OmniPanel extends HTMLElement {
   }
 
   _cleaningSettings() {
+    const connected = this._connectionState() === "connected";
     const volume = this._state("volume");
     const dnd = this._state("do_not_disturb");
-    const volumeValue = this._available(volume) ? Number(volume.state) : null;
+    const volumeValue = connected && this._available(volume) ? Number(volume.state) : null;
+    const dndAvailable = connected && this._available(dnd);
     return `
       <section class="card">
         <div class="section-title"><div><span class="eyebrow">Уборка</span><h2>Параметры</h2></div></div>
-        ${this._segmentControl("suction", SUCTION_LABELS, "three", "Мощность всасывания", this._label(SUCTION_LABELS, this._stateValue("suction"), "Нет данных"))}
-        ${this._segmentControl("water", WATER_LABELS, "four", "Количество воды", this._label(WATER_LABELS, this._stateValue("water"), "Нет данных"))}
+        ${this._segmentControl("suction", SUCTION_LABELS, "three", "Мощность всасывания", this._label(SUCTION_LABELS, connected ? this._stateValue("suction") : null, "Нет данных"))}
+        ${this._segmentControl("water", WATER_LABELS, "four", "Количество воды", this._label(WATER_LABELS, connected ? this._stateValue("water") : null, "Нет данных"))}
       </section>
       <section class="card">
         <div class="section-title"><div><span class="eyebrow">Звук</span><h2>Громкость</h2></div></div>
@@ -701,24 +774,31 @@ class S8OmniPanel extends HTMLElement {
       </section>
       <section class="card">
         <div class="section-title"><div><span class="eyebrow">Поведение</span><h2>Автоматизация</h2></div></div>
-        <button class="toggle-row" type="button" data-toggle="do_not_disturb" ${dnd ? "" : "disabled"}>
-          <span><strong>Не беспокоить</strong><small>Переключатель режима без расписания.</small></span><span class="toggle ${dnd?.state === "on" ? "on" : ""}"></span>
+        <button class="toggle-row" type="button" data-toggle="do_not_disturb" ${dndAvailable ? "" : "disabled"}>
+          <span><strong>Не беспокоить</strong><small>Переключатель режима без расписания.</small></span><span class="toggle ${dndAvailable && dnd?.state === "on" ? "on" : ""}"></span>
         </button>
       </section>`;
   }
 
   _station() {
     const snap = this._snapshot();
-    const stationLabel = this._label(STATION_LABELS, snap.station, "Нет данных");
-    const operation = snap.stationOperations.length ? snap.stationOperations.map((item) => STATION_OPERATION_LABELS[item] || item).join(" · ") : "Ожидание";
+    const stationLabel = snap.unavailable ? "Нет данных" : this._label(STATION_LABELS, snap.station, "Нет данных");
+    const operation = snap.unavailable
+      ? "Нет данных"
+      : snap.stationOperations.length
+        ? snap.stationOperations.map((item) => STATION_OPERATION_LABELS[item] || item).join(" · ")
+        : snap.missingStationDps.length
+          ? "Нет полного состояния"
+          : "Ожидание";
     return `
+      ${this._trustBanner(snap)}
       <section class="card station-hero" data-more="station_status">
         <div class="station-device"><ha-icon icon="mdi:home-automation"></ha-icon></div>
-        <div><span class="eyebrow">Станция S8 OMNI</span><h2>${escapeHtml(stationLabel)}</h2><p>${snap.station === "unknown" ? "Нет достоверного полного состояния станции." : `Текущая операция: ${escapeHtml(operation)}.`}</p></div>
+        <div><span class="eyebrow">Станция S8 OMNI</span><h2>${escapeHtml(stationLabel)}</h2><p>${snap.unavailable ? "Нет актуальной локальной телеметрии станции." : snap.station === "unknown" ? "Нет достоверного полного состояния станции." : `Текущая операция: ${escapeHtml(operation)}.`}</p></div>
       </section>
       <section class="card">
         <div class="info-list">
-          <div class="info-row"><span>Робот</span><strong>${snap.onDock === true ? "На базе" : snap.onDock === false ? "Не на базе" : "Неизвестно"}</strong></div>
+          <div class="info-row"><span>Робот</span><strong>${snap.unavailable ? "Нет данных" : snap.onDock === true ? "На базе" : snap.onDock === false ? "Не на базе" : "Неизвестно"}</strong></div>
           <div class="info-row"><span>Заряд</span><strong>${snap.battery === null ? "—" : `${Math.round(snap.battery)}%`}</strong></div>
           <div class="info-row"><span>Текущая операция</span><strong>${escapeHtml(operation)}</strong></div>
         </div>
@@ -736,35 +816,39 @@ class S8OmniPanel extends HTMLElement {
 
   _operation(key, label, icon) {
     const stateObj = this._state(key);
-    const active = stateObj?.state === "on";
-    const text = !stateObj || stateObj.state === "unavailable" ? "Нет данных" : active ? "Работает" : "Ожидание";
+    const connected = this._connectionState() === "connected";
+    const active = connected && stateObj?.state === "on";
+    const text = !connected || !stateObj || stateObj.state === "unavailable" || stateObj.state === "unknown" ? "Нет данных" : active ? "Работает" : "Ожидание";
     return `<div class="operation ${active ? "active" : ""}" data-more="${key}"><span class="icon"><ha-icon icon="${icon}"></ha-icon></span><span><strong>${label}</strong><span>${text}</span></span><i></i></div>`;
   }
 
   _maintenance() {
-    const fault = this._formatEntity("fault", "—");
+    const connected = this._connectionState() === "connected";
+    const fault = connected ? this._formatEntity("fault", "—") : "—";
     const child = this._state("child_lock");
+    const childAvailable = connected && this._available(child);
     return `
       <section style="padding:8px 6px 14px"><span class="eyebrow">S8 OMNI</span><h2 style="font-size:34px;margin-top:5px">Обслуживание</h2><p style="color:var(--secondary-text-color);margin-top:6px">Остаточный ресурс расходников.</p></section>
-      ${this._resource("filter_life", "Фильтр", "mdi:air-filter")}
-      ${this._resource("side_brush_life", "Боковая щётка", "mdi:fan")}
-      ${this._resource("main_brush_life", "Основная щётка", "mdi:brush")}
+      ${this._resource("filter_life", "Фильтр", "mdi:air-filter", connected)}
+      ${this._resource("side_brush_life", "Боковая щётка", "mdi:fan", connected)}
+      ${this._resource("main_brush_life", "Основная щётка", "mdi:brush", connected)}
       <section class="card">
         <div class="section-title"><div><span class="eyebrow">Система</span><h2>Защита и ошибки</h2></div></div>
         <div class="info-row" data-more="fault"><span>Fault</span><strong>${escapeHtml(fault)}</strong></div>
-        <button class="toggle-row" type="button" data-toggle="child_lock" ${child ? "" : "disabled"}><span><strong>Блокировка от детей</strong><small>Защита кнопок робота</small></span><span class="toggle ${child?.state === "on" ? "on" : ""}"></span></button>
+        <button class="toggle-row" type="button" data-toggle="child_lock" ${childAvailable ? "" : "disabled"}><span><strong>Блокировка от детей</strong><small>Защита кнопок робота</small></span><span class="toggle ${childAvailable && child?.state === "on" ? "on" : ""}"></span></button>
       </section>
       <section class="future-card"><span class="icon"><ha-icon icon="mdi:restore"></ha-icon></span><div><strong>Сброс ресурса</strong><p>Сброс станет доступен после завершения проверки безопасной команды.</p></div></section>`;
   }
 
-  _resource(key, title, icon) {
-    return `<div class="resource" data-more="${key}"><span class="icon"><ha-icon icon="${icon}"></ha-icon></span><span><strong>${title}</strong><span>Остаточный ресурс от устройства</span></span><b>${escapeHtml(this._formatEntity(key, "—"))}</b></div>`;
+  _resource(key, title, icon, connected = true) {
+    const value = connected ? this._formatEntity(key, "—") : "—";
+    return `<div class="resource" data-more="${key}"><span class="icon"><ha-icon icon="${icon}"></ha-icon></span><span><strong>${title}</strong><span>Остаточный ресурс от устройства</span></span><b>${escapeHtml(value)}</b></div>`;
   }
 
   _diagnostics() {
     const snap = this._snapshot();
     const attrs = snap.attrs || {};
-    const deviceState = snap.unavailable ? "Недоступно" : "Доступно";
+    const deviceState = snap.unavailable ? "Недоступно" : snap.unreliable ? "Не подтверждено" : "Доступно";
     return `
       <section style="padding:8px 6px 14px"><span class="eyebrow">Технический экран</span><h2 style="font-size:34px;margin-top:5px">Диагностика</h2><p style="color:var(--secondary-text-color);margin-top:6px">Нормализованные и raw-значения интеграции.</p></section>
       <div class="diagnostic-strip"><div><span>Локальная связь</span><strong>${escapeHtml(this._connectionLabel())}</strong></div><div><span>Устройство</span><strong>${deviceState}</strong></div><div><span>Возраст данных</span><strong>${snap.age === null ? "—" : escapeHtml(this._formatDuration(snap.age))}</strong></div></div>
@@ -774,7 +858,7 @@ class S8OmniPanel extends HTMLElement {
           ${this._diagRow("Composite", snap.composite)}
           ${this._diagRow("Robot status", snap.robot)}
           ${this._diagRow("Station status", snap.station)}
-          ${this._diagRow("Station DP отсутствуют", snap.missingStationDps.length ? snap.missingStationDps.join(", ") : "Нет")}
+          ${this._diagRow("Station DP отсутствуют", snap.missingStationDps.length ? snap.missingStationDps.join(", ") : snap.unreliable ? "Нет актуальных данных" : "Нет")}
         </div>
       </section>
       <section class="card">
@@ -927,7 +1011,8 @@ class S8OmniPanel extends HTMLElement {
   _render() {
     if (!this.shadowRoot) return;
     if (!this._hass || !this._panel || this._registryLoading || !this._registryLoaded) {
-      this.shadowRoot.innerHTML = `<style>${this._styles()}</style><main>${this._header()}<div class="content"><div class="loading"><div><ha-icon icon="mdi:robot-vacuum"></ha-icon><p>Подключаем интерфейс…</p></div></div></div></main>`;
+      this.shadowRoot.innerHTML = `<style>${this._styles()}</style><main>${this._header()}<div class="content"><div class="loading"><div><ha-icon icon="mdi:robot-vacuum"></ha-icon><p>Подключаем интерфейс…</p></div></div></div>${this._nav()}</main>`;
+      this._bind();
       return;
     }
     if (this._registryError) {
