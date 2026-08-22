@@ -6,10 +6,12 @@ All notable project changes are recorded here.
 
 ### Added
 
-- `v1.00_b004`: add the integration-owned native S8 OMNI panel at `/dashboard-s8-omni`, dashboard version `v0.1.0`.
+- `v1.00_b004`: add the integration-owned native S8 OMNI panel at `/dashboard-s8-omni`, dashboard version `v0.2.0`.
 - `v1.00_b004`: add mobile-first Overview, Cleaning, Station, Maintenance and Diagnostics views targeted at iPhone Pro Max portrait use.
+- `v1.00_b004`: add appliance-specific robot/dock visual context, factual battery/mode/telemetry indicators and state-driven robot/station motion cues.
 - `v1.00_b004`: add normalized robot status, station status and composite robot + station status sensors for reuse by the native panel and `ha-contract-generated-ui`.
-- `v1.00_b004`: add last successful telemetry timestamp and telemetry-age diagnostics.
+- `v1.00_b004`: add local Tuya LAN connection health, last successful telemetry timestamp and telemetry-age diagnostics.
+- `v1.00_b004`: expose DP1/DP2 and raw station flags as diagnostic attributes of the composite status sensor.
 - `v1.00_b004`: publish machine-readable navigation metadata in `panel.json`.
 - `v1.00_b003`: add a Home Assistant **Reconfigure** flow for S8 OMNI local connection parameters: IP address, Device ID, Local Key and Tuya protocol version.
 - `v1.00_b003`: validate reconfigured connection values against the robot before saving and reload the config entry only after a successful update.
