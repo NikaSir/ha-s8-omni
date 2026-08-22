@@ -2,7 +2,7 @@
 
 Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum and OMNI station, built from verified Tuya LAN datapoints.
 
-> Current development line: **v1.00_b007** (`1.0.0b7`). This is an early test build.
+> Current development line: **v1.00_b009** (`1.0.0b9`). This is an early test build.
 
 ## Scope
 
@@ -16,15 +16,17 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 - Reconfigure flow for IP address, Device ID, Local Key and protocol version without removing the integration entry.
 - Automatic integration reload when the polling interval is changed.
 - Integration-owned native panel at **`/dashboard-s8-omni`**.
+- Public **Обновить сейчас** button that requests an immediate coordinator refresh without writing a Tuya control DP.
 
 ## Native S8 OMNI panel
 
 `ha-s8-omni` owns its full appliance UI instead of exposing a loose collection of Lovelace entities as the primary experience.
 
-Dashboard **v0.4.0** follows the Home Assistant NikaS specialized-panel app shell and is mobile-first for **iPhone Pro Max portrait**:
+Dashboard **v0.4.2** follows the Home Assistant NikaS specialized-panel app shell and is mobile-first for **iPhone Pro Max portrait**:
 
-- persistent header with **← Назад** and centered **S8 OMNI** title;
+- persistent header with explicit **← Назад**, centered **S8 OMNI** title and **Обновить** action;
 - Back explicitly navigates to **`/dashboard-actions`** and never uses browser-history back;
+- Refresh calls the public Home Assistant `button` entity owned by `ha-s8-omni`; the frontend does not write Tuya DP directly;
 - fixed bottom navigation remains the sole primary navigation between Overview, Cleaning, Station, Maintenance and Diagnostics;
 - Overview with composite robot + station state, robot/dock visual context, battery, telemetry health and one-handed Start/Pause/Home controls;
 - Cleaning controls with large segmented choices for suction and water, plus volume and DND;
