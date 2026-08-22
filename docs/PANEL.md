@@ -8,7 +8,7 @@ The S8 OMNI integration owns and ships its canonical Home Assistant UI.
 
 The route is registered by the integration through Home Assistant's custom-panel API. No Lovelace YAML, LocalTuya command, cloud request or direct Tuya DP write is required by the panel.
 
-Dashboard version: `v0.2.0`.
+Dashboard version: `v0.2.1`.
 
 ## UX target
 
@@ -17,6 +17,8 @@ Primary viewport: **iPhone Pro Max, portrait**.
 The layout is mobile-first, has no intentional horizontal scrolling, uses large touch targets and keeps the primary robot/station state and frequent commands near the top. Desktop and iPad widen the content without changing the information hierarchy.
 
 The visual model is deliberately appliance-specific rather than a generic Lovelace entity list. The Overview contains a compact robot-to-dock scene, factual battery/mode/telemetry indicators and one-handed Start/Pause/Home controls. Motion is state-driven and respects `prefers-reduced-motion`.
+
+A sticky top application bar provides **Меню**, which fires Home Assistant's native `hass-toggle-menu` event. This opens the normal Home Assistant sidebar instead of navigating to a hard-coded dashboard path, so the panel remains compatible with the user's sidebar/menu organization.
 
 ## Views
 
@@ -110,6 +112,8 @@ Rows, metrics and status elements carrying a real Home Assistant entity support 
 Machine-readable metadata is published in repository root `panel.json` for `ha-contract-generated-ui` and other consumers.
 
 The generated central UI may show a compact vacuum status and frequent Start/Home actions, but detailed robot, station, maintenance and future map controls remain owned by this panel.
+
+The panel's **Меню** button opens the Home Assistant navigation drawer. It is intentionally not a hard-coded link to `/dashboard-house`, `/dashboard-actions` or another central dashboard, because the Home Assistant sidebar is the navigation authority.
 
 ## Current deferred capabilities
 
