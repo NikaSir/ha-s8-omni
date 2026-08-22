@@ -50,7 +50,8 @@ async def _async_register_panel(hass: HomeAssistant, entry: ConfigEntry) -> None
         sidebar_title=PANEL_TITLE,
         sidebar_icon=PANEL_ICON,
         require_admin=False,
-        handle_safe_area=False,
+        # The panel applies iOS bottom/side safe-area insets to its own navigation.
+        handle_safe_area=True,
         config={
             "entry_id": entry.entry_id,
             "panel_id": PANEL_ID,
