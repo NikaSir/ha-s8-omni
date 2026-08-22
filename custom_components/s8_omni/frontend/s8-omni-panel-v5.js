@@ -1,6 +1,6 @@
 import "./s8-omni-panel-v4.js";
 
-const UI_VERSION = "v0.4.0";
+const UI_VERSION = "v0.4.1";
 const PARENT_ROUTE = "/dashboard-actions";
 const S8OmniPanel = customElements.get("s8-omni-panel");
 
@@ -28,8 +28,8 @@ function replaceText(root, from, to) {
   }
 }
 
-if (S8OmniPanel && !S8OmniPanel.prototype.__s8NikasShellV040) {
-  S8OmniPanel.prototype.__s8NikasShellV040 = true;
+if (S8OmniPanel && !S8OmniPanel.prototype.__s8NikasShellV041) {
+  S8OmniPanel.prototype.__s8NikasShellV041 = true;
 
   const originalRender = S8OmniPanel.prototype._render;
 
@@ -146,7 +146,9 @@ if (S8OmniPanel && !S8OmniPanel.prototype.__s8NikasShellV040) {
     // The Header owns the application name. The hero owns appliance state.
     replaceText(root, "S8 OMNI · v0.3.0", "СОСТОЯНИЕ");
     replaceText(root, "S8 OMNI · v0.4.0", "СОСТОЯНИЕ");
+    replaceText(root, "S8 OMNI · v0.4.1", "СОСТОЯНИЕ");
     replaceText(root, "v0.3.0", UI_VERSION);
+    replaceText(root, "v0.4.0", UI_VERSION);
 
     const nav = main.querySelector(":scope > nav");
     if (nav) {
