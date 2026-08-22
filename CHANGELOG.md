@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Added
 
+- `v1.00_b009` / dashboard `v0.4.2`: add a public **Обновить сейчас** button entity that requests an immediate coordinator refresh without writing any robot/station Tuya control DP.
+- `v1.00_b009` / dashboard `v0.4.2`: add the refresh action to the right side of the unified NikaS header while preserving explicit Back on the left and fixed bottom navigation for internal sections.
 - `v1.00_b008` / dashboard `v0.4.1`: complete the Home Assistant NikaS application shell by making the existing five-section navigation a fixed, iOS-safe bottom bar that remains available during long vertical scrolling.
 - `v1.00_b008` / dashboard `v0.4.1`: keep explicit Header Back to `/dashboard-actions`, preserve the accepted `Обзор / Уборка / Станция / Сервис / Диагн.` navigation model, and reserve the hero for current appliance state rather than duplicate device naming.
 - `v1.00_b007` / dashboard `v0.4.0`: adopt the Home Assistant NikaS specialized-panel app shell with a persistent **← Назад** header.
@@ -47,7 +49,7 @@ All notable project changes are recorded here.
 
 ### Known limitations
 
-- Stop command is intentionally not implemented through `v1.00_b008`.
+- Stop command is intentionally not implemented through `v1.00_b009`.
 - Consumable/map reset writes are intentionally deferred pending verification.
 - DND schedule, cleaning timers and raw map/control payloads are intentionally deferred pending verification.
 - Station DP134/135/136 remain read-only until station write semantics are verified end-to-end.
