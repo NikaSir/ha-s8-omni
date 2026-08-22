@@ -1,4 +1,4 @@
-# v1.00_b010 acceptance checklist
+# v1.00_b011 acceptance checklist
 
 Before device-side testing, back up Home Assistant and disable **only S8 OMNI** in LocalTuya to avoid two local Tuya clients contending for the device.
 
@@ -77,6 +77,24 @@ Control viewport: **iPhone Pro Max · portrait**.
 - [ ] Segment selection uses only the existing Home Assistant select entity.
 - [ ] Active station operation gets a prominent live-operation banner.
 
+## v1.00_b011 — Download diagnostics acceptance
+
+From **Settings → Devices & services → S8 OMNI → Download diagnostics**:
+
+- [ ] Diagnostics download is available for the S8 OMNI config entry.
+- [ ] Integration version is `v1.00_b011`; dashboard version remains `v0.4.3`.
+- [ ] Host/IP is replaced by a redaction marker.
+- [ ] Device ID is replaced by a redaction marker.
+- [ ] Local Key is replaced by a redaction marker.
+- [ ] No Local Key fragment, Device ID or private IP appears inside the exported coordinator exception text.
+- [ ] Raw map/path/command/timer payloads are absent.
+- [ ] Export contains coordinator health, last successful telemetry timestamp and reported DP IDs.
+- [ ] Export contains normalized robot/station/composite state.
+- [ ] Export contains only the known safe scalar datapoints used by public entities.
+- [ ] Generating diagnostics performs no device write and does not trigger a station/robot command.
+
+If any identifier or secret appears unredacted, do not share the file; stop and fix the diagnostics exporter first.
+
 ### Required state scenarios
 
 - [x] Robot at base with no active station operation.
@@ -100,5 +118,6 @@ Control viewport: **iPhone Pro Max · portrait**.
 - [x] No station write buttons appear while DP134/135/136 remain read-only.
 - [x] Map/room controls remain deferred until a stable integration API exists.
 - [x] Consumable percentages are not invented.
+- [x] Diagnostics exporter deliberately excludes raw map/path/command/timer payloads.
 
 Stop testing additional write commands if any command behaves unexpectedly; collect Home Assistant logs before further changes.
