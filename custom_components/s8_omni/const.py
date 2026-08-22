@@ -1,5 +1,5 @@
 DOMAIN = "s8_omni"
-VERSION = "v1.00_b002"
+VERSION = "v1.00_b003"
 
 CONF_DEVICE_ID = "device_id"
 CONF_LOCAL_KEY = "local_key"
