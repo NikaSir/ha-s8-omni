@@ -10,14 +10,46 @@
           "local_key": "Local Key",
           "protocol_version": "Версия протокола",
           "scan_interval": "Интервал опроса, с"
+        },
+        "data_description": {
+          "local_key": "Локальный ключ устройства. Интеграция хранит его в записи Home Assistant и не отправляет в облако."
+        }
+      },
+      "reconfigure": {
+        "title": "Перенастроить подключение S8 OMNI",
+        "description": "Изменение параметров локального подключения. Перед сохранением Home Assistant проверит новые значения прямым подключением к роботу.",
+        "data": {
+          "host": "IP-адрес",
+          "device_id": "Device ID",
+          "local_key": "Local Key",
+          "protocol_version": "Версия протокола"
+        },
+        "data_description": {
+          "device_id": "Для этой записи интеграции Device ID должен остаться прежним.",
+          "local_key": "Используйте это поле после повторной привязки робота, когда Tuya выдаст новый Local Key."
         }
       }
     },
     "error": {
-      "cannot_connect": "Не удалось подключиться к S8 OMNI."
+      "cannot_connect": "Не удалось подключиться к S8 OMNI с указанными параметрами."
     },
     "abort": {
-      "already_configured": "Это устройство уже настроено."
+      "already_configured": "Это устройство уже настроено.",
+      "reconfigure_successful": "Параметры подключения S8 OMNI успешно обновлены.",
+      "wrong_device": "Device ID не соответствует этой записи S8 OMNI."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Параметры S8 OMNI",
+        "data": {
+          "scan_interval": "Интервал опроса, с"
+        },
+        "data_description": {
+          "scan_interval": "Период локального опроса робота. После изменения интеграция автоматически перезагрузится."
+        }
+      }
     }
   }
 }
