@@ -1,5 +1,5 @@
 import asyncio
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 
 import tinytuya
@@ -26,6 +26,7 @@ class S8OmniCoordinator(DataUpdateCoordinator):
         self.device_id = entry.data[CONF_DEVICE_ID]
         self.local_key = entry.data[CONF_LOCAL_KEY]
         self.protocol_version = entry.data.get(CONF_PROTOCOL_VERSION, DEFAULT_PROTOCOL_VERSION)
+        self.last_successful_update: datetime | None = None
         scan = int(
             entry.options.get(
                 CONF_SCAN_INTERVAL,
@@ -66,9 +67,11 @@ class S8OmniCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         try:
-            return await self.hass.async_add_executor_job(self._read_sync)
+            data = await self.hass.async_add_executor_job(self._read_sync)
         except Exception as err:
             raise UpdateFailed(f"S8 OMNI local read failed: {err}") from err
+        self.last_successful_update = datetime.now(timezone.utc)
+        return data
 
     def _set_sync(self, dp, value):
         result = self._device.set_value(dp, value)
