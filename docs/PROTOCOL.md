@@ -11,8 +11,8 @@ This document records datapoints verified through Tuya Developer Platform, Local
 | 6 | `clean_time` | value | minutes |
 | 7 | `clean_area` | value | square metres in current HA presentation |
 | 8 | `battery_percentage` | value | 0–100 % |
-| 9 | `suction` | enum | `gentle`, `normal`, `strong` |
-| 10 | `cistern` | enum | water delivery level; `high` confirmed as High |
+| 9 | `suction` | enum | `gentle`, `normal`, `strong`; official app labels are Quiet, Normal, Strong |
+| 10 | `cistern` | enum | water delivery level; live Tuya status log captured `closed`, `low`, `high`; official app exposes Closed, Low, Medium, High. `normal` is the current middle option and still requires one explicit live-log confirmation as Medium |
 | 17 | `edge_brush_life` | value | remaining side-brush resource, minutes |
 | 19 | `roll_brush_life` | value | remaining main/roller-brush resource, minutes |
 | 21 | `filter_life` | value | remaining filter resource, minutes |
@@ -27,13 +27,27 @@ This document records datapoints verified through Tuya Developer Platform, Local
 | 135 | `dp_roll_clean` | bool | station roller self-cleaning; Device Logs confirmed on/off |
 | 136 | `dp_roll_hot` | bool | station roller drying; `true` confirmed during drying |
 
-## Command sequences used in b001
+## Command sequences used in current builds
 
 - **Start / continue:** `mode=smart` → `pause=false` → `power_go=true`.
 - **Pause:** `power_go=false` → `pause=true`.
 - **Return home:** `mode=chargego` → `pause=false` → `power_go=true`.
 
 DP5 `status` is treated as report-only and is never written.
+
+## Official app terminology reference
+
+The English application UI is used as the semantic reference because its Russian localization is inconsistent. The following labels are confirmed from the application UI, but they do **not** by themselves prove a raw DP write mapping:
+
+- Clean modes: `Smart`, `Select Room`, `Zone Cleaning`, `Where To Sweep`.
+- Water: `Closed`, `Low`, `Medium`, `High`.
+- Suction: `Quiet`, `Normal`, `Strong`.
+- Settings: `Timer`, `Room Manage`, `Record`, `Voice and volume`, `Switch disturb`, `Manual`, `Consumables management`, `Seek Robot`.
+- Switches/functions: `Button Child Lock`, `Breakpoint continuous scanning`, `Dust box collects dust`, `Mop self cleaning`, `Mop drying`.
+- DND contains an enable switch plus explicit start and end times.
+- Consumables UI exposes filter, edge brush and roller brush remaining life plus separate Reset actions.
+
+These labels are a presentation/semantics reference only. New write commands are added to the integration only after controlled DP logging and physical verification.
 
 ## State rule
 

@@ -2,7 +2,7 @@
 
 Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum and OMNI station, built from verified Tuya LAN datapoints.
 
-> Current development line: **v1.00_b001** (`1.0.0b1`). This is an early test build.
+> Current development line: **v1.00_b003** (`1.0.0b3`). This is an early test build.
 
 ## Scope
 
@@ -12,6 +12,8 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 - Suction, water level, volume, Do Not Disturb and child lock controls.
 - Real OMNI station telemetry: dust collection, roller cleaning and roller drying.
 - Diagnostics including raw fault value and optional raw robot status.
+- Reconfigure flow for IP address, Device ID, Local Key and protocol version without removing the integration entry.
+- Automatic integration reload when the polling interval is changed.
 
 ## Important coexistence rule
 
@@ -31,11 +33,18 @@ Do **not** keep S8 OMNI active in LocalTuya while testing this integration. Two 
 
 Copy `custom_components/s8_omni` to `/config/custom_components/s8_omni`, restart Home Assistant and add the integration from the UI.
 
-## v1.00_b001 limitations
+## Reconfiguring the local connection
+
+Use the S8 OMNI integration entry's **Reconfigure** action to update the IP address, Local Key or protocol version. The integration tests the new values against the robot before saving them and reloads the entry after a successful update. The Device ID is treated as the identity of the existing entry and cannot be changed to a different robot.
+
+The Local Key field uses a password-style input. Never paste Local Keys, cloud credentials or temporary access tokens into screenshots or public issues.
+
+## Current limitations
 
 - `Stop` is intentionally not exposed yet. The observed physical/API behavior is not sufficiently unambiguous for a safe standalone implementation.
 - Map/brush/filter reset commands are not implemented yet because their write semantics have not been verified end-to-end.
 - Station DP 134/135/136 are read-only in this build.
+- DND schedule, cleaning timers, map operations and manual-direction control are not exposed until their payloads are verified.
 - Unknown/unavailable device state is not silently treated as normal.
 
 ## Verified DP contract
