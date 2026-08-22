@@ -21,7 +21,8 @@ from .coordinator import S8OmniCoordinator
 
 PLATFORMS = ["vacuum", "sensor", "binary_sensor", "switch", "select", "number", "button"]
 FRONTEND_DIR = Path(__file__).parent / "frontend"
-PANEL_MODULE = f"{PANEL_STATIC_URL}/s8-omni-panel-v10.js?v={DASHBOARD_VERSION}"
+# Production frontend contract: one stable, self-contained bundle with query-string cache busting.
+PANEL_MODULE = f"{PANEL_STATIC_URL}/s8-omni-panel.js?v={DASHBOARD_VERSION}"
 
 _LOGGER = logging.getLogger(__name__)
 
