@@ -2,7 +2,7 @@
 
 Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum and OMNI station, built from verified Tuya LAN datapoints.
 
-> Current development line: **v1.00_b003** (`1.0.0b3`). This is an early test build.
+> Current development line: **v1.00_b004** (`1.0.0b4`). This is an early test build.
 
 ## Scope
 
@@ -11,9 +11,28 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 - Start, pause and return-to-base commands using experimentally verified DP sequences.
 - Suction, water level, volume, Do Not Disturb and child lock controls.
 - Real OMNI station telemetry: dust collection, roller cleaning and roller drying.
-- Diagnostics including raw fault value and optional raw robot status.
+- Normalized robot, station and reusable composite status semantics.
+- Diagnostics including local connection health, telemetry age and raw Tuya context.
 - Reconfigure flow for IP address, Device ID, Local Key and protocol version without removing the integration entry.
 - Automatic integration reload when the polling interval is changed.
+- Integration-owned native panel at **`/dashboard-s8-omni`**.
+
+## Native S8 OMNI panel
+
+`ha-s8-omni` owns its full appliance UI instead of exposing a loose collection of Lovelace entities as the primary experience.
+
+Dashboard **v0.2.0** is mobile-first for **iPhone Pro Max portrait** and includes:
+
+- Overview with composite robot + station state, robot/dock visual context, battery, telemetry health and one-handed Start/Pause/Home controls;
+- Cleaning controls for verified mode context, suction, water, volume and DND;
+- Station view with independent dust collection / roller cleaning / drying state;
+- Maintenance view with factual remaining resource in minutes;
+- Diagnostics with normalized and raw state context;
+- reserved architecture for future Map / Rooms support.
+
+The frontend never writes Tuya DP directly, never calls LocalTuya and never uses Tuya cloud APIs. New commands appear only after `ha-s8-omni` exposes a verified Home Assistant entity/service.
+
+See [`docs/PANEL.md`](docs/PANEL.md).
 
 ## Important coexistence rule
 
@@ -28,6 +47,7 @@ Do **not** keep S8 OMNI active in LocalTuya while testing this integration. Two 
 3. Restart Home Assistant.
 4. Go to **Settings → Devices & services → Add integration → S8 OMNI**.
 5. Enter the device IP address, Device ID, Local Key and protocol version (`3.3`).
+6. Open **`/dashboard-s8-omni`** or use the **Пылесос** sidebar entry.
 
 ### Manual
 
@@ -45,7 +65,7 @@ The Local Key field uses a password-style input. Never paste Local Keys, cloud c
 - Map/brush/filter reset commands are not implemented yet because their write semantics have not been verified end-to-end.
 - Station DP 134/135/136 are read-only in this build.
 - DND schedule, cleaning timers, map operations and manual-direction control are not exposed until their payloads are verified.
-- Unknown/unavailable device state is not silently treated as normal.
+- Unknown/unavailable device state is never silently treated as normal.
 
 ## Verified DP contract
 

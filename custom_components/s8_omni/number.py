@@ -21,6 +21,10 @@ class S8Volume(S8OmniEntity, NumberEntity):
         super().__init__(coordinator, "volume")
 
     @property
+    def available(self):
+        return super().available and self.coordinator.data is not None and DP_VOLUME in self.coordinator.data
+
+    @property
     def native_value(self):
         try:
             return float(self.dp(DP_VOLUME))

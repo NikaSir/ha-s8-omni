@@ -7,7 +7,7 @@ This document records datapoints verified through Tuya Developer Platform, Local
 | 1 | `power_go` / `switch_go` | bool | `true` while running/continuing; `false` during pause/stop transitions |
 | 2 | `pause` | bool | `true` when paused/idle; `false` while running |
 | 4 | `mode` | enum | observed `smart`, `chargego`; model also exposes zone/pose/part variants |
-| 5 | `status` | enum | robot reporting state; observed `smart`, `paused`, `standby`, `sleep`, `goto_charge`, `charge_done`, `charging`, `repositing` |
+| 5 | `status` | enum | robot reporting state; observed `smart`, `paused`, `standby`, `sleep`, `goto_charge`, `charge_done`, `charging`, `repositing` and model-supported cleaning/navigation states |
 | 6 | `clean_time` | value | minutes |
 | 7 | `clean_area` | value | square metres in current HA presentation |
 | 8 | `battery_percentage` | value | 0–100 % |
@@ -34,6 +34,46 @@ This document records datapoints verified through Tuya Developer Platform, Local
 - **Return home:** `mode=chargego` → `pause=false` → `power_go=true`.
 
 DP5 `status` is treated as report-only and is never written.
+
+## Normalized status contract
+
+Starting with `v1.00_b004`, the integration owns the status interpretation used by every UI.
+
+### Robot status
+
+Known DP5 values are normalized to stable semantic states, including:
+
+- `standby` → `idle`
+- `smart` / `cleaning` → `cleaning`
+- `zone_clean` → `zone_cleaning`
+- `part_clean` / `select_room` → `room_cleaning`
+- `paused` → `paused`
+- `goto_charge` → `returning_to_dock`
+- `charging` → `charging`
+- `charge_done` → `charged`
+- `sleep` → `sleeping`
+- `fault` or non-zero DP28 → `error`
+- `repositing` → `repositioning`
+
+An absent or unrecognized DP5 becomes `unknown`. It is never coerced to `idle`.
+
+### Station status
+
+Station status is derived only from the three verified station telemetry flags:
+
+- DP134 true → `dust_collection`
+- DP135 true → `roller_cleaning`
+- DP136 true → `drying`
+
+If more than one flag is true, the station state is `multiple_operations` and the integration exposes all active operations in an attribute. No arbitrary priority is invented.
+
+If all three station DPs are present and false, the station state is `idle`. If no station operation is active but at least one required station DP is missing, the station state is `unknown` rather than `idle`.
+
+### Composite status
+
+The reusable composite sensor combines robot, station, dock inference, battery, mode and fault context. Active station work overrides a generic docked presentation so that, for example, a robot at the dock while DP136 is true is represented as `docked_drying`, not simply `docked`.
+
+This composite entity is the canonical status source for the native `/dashboard-s8-omni` panel and for `ha-contract-generated-ui` summary rendering.
 
 ## Official app terminology reference
 

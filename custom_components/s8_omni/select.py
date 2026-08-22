@@ -42,6 +42,10 @@ class S8Select(S8OmniEntity, SelectEntity):
         self._attr_options = desc.options
 
     @property
+    def available(self):
+        return super().available and self.coordinator.data is not None and self.desc.dp in self.coordinator.data
+
+    @property
     def current_option(self):
         value = self.dp(self.desc.dp)
         return str(value) if value is not None else None

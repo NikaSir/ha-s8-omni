@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntity
 from homeassistant.helpers.entity import EntityCategory
 
 from .const import (
@@ -34,7 +34,9 @@ DESCS = [
 
 async def async_setup_entry(hass, entry, async_add_entities):
     coordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([S8Binary(coordinator, desc) for desc in DESCS])
+    entities = [S8Binary(coordinator, desc) for desc in DESCS]
+    entities.append(S8LocalConnectionBinary(coordinator))
+    async_add_entities(entities)
 
 
 class S8Binary(S8OmniEntity, BinarySensorEntity):
@@ -46,5 +48,31 @@ class S8Binary(S8OmniEntity, BinarySensorEntity):
         self._attr_entity_category = desc.category
 
     @property
+    def available(self):
+        return super().available and self.coordinator.data is not None and self.desc.dp in self.coordinator.data
+
+    @property
     def is_on(self):
-        return bool(self.dp(self.desc.dp, False))
+        value = self.dp(self.desc.dp)
+        return None if value is None else bool(value)
+
+
+class S8LocalConnectionBinary(S8OmniEntity, BinarySensorEntity):
+    """Expose coordinator health without converting a failed poll to a normal state."""
+
+    _attr_name = "Локальное соединение"
+    _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, coordinator):
+        super().__init__(coordinator, "local_connection")
+
+    @property
+    def available(self):
+        # The entity itself stays available so a failed Tuya LAN poll is visible as
+        # disconnected instead of disappearing together with the data entities.
+        return True
+
+    @property
+    def is_on(self):
+        return bool(self.coordinator.last_update_success)

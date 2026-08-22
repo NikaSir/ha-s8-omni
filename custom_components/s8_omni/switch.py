@@ -31,8 +31,13 @@ class S8Switch(S8OmniEntity, SwitchEntity):
         self._attr_name = desc.name
 
     @property
+    def available(self):
+        return super().available and self.coordinator.data is not None and self.desc.dp in self.coordinator.data
+
+    @property
     def is_on(self):
-        return bool(self.dp(self.desc.dp, False))
+        value = self.dp(self.desc.dp)
+        return None if value is None else bool(value)
 
     async def async_turn_on(self, **kwargs):
         await self.coordinator.async_set_dp(self.desc.dp, True)
