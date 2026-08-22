@@ -2,7 +2,7 @@
 
 Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum and OMNI station, built from verified Tuya LAN datapoints.
 
-> Current development line: **v1.00_b005** (`1.0.0b5`). This is an early test build.
+> Current development line: **v1.00_b006** (`1.0.0b6`). This is an early test build.
 
 ## Scope
 
@@ -21,15 +21,18 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 
 `ha-s8-omni` owns its full appliance UI instead of exposing a loose collection of Lovelace entities as the primary experience.
 
-Dashboard **v0.2.1** is mobile-first for **iPhone Pro Max portrait** and includes:
+Dashboard **v0.3.0** is mobile-first for **iPhone Pro Max portrait** and includes:
 
 - Overview with composite robot + station state, robot/dock visual context, battery, telemetry health and one-handed Start/Pause/Home controls;
-- Cleaning controls for verified mode context, suction, water, volume and DND;
-- Station view with independent dust collection / roller cleaning / drying state;
+- Cleaning controls with large segmented choices for suction and water, plus volume and DND;
+- user-facing state semantics that suppress the stale Tuya `chargego` mode after the robot is already charging/charged;
+- Station view with independent dust collection / roller cleaning / drying state and a prominent live-operation banner;
 - Maintenance view with factual remaining resource in minutes;
 - Diagnostics with normalized and raw state context;
 - a persistent **Меню** button that opens the native Home Assistant sidebar from every panel view;
 - reserved architecture for future Map / Rooms support.
+
+User-facing screens avoid protocol/DP implementation wording; raw Tuya and integration-contract details remain in Diagnostics and documentation.
 
 The frontend never writes Tuya DP directly, never calls LocalTuya and never uses Tuya cloud APIs. New commands appear only after `ha-s8-omni` exposes a verified Home Assistant entity/service.
 
