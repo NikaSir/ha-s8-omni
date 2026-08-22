@@ -7,7 +7,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.2.1"
+    "dashboard_version": "v0.3.0"
   },
   "generated_ui": {
     "summary_entity_unique_id_suffix": "composite_status",
