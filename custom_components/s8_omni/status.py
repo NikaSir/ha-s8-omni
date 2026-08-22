@@ -10,6 +10,8 @@ from .const import (
     DP_DUST,
     DP_FAULT,
     DP_MODE,
+    DP_PAUSE,
+    DP_POWER_GO,
     DP_ROLL_CLEAN,
     DP_ROLL_DRY,
     DP_STATUS,
@@ -209,4 +211,9 @@ def composite_attributes(data: Mapping[int, Any]) -> dict[str, Any]:
         "battery": data.get(DP_BATTERY),
         "mode": data.get(DP_MODE),
         "fault": data.get(DP_FAULT),
+        "power_go": data.get(DP_POWER_GO),
+        "pause": data.get(DP_PAUSE),
+        "dp_dust": data.get(DP_DUST),
+        "dp_roll_clean": data.get(DP_ROLL_CLEAN),
+        "dp_roll_hot": data.get(DP_ROLL_DRY),
     }
