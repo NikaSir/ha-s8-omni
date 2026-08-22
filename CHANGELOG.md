@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Added
 
+- `v1.00_b014` / dashboard `v0.5.2`: add compact **Робот** and **Станция** status cards below the frequent Overview actions so the first screen remains concise while still showing both subsystem states.
+- `v1.00_b014` / dashboard `v0.5.2`: robot summary shows normalized state plus factual dock context; station summary shows normalized state plus active station operation or an explicit telemetry warning.
 - `v1.00_b013` / dashboard `v0.5.1`: split the first two root tabs by responsibility: **Overview** now owns composite system state/health and frequent actions, while **Cleaning** owns the active cleaning workflow, session metrics and the entry to cleaning settings.
 - `v1.00_b013` / dashboard `v0.5.1`: remove the large composite robot/station hero and station-operation block from the Cleaning tab; remove cleaning time/area/suction/water and station detail blocks from Overview.
 - `v1.00_b013` / dashboard `v0.5.1`: keep the existing **Настройки уборки** drill-down as the only editable profile screen and preserve the canonical full-width fixed bottom Tab Bar.
@@ -36,7 +38,7 @@ All notable project changes are recorded here.
 
 ### Known limitations
 
-- Stop command is intentionally not implemented through `v1.00_b013`.
+- Stop command is intentionally not implemented through `v1.00_b014`.
 - Consumable/map reset writes are intentionally deferred pending verification.
 - DND schedule, cleaning timers and raw map/control payloads are intentionally deferred pending verification.
 - Station DP134/135/136 remain read-only until station write semantics are verified end-to-end.
