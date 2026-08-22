@@ -20,7 +20,7 @@ from .coordinator import S8OmniCoordinator
 
 PLATFORMS = ["vacuum", "sensor", "binary_sensor", "switch", "select", "number"]
 FRONTEND_DIR = Path(__file__).parent / "frontend"
-PANEL_MODULE = f"{PANEL_STATIC_URL}/s8-omni-panel.js?v={VERSION}"
+PANEL_MODULE = f"{PANEL_STATIC_URL}/s8-omni-panel-v2.js?v={DASHBOARD_VERSION}"
 
 _LOGGER = logging.getLogger(__name__)
 
