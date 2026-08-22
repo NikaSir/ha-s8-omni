@@ -51,5 +51,64 @@
         }
       }
     }
+  },
+  "entity": {
+    "sensor": {
+      "robot_status": {
+        "name": "Статус робота",
+        "state": {
+          "idle": "Ожидание",
+          "cleaning": "Уборка",
+          "zone_cleaning": "Уборка зоны",
+          "room_cleaning": "Уборка комнат",
+          "paused": "Уборка приостановлена",
+          "going_to_position": "Движется к точке",
+          "position_reached": "Точка достигнута",
+          "position_not_reached": "Точка не достигнута",
+          "returning_to_dock": "Возвращается на базу",
+          "charging": "Заряжается",
+          "charged": "Заряжен",
+          "sleeping": "Сон",
+          "error": "Ошибка",
+          "wall_following": "Уборка вдоль стен",
+          "manual_control": "Ручное управление",
+          "repositioning": "Определяет положение",
+          "creating_map": "Создаёт карту",
+          "unknown": "Состояние неизвестно"
+        }
+      },
+      "station_status": {
+        "name": "Статус станции",
+        "state": {
+          "idle": "Ожидание",
+          "dust_collection": "Очистка пылесборника",
+          "roller_cleaning": "Промывка / очистка",
+          "drying": "Сушка",
+          "multiple_operations": "Несколько операций",
+          "unknown": "Состояние неизвестно"
+        }
+      },
+      "composite_status": {
+        "name": "Составной статус",
+        "state": {
+          "idle": "Ожидание",
+          "cleaning": "Уборка",
+          "zone_cleaning": "Уборка зоны",
+          "room_cleaning": "Уборка комнат",
+          "paused": "Уборка приостановлена",
+          "returning_to_dock": "Возвращается на базу",
+          "charging": "Заряжается",
+          "charged": "На базе · Заряжен",
+          "sleeping": "Сон",
+          "repositioning": "Определяет положение",
+          "docked_dust_collection": "На базе · Очистка пылесборника",
+          "docked_roller_cleaning": "На базе · Промывка / очистка",
+          "docked_drying": "На базе · Сушка",
+          "docked_station_active": "На базе · Станция работает",
+          "error": "Ошибка",
+          "unknown": "Состояние неизвестно"
+        }
+      }
+    }
   }
 }
