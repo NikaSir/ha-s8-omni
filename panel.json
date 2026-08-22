@@ -8,7 +8,13 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.5.2",
+    "dashboard_version": "v0.5.3",
+    "frontend": {
+      "module": "s8-omni-panel.js",
+      "bundle": "self_contained",
+      "runtime_historical_imports": false,
+      "cache_busting": "query_string_dashboard_version"
+    },
     "navigation": {
       "header_back": "explicit_parent_route",
       "header_action": "refresh",
