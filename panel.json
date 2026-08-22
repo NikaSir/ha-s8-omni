@@ -8,7 +8,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.5.0",
+    "dashboard_version": "v0.5.1",
     "navigation": {
       "header_back": "explicit_parent_route",
       "header_action": "refresh",
@@ -17,6 +17,13 @@
       "floating_tab_bar": false,
       "browser_history_back": false,
       "views": ["overview", "cleaning", "station", "maintenance", "diagnostics"],
+      "view_responsibilities": {
+        "overview": "composite_system_state_health_and_frequent_actions",
+        "cleaning": "active_cleaning_workflow_metrics_and_profile_entry",
+        "station": "station_state_and_operations",
+        "maintenance": "consumables_and_service",
+        "diagnostics": "technical_state_and_raw_context"
+      },
       "drill_down": {
         "cleaning-settings": {
           "parent_view": "cleaning",
