@@ -1,4 +1,4 @@
-# v1.00_b004 acceptance checklist
+# v1.00_b005 acceptance checklist
 
 Before device-side testing, back up Home Assistant and disable **only S8 OMNI** in LocalTuya to avoid two local Tuya clients contending for the device.
 
@@ -15,6 +15,7 @@ Before device-side testing, back up Home Assistant and disable **only S8 OMNI** 
 - [x] Station dust collection has been observed and confirmed.
 - [x] Station roller/mop cleaning has been observed and confirmed.
 - [x] Station drying has been observed and confirmed.
+- [x] Dashboard `v0.2.0` renders correctly on iPhone Pro Max portrait in Overview, Cleaning, Station, Maintenance and Diagnostics views.
 
 ## Remaining protocol acceptance
 
@@ -34,30 +35,33 @@ Before device-side testing, back up Home Assistant and disable **only S8 OMNI** 
 5. After the planned Tuya re-pair, enter the new Local Key and verify the existing config entry reconnects without removing/re-adding the integration.
 6. Change the polling interval in Options and confirm the integration reloads automatically with the new interval.
 
-## v1.00_b004 panel acceptance — iPhone Pro Max portrait
+## v1.00_b005 panel acceptance — iPhone Pro Max portrait
 
 Open `/dashboard-s8-omni` and verify all of the following without using the Tuya application as the primary UI.
 
 ### Layout and navigation
 
-- [ ] No horizontal scrolling at iPhone Pro Max portrait width.
-- [ ] Overview status and Start/Pause/Home controls are visible near the top.
-- [ ] Bottom navigation provides Overview, Cleaning, Station, Maintenance and Diagnostics.
-- [ ] Touch targets are comfortably separated and usable one-handed.
-- [ ] Home Assistant header and iOS safe areas do not cover content or navigation.
+- [x] No horizontal scrolling at iPhone Pro Max portrait width in dashboard `v0.2.0` screenshots.
+- [x] Overview status and Start/Pause/Home controls are visible near the top.
+- [x] Bottom navigation provides Overview, Cleaning, Station, Maintenance and Diagnostics.
+- [x] Touch targets are comfortably separated and usable one-handed in the reviewed screenshots.
+- [x] Home Assistant/iOS safe areas do not cover the bottom navigation in the reviewed screenshots.
+- [ ] Dashboard `v0.2.1`: sticky **Меню** control does not cover the hero/content or iOS safe area.
+- [ ] Dashboard `v0.2.1`: pressing **Меню** opens the native Home Assistant sidebar/navigation drawer.
+- [ ] **Меню** works from Overview, Cleaning, Station, Maintenance and Diagnostics.
 - [ ] Long press on entity-backed rows opens native Home Assistant more-info.
 
 ### Required state scenarios
 
-- [ ] Robot at base with no active station operation.
+- [x] Robot at base with no active station operation is rendered as charged/idle station in the reviewed screenshot.
 - [ ] Normal cleaning.
 - [ ] Pause, when physical Pause acceptance is complete.
-- [ ] Return to base.
+- [x] Return-to-base mode is represented in the reviewed Overview/Cleaning screenshots.
 - [ ] Charging.
-- [ ] Charge complete.
-- [ ] Station dust collection.
-- [ ] Station roller/mop cleaning.
-- [ ] Station drying.
+- [x] Charge complete is represented in the reviewed Overview/Diagnostics screenshots (`charge_done`).
+- [ ] Station dust collection while active.
+- [ ] Station roller/mop cleaning while active.
+- [ ] Station drying while active.
 - [ ] Robot fault.
 - [ ] Unknown/unrecognized robot status.
 - [ ] Whole S8 OMNI unavailable.
@@ -77,11 +81,12 @@ When the vacuum entity is docked while an OMNI station operation is active, the 
 
 ### UI safety assertions
 
-- [ ] No panel action writes a Tuya DP directly.
-- [ ] No LocalTuya service is called by the panel.
-- [ ] No cloud API is called by the panel.
-- [ ] No station write buttons appear while DP134/135/136 remain read-only.
-- [ ] Map/room controls remain a placeholder until the integration provides a stable public API.
-- [ ] Consumable percentages are not invented from remaining minutes.
+- [x] No panel action writes a Tuya DP directly.
+- [x] No LocalTuya service is called by the panel.
+- [x] No cloud API is called by the panel.
+- [x] No station write buttons appear while DP134/135/136 remain read-only.
+- [x] Map/room controls remain a placeholder until the integration provides a stable public API.
+- [x] Consumable percentages are not invented from remaining minutes.
+- [x] The new **Меню** control only emits Home Assistant's native `hass-toggle-menu` event; it does not hard-code a dashboard route.
 
 Stop testing additional write commands if any command behaves unexpectedly; collect Home Assistant logs before further changes.
