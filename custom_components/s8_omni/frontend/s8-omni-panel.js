@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.5.5";
+const UI_VERSION = "v0.5.6";
 
 const ROBOT_LABELS = {
   idle: "Ожидание",
@@ -485,7 +485,14 @@ class S8OmniPanel extends HTMLElement {
     const snap = this._snapshot();
     const cleanTime = snap.connected ? this._stateValue("clean_time") : null;
     const cleanArea = snap.connected ? this._stateValue("clean_area") : null;
-    return `${this._quickActions()}${this._trustBanner(snap)}<section class="card"><div class="section-title"><div><span class="eyebrow">Текущая задача</span><h2>Уборка</h2></div></div><div class="metric-grid"><div class="metric" data-more="clean_time"><ha-icon icon="mdi:timer-outline"></ha-icon><span>Время</span><strong>${cleanTime !== null ? `${escapeHtml(cleanTime)} мин` : "—"}</strong></div><div class="metric" data-more="clean_area"><ha-icon icon="mdi:ruler-square"></ha-icon><span>Площадь</span><strong>${cleanArea !== null ? `${escapeHtml(cleanArea)} м²` : "—"}</strong></div></div></section><section class="card"><div class="section-title"><div><span class="eyebrow">Профиль</span><h2>Как убирать</h2></div></div><button class="drill-entry" type="button" data-detail="cleaning-settings"><span class="icon"><ha-icon icon="mdi:tune-variant"></ha-icon></span><span><strong>Настройки уборки</strong><span>Всасывание, вода, громкость и «Не беспокоить»</span></span><ha-icon icon="mdi:chevron-right"></ha-icon></button></section><section class="future-card"><span class="icon"><ha-icon icon="mdi:map-outline"></ha-icon></span><div><span class="eyebrow">Следующий этап</span><strong>Карта и комнаты</strong><p>Комнатная и зональная уборка появятся после завершения безопасной поддержки в интеграции.</p></div></section>`;
+    const suction = snap.connected ? this._label(SUCTION_LABELS, this._stateValue("suction"), "Нет данных") : "Нет данных";
+    const water = snap.connected ? this._label(WATER_LABELS, this._stateValue("water"), "Нет данных") : "Нет данных";
+    const volumeObj = this._state("volume");
+    const volumeValue = snap.connected && this._available(volumeObj) ? Number(volumeObj.state) : null;
+    const volume = Number.isFinite(volumeValue) ? `${Math.round(volumeValue)}%` : "Нет данных";
+    const dndObj = this._state("do_not_disturb");
+    const dnd = snap.connected && this._available(dndObj) ? (dndObj.state === "on" ? "Вкл" : "Выкл") : "Нет данных";
+    return `${this._trustBanner(snap)}<section class="card"><div class="section-title"><div><h2>Текущая уборка</h2></div></div><div class="metric-grid"><div class="metric" data-more="clean_time"><ha-icon icon="mdi:timer-outline"></ha-icon><span>Время</span><strong>${cleanTime !== null ? `${escapeHtml(cleanTime)} мин` : "—"}</strong></div><div class="metric" data-more="clean_area"><ha-icon icon="mdi:ruler-square"></ha-icon><span>Площадь</span><strong>${cleanArea !== null ? `${escapeHtml(cleanArea)} м²` : "—"}</strong></div></div></section><section class="card"><div class="section-title"><div><h2>Как убирать</h2></div></div><button class="drill-entry" type="button" data-detail="cleaning-settings"><span class="icon"><ha-icon icon="mdi:tune-variant"></ha-icon></span><span><strong>Всасывание: ${escapeHtml(suction)} · Вода: ${escapeHtml(water)}</strong><span>Громкость: ${escapeHtml(volume)} · Не беспокоить: ${escapeHtml(dnd)}</span></span><ha-icon icon="mdi:chevron-right"></ha-icon></button></section><section class="future-card"><span class="icon"><ha-icon icon="mdi:map-outline"></ha-icon></span><div><span class="eyebrow">Следующий этап</span><strong>Карта и комнаты</strong><p>Комнатная и зональная уборка появятся после завершения безопасной поддержки в интеграции.</p></div></section>`;
   }
 
   _segmentControl(key, labels, columnsClass, title, hint) {
