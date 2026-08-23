@@ -8,7 +8,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.5.9",
+    "dashboard_version": "v0.6.0",
     "template": "NikaS Integration Panel Template v1.0",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -22,7 +22,8 @@
       "disable_device_actions_when_disconnected": true
     },
     "navigation": {
-      "header_back": "explicit_parent_route",
+      "header_root_primary": "home_assistant_sidebar_menu",
+      "header_detail_back": "return_to_parent_view",
       "header_action": "refresh",
       "header_grid": "52px_minmax_52px__48px_mobile",
       "primary_navigation": "full_width_fixed_bottom_tab_bar",
@@ -52,6 +53,7 @@
       "quick_actions": "state_aware_three_equal_columns",
       "quick_action_icon_px": 42,
       "card_proportions": "balanced_reference_not_forced_compact",
+      "typography_scale": "balanced_12_to_31_px_mobile",
       "overview_target": "balanced_readability_with_natural_vertical_scroll_when_needed",
       "cleaning_root_actions": false,
       "cleaning_key_profile_cards": ["suction", "water"],
