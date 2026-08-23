@@ -8,7 +8,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.5.7",
+    "dashboard_version": "v0.5.8",
     "template": "NikaS Integration Panel Template v1.0",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -32,7 +32,7 @@
       "views": ["overview", "cleaning", "station", "maintenance", "diagnostics"],
       "view_responsibilities": {
         "overview": "composite_system_state_health_frequent_actions_and_compact_robot_station_summary",
-        "cleaning": "current_cleaning_metrics_and_read_only_profile_summary_with_settings_drill_down",
+        "cleaning": "current_cleaning_metrics_key_profile_cards_and_settings_drill_down",
         "station": "station_state_and_operations",
         "maintenance": "consumables_and_service",
         "diagnostics": "technical_state_and_raw_context"
@@ -54,7 +54,8 @@
       "card_proportions": "balanced_reference_not_forced_compact",
       "overview_target": "balanced_readability_with_natural_vertical_scroll_when_needed",
       "cleaning_root_actions": false,
-      "cleaning_profile_summary": ["suction", "water", "volume", "do_not_disturb"],
+      "cleaning_key_profile_cards": ["suction", "water"],
+      "cleaning_settings_secondary_summary": ["volume", "do_not_disturb"],
       "status_heading": "Статусы",
       "touch_target_min_px": 44,
       "safe_area": true
