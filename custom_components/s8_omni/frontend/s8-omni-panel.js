@@ -1,62 +1,62 @@
-const UI_VERSION = "v0.5.8";
+const UI_VERSION = "v0.5.9";
 
 const ROBOT_LABELS = {
   idle: "Ожидание",
-  cleaning: "Убирает",
-  zone_cleaning: "Уборка зоны",
-  room_cleaning: "Уборка комнат",
-  paused: "Уборка приостановлена",
-  going_to_position: "Движется к точке",
-  position_reached: "Точка достигнута",
-  position_not_reached: "Точка не достигнута",
-  returning_to_dock: "Возвращается на базу",
-  charging: "Заряжается",
+  cleaning: "Уборка",
+  zone_cleaning: "Зона",
+  room_cleaning: "Комнаты",
+  paused: "Пауза",
+  going_to_position: "К точке",
+  position_reached: "У точки",
+  position_not_reached: "Нет позиции",
+  returning_to_dock: "Возврат",
+  charging: "Зарядка",
   charged: "Заряжен",
   sleeping: "Сон",
   error: "Ошибка",
-  wall_following: "Уборка вдоль стен",
-  manual_control: "Ручное управление",
-  repositioning: "Определяет положение",
-  creating_map: "Создаёт карту",
-  unknown: "Состояние неизвестно",
+  wall_following: "Вдоль стен",
+  manual_control: "Вручную",
+  repositioning: "Поиск позиции",
+  creating_map: "Карта",
+  unknown: "Нет данных",
 };
 
 const STATION_LABELS = {
   idle: "Ожидание",
-  dust_collection: "Очистка пылесборника",
-  roller_cleaning: "Промывка / очистка",
+  dust_collection: "Сбор пыли",
+  roller_cleaning: "Промывка",
   drying: "Сушка",
-  multiple_operations: "Несколько операций",
-  unknown: "Нет достоверных данных",
+  multiple_operations: "Несколько",
+  unknown: "Нет данных",
 };
 
 const COMPOSITE_LABELS = {
   idle: "Готов к уборке",
-  cleaning: "Убирает",
-  zone_cleaning: "Убирает зону",
-  room_cleaning: "Убирает комнаты",
-  paused: "Уборка приостановлена",
-  returning_to_dock: "Возвращается на базу",
-  charging: "Заряжается",
+  cleaning: "Уборка",
+  zone_cleaning: "Зона",
+  room_cleaning: "Комнаты",
+  paused: "Пауза",
+  returning_to_dock: "Возврат",
+  charging: "Зарядка",
   charged: "На базе · Заряжен",
   sleeping: "Сон",
-  repositioning: "Определяет положение",
-  docked_dust_collection: "На базе · Очистка пылесборника",
-  docked_roller_cleaning: "На базе · Промывка / очистка",
+  repositioning: "Поиск позиции",
+  docked_dust_collection: "На базе · Сбор пыли",
+  docked_roller_cleaning: "На базе · Промывка",
   docked_drying: "На базе · Сушка",
-  docked_station_active: "На базе · Станция работает",
+  docked_station_active: "На базе · Станция активна",
   error: "Требуется внимание",
-  unknown: "Состояние неизвестно",
+  unknown: "Нет данных",
 };
 
 const MODE_LABELS = {
   smart: "Smart",
-  zone: "Уборка зоны",
+  zone: "Зона",
   pose: "Точка",
-  part: "Частичная уборка",
-  chargego: "Возврат на базу",
+  part: "Частичная",
+  chargego: "Возврат",
   wallfollow: "Вдоль стен",
-  selectroom: "Уборка комнат",
+  selectroom: "Комнаты",
 };
 
 const SUCTION_LABELS = { gentle: "Тихий", normal: "Нормальный", strong: "Сильный" };
@@ -94,8 +94,8 @@ const ENTITY_SUFFIXES = [
 ];
 
 const STATION_OPERATION_LABELS = {
-  dust_collection: "Очистка пылесборника",
-  roller_cleaning: "Промывка / очистка",
+  dust_collection: "Сбор пыли",
+  roller_cleaning: "Промывка",
   drying: "Сушка",
 };
 
@@ -225,7 +225,8 @@ class S8OmniPanel extends HTMLElement {
     if (stateObj.state === "unavailable") return "Недоступно";
     if (stateObj.state === "unknown") return "Неизвестно";
     const unit = stateObj.attributes?.unit_of_measurement;
-    return unit ? `${stateObj.state} ${unit}` : stateObj.state;
+    const shownUnit = unit === "min" ? "мин" : unit;
+    return shownUnit ? `${stateObj.state} ${shownUnit}` : stateObj.state;
   }
 
   _connectionState() {
@@ -316,16 +317,18 @@ class S8OmniPanel extends HTMLElement {
       .hero { position:relative; overflow:hidden; background:linear-gradient(135deg,var(--card-background-color) 58%,color-mix(in srgb,var(--primary-color) 9%,var(--card-background-color)) 100%); }
       .hero::after { content:""; position:absolute; width:230px; height:230px; right:-75px; top:-105px; border-radius:50%; background:color-mix(in srgb,var(--primary-color) 8%,transparent); pointer-events:none; }
       .hero-top { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; gap:12px; position:relative; z-index:1; }
-      .hero h1 { margin-top:5px; font-size:clamp(33px,8vw,46px); line-height:1.03; letter-spacing:-.035em; overflow-wrap:anywhere; }
+      .hero h1 { margin-top:5px; font-size:clamp(33px,8vw,46px); line-height:1.03; letter-spacing:-.035em; overflow-wrap:normal; word-break:normal; }
       .hero-hint { margin-top:8px; color:var(--secondary-text-color); font-size:15px; line-height:1.28; }
       .connection-badge { display:inline-flex; align-items:center; gap:7px; min-height:36px; padding:0 12px; border-radius:999px; background:var(--secondary-background-color); color:var(--secondary-text-color); font-size:13px; font-weight:800; white-space:nowrap; }
       .dot { width:8px; height:8px; border-radius:50%; background:var(--success-color,#43a047); }
       .connection-badge.bad .dot { background:var(--error-color,#db4437); }
       .scene { position:relative; z-index:1; height:166px; margin-top:15px; border-radius:22px; border:1px solid color-mix(in srgb,var(--divider-color) 80%,transparent); background:color-mix(in srgb,var(--secondary-background-color) 72%,transparent); overflow:hidden; }
-      .scene-label { position:absolute; top:15px; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--secondary-text-color); }
-      .scene-label.robot { left:16px; } .scene-label.station { right:16px; }
-      .scene-state { position:absolute; top:35px; max-width:46%; font-size:15px; font-weight:800; line-height:1.1; overflow-wrap:anywhere; }
-      .scene-state.robot { left:16px; } .scene-state.station { right:16px; text-align:right; }
+      .scene-label { position:absolute; top:15px; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--secondary-text-color); white-space:nowrap; }
+      .scene-label.robot { left:16px; }
+      .scene-label.station { right:108px; text-align:right; }
+      .scene-state { position:absolute; top:35px; max-width:40%; font-size:15px; font-weight:800; line-height:1.1; overflow-wrap:normal; word-break:normal; hyphens:none; }
+      .scene-state.robot { left:16px; }
+      .scene-state.station { right:108px; text-align:right; white-space:nowrap; }
       .track { position:absolute; left:14%; right:23%; top:70%; border-top:2px dashed color-mix(in srgb,var(--secondary-text-color) 24%,transparent); }
       .track::before { content:""; position:absolute; left:0; top:-5px; width:8px; height:8px; border-radius:50%; background:color-mix(in srgb,var(--primary-color) 55%,white); }
       .dock { position:absolute; right:8%; bottom:23px; width:64px; height:82px; border-radius:16px 16px 20px 20px; background:color-mix(in srgb,var(--secondary-background-color) 90%,var(--primary-text-color) 10%); border:1px solid var(--divider-color); display:grid; place-items:center; color:var(--secondary-text-color); }
@@ -336,7 +339,7 @@ class S8OmniPanel extends HTMLElement {
       .hero-metrics { position:relative; z-index:1; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:13px; }
       .hero-metrics>div { min-height:82px; border-radius:19px; padding:12px; background:var(--secondary-background-color); overflow:hidden; }
       .hero-metrics span { display:block; color:var(--secondary-text-color); font-size:11px; text-transform:uppercase; letter-spacing:.1em; white-space:nowrap; }
-      .hero-metrics strong { display:block; margin-top:5px; font-size:22px; line-height:1.08; overflow-wrap:anywhere; }
+      .hero-metrics strong { display:block; margin-top:5px; font-size:22px; line-height:1.08; overflow-wrap:normal; word-break:normal; hyphens:none; }
       .battery-bar { height:5px; border-radius:999px; background:var(--divider-color); margin-top:10px; overflow:hidden; }
       .battery-bar i { display:block; height:100%; border-radius:inherit; background:var(--primary-color); }
       .trust-banner { display:flex; gap:11px; align-items:flex-start; padding:12px 14px; margin:0 0 12px; border-radius:18px; background:color-mix(in srgb,var(--error-color,#db4437) 10%,var(--card-background-color)); border:1px solid color-mix(in srgb,var(--error-color,#db4437) 35%,transparent); }
@@ -347,8 +350,11 @@ class S8OmniPanel extends HTMLElement {
       .action { min-height:112px; border:1px solid color-mix(in srgb,var(--divider-color) 82%,transparent); border-radius:24px; padding:10px 7px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; background:var(--card-background-color); color:var(--primary-text-color); text-align:center; overflow:hidden; }
       .action.primary { background:var(--primary-color); color:var(--text-primary-color,white); border-color:transparent; }
       .action:disabled { opacity:.34; }
+      .action.running { background:color-mix(in srgb,var(--primary-color) 16%,var(--card-background-color)); color:var(--primary-color); border-color:color-mix(in srgb,var(--primary-color) 28%,var(--divider-color)); }
+      .action.running:disabled { opacity:1; }
       .action-icon { width:60px; height:60px; flex:0 0 60px; border-radius:19px; display:grid; place-items:center; background:rgba(0,0,0,.10); box-shadow:inset 0 0 0 1px color-mix(in srgb,currentColor 9%,transparent); }
       .action.primary .action-icon { background:rgba(0,0,0,.17); }
+      .action.running .action-icon { background:color-mix(in srgb,var(--primary-color) 18%,var(--secondary-background-color)); }
       .action-icon ha-icon { --mdc-icon-size:42px; }
       .action strong { display:block; font-size:16px; line-height:1.04; white-space:nowrap; }
       .action .action-sub { display:block; font-size:11px; opacity:.75; line-height:1.08; white-space:nowrap; }
@@ -359,18 +365,24 @@ class S8OmniPanel extends HTMLElement {
       .status-icon { width:48px; height:48px; border-radius:16px; display:grid; place-items:center; background:var(--card-background-color); color:var(--primary-color); }
       .status-icon ha-icon { --mdc-icon-size:28px; }
       .status-copy strong { display:block; font-size:15px; line-height:1.05; }
-      .status-copy b { display:block; margin-top:4px; font-size:20px; line-height:1.08; overflow-wrap:anywhere; }
-      .status-copy span { display:block; margin-top:4px; color:var(--secondary-text-color); font-size:12px; line-height:1.2; overflow-wrap:anywhere; }
+      .status-copy b { display:block; margin-top:4px; font-size:20px; line-height:1.08; overflow-wrap:normal; word-break:normal; hyphens:none; }
+      .status-copy span { display:block; margin-top:4px; color:var(--secondary-text-color); font-size:12px; line-height:1.2; overflow-wrap:normal; word-break:normal; }
       .section-title { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }
       .section-title h2 { margin-top:3px; font-size:27px; letter-spacing:-.02em; }
       .metric-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
       .metric { min-height:122px; border-radius:22px; padding:16px; background:var(--secondary-background-color); display:grid; grid-template-columns:44px minmax(0,1fr); grid-template-rows:auto auto; align-content:center; column-gap:11px; overflow:hidden; }
       .metric ha-icon { grid-row:1/span 2; align-self:center; color:var(--primary-color); --mdc-icon-size:31px; }
       .metric span { color:var(--secondary-text-color); font-size:13px; align-self:end; }
-      .metric strong { font-size:24px; align-self:start; overflow-wrap:anywhere; }
-      .drill-entry { width:100%; min-height:90px; border:0; border-radius:22px; padding:15px; display:grid; grid-template-columns:52px minmax(0,1fr) 26px; gap:12px; align-items:center; background:var(--secondary-background-color); color:var(--primary-text-color); text-align:left; }
-      .drill-entry .icon { width:52px; height:52px; border-radius:17px; display:grid; place-items:center; background:var(--card-background-color); color:var(--primary-color); }
-      .drill-entry strong { display:block; font-size:17px; line-height:1.22; } .drill-entry span { display:block; margin-top:4px; color:var(--secondary-text-color); font-size:12px; line-height:1.3; }
+      .metric strong { font-size:24px; align-self:start; overflow-wrap:normal; word-break:normal; hyphens:none; }
+      .profile-metric { grid-template-columns:36px minmax(0,1fr); column-gap:9px; }
+      .profile-metric ha-icon { --mdc-icon-size:28px; }
+      .profile-metric strong { font-size:clamp(18px,4.8vw,22px); white-space:nowrap; }
+      .drill-entry,.settings-entry { width:100%; min-height:90px; border:0; border-radius:22px; padding:15px; display:grid; grid-template-columns:52px minmax(0,1fr) 26px; gap:12px; align-items:center; background:var(--secondary-background-color); color:var(--primary-text-color); text-align:left; }
+      .settings-entry { margin:0 0 14px; background:var(--card-background-color); border:1px solid color-mix(in srgb,var(--divider-color) 70%,transparent); box-shadow:0 7px 22px rgba(0,0,0,.045); }
+      .drill-entry .icon,.settings-entry .icon { width:52px; height:52px; border-radius:17px; display:grid; place-items:center; background:var(--card-background-color); color:var(--primary-color); }
+      .settings-entry .icon { background:var(--secondary-background-color); }
+      .drill-entry strong,.settings-entry strong { display:block; font-size:17px; line-height:1.22; }
+      .drill-entry span,.settings-entry span { display:block; margin-top:4px; color:var(--secondary-text-color); font-size:12px; line-height:1.3; }
       .future-card { display:grid; grid-template-columns:50px minmax(0,1fr); gap:12px; padding:15px; margin-bottom:14px; border-radius:22px; border:1px dashed var(--divider-color); }
       .future-card .icon { width:50px; height:50px; border-radius:16px; display:grid; place-items:center; background:var(--secondary-background-color); color:var(--secondary-text-color); }
       .future-card strong { display:block; font-size:16px; } .future-card p { margin-top:4px; color:var(--secondary-text-color); font-size:12px; line-height:1.38; }
@@ -383,7 +395,10 @@ class S8OmniPanel extends HTMLElement {
       .slider-row,.toggle-row,.info-row { padding:14px 0; border-top:1px solid var(--divider-color); }
       .slider-row:first-child,.toggle-row:first-child,.info-row:first-child { border-top:0; }
       .slider-head,.toggle-row,.info-row { display:flex; justify-content:space-between; gap:14px; align-items:center; }
-      .slider-head strong,.toggle-row strong,.info-row strong { font-size:15px; } .slider-head span,.toggle-row small,.info-row span { color:var(--secondary-text-color); font-size:12px; }
+      .toggle-row>span:first-child { display:flex; flex-direction:column; gap:4px; min-width:0; }
+      .slider-head strong,.toggle-row strong,.info-row strong { font-size:15px; }
+      .toggle-row strong,.toggle-row small { display:block; }
+      .slider-head span,.toggle-row small,.info-row span { color:var(--secondary-text-color); font-size:12px; }
       input[type=range] { width:100%; margin-top:12px; accent-color:var(--primary-color); }
       .toggle-row { width:100%; border-left:0; border-right:0; border-bottom:0; background:transparent; color:var(--primary-text-color); text-align:left; }
       .toggle { width:48px; height:28px; border-radius:999px; background:var(--disabled-color,#bdbdbd); padding:3px; flex:0 0 auto; }
@@ -391,17 +406,21 @@ class S8OmniPanel extends HTMLElement {
       .toggle.on { background:var(--primary-color); } .toggle.on::after { transform:translateX(20px); }
       .station-hero { display:grid; grid-template-columns:92px minmax(0,1fr); gap:16px; align-items:center; }
       .station-device { width:92px; height:122px; border-radius:24px; background:var(--secondary-background-color); border:1px solid var(--divider-color); display:grid; place-items:center; color:var(--primary-color); }
-      .station-device ha-icon { --mdc-icon-size:42px; } .station-hero h2 { font-size:38px; line-height:1; margin-top:6px; overflow-wrap:anywhere; } .station-hero p { margin-top:9px; color:var(--secondary-text-color); font-size:14px; line-height:1.35; }
-      .operation-list { display:grid; gap:9px; } .operation { min-height:74px; border-radius:20px; padding:12px; background:var(--secondary-background-color); display:grid; grid-template-columns:48px minmax(0,1fr) 12px; gap:12px; align-items:center; }
+      .station-device ha-icon { --mdc-icon-size:42px; } .station-hero h2 { font-size:38px; line-height:1; margin-top:6px; overflow-wrap:normal; word-break:normal; } .station-hero p { margin-top:9px; color:var(--secondary-text-color); font-size:14px; line-height:1.35; }
+      .operation-list { display:grid; gap:9px; }
+      .operation { min-height:74px; border-radius:20px; padding:12px; background:var(--secondary-background-color); display:grid; grid-template-columns:48px minmax(0,1fr) 34px; gap:12px; align-items:center; border:1px solid transparent; }
+      .operation.active { background:color-mix(in srgb,var(--primary-color) 9%,var(--secondary-background-color)); border-color:color-mix(in srgb,var(--primary-color) 24%,transparent); }
       .operation .icon { width:48px; height:48px; border-radius:16px; display:grid; place-items:center; background:var(--card-background-color); color:var(--primary-color); }
-      .operation strong { display:block; font-size:15px; } .operation span { display:block; margin-top:3px; color:var(--secondary-text-color); font-size:12px; } .operation i { width:9px; height:9px; border-radius:50%; background:var(--divider-color); }
-      .operation.active i { background:var(--primary-color); box-shadow:0 0 0 5px color-mix(in srgb,var(--primary-color) 14%,transparent); }
+      .operation strong { display:block; font-size:15px; } .operation span { display:block; margin-top:3px; color:var(--secondary-text-color); font-size:12px; }
+      .operation i { width:10px; height:10px; justify-self:center; border-radius:50%; background:var(--divider-color); position:relative; }
+      .operation.active i { width:28px; height:28px; background:color-mix(in srgb,var(--primary-color) 18%,transparent); border:2px solid color-mix(in srgb,var(--primary-color) 34%,transparent); box-shadow:0 0 0 4px color-mix(in srgb,var(--primary-color) 8%,transparent); }
+      .operation.active i::after { content:""; position:absolute; inset:7px; border-radius:50%; background:var(--primary-color); }
       .resource { min-height:98px; border-radius:22px; padding:15px; margin-bottom:10px; background:var(--card-background-color); border:1px solid color-mix(in srgb,var(--divider-color) 70%,transparent); display:grid; grid-template-columns:58px minmax(0,1fr) auto; gap:13px; align-items:center; }
       .resource .icon { width:58px; height:58px; border-radius:18px; display:grid; place-items:center; background:color-mix(in srgb,var(--primary-color) 12%,var(--secondary-background-color)); color:var(--primary-color); }
       .resource strong { font-size:16px; } .resource span { display:block; margin-top:4px; color:var(--secondary-text-color); font-size:12px; } .resource b { font-size:22px; white-space:nowrap; }
       .diagnostic-strip { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; padding:13px; margin-bottom:14px; border:1px solid color-mix(in srgb,var(--success-color,#43a047) 45%,var(--divider-color)); border-radius:22px; }
-      .diagnostic-strip span { display:block; color:var(--secondary-text-color); font-size:11px; } .diagnostic-strip strong { display:block; margin-top:6px; font-size:14px; overflow-wrap:anywhere; }
-      .info-list { margin-top:3px; } .info-row>span:first-child { color:var(--primary-text-color); font-size:14px; } .info-row>strong { text-align:right; overflow-wrap:anywhere; }
+      .diagnostic-strip span { display:block; color:var(--secondary-text-color); font-size:11px; } .diagnostic-strip strong { display:block; margin-top:6px; font-size:14px; overflow-wrap:normal; word-break:normal; }
+      .info-list { margin-top:3px; } .info-row>span:first-child { color:var(--primary-text-color); font-size:14px; } .info-row>strong { text-align:right; overflow-wrap:normal; word-break:normal; }
       nav { position:fixed; left:0; right:0; bottom:0; z-index:70; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:1px; padding:7px max(7px,env(safe-area-inset-right)) calc(7px + env(safe-area-inset-bottom)) max(7px,env(safe-area-inset-left)); background:color-mix(in srgb,var(--card-background-color) 97%,transparent); border-top:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent); box-shadow:0 -3px 14px rgba(0,0,0,.055); backdrop-filter:blur(18px) saturate(135%); -webkit-backdrop-filter:blur(18px) saturate(135%); }
       nav button { min-height:58px; border:0; border-radius:17px; background:transparent; color:var(--secondary-text-color); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:5px 2px; overflow:hidden; }
       nav button ha-icon { --mdc-icon-size:25px; } nav button span { font-size:11px; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } nav button.active { background:color-mix(in srgb,var(--primary-color) 10%,transparent); color:var(--primary-color); }
@@ -413,11 +432,16 @@ class S8OmniPanel extends HTMLElement {
         .app-header { grid-template-columns:48px minmax(0,1fr) 48px; gap:8px; min-height:calc(68px + env(safe-area-inset-top)); padding-left:max(10px,env(safe-area-inset-left)); padding-right:max(10px,env(safe-area-inset-right)); }
         .header-action { width:48px; height:48px; border-radius:15px; } .header-title strong { font-size:22px; } .header-title span { font-size:11px; }
         .content { padding:12px 10px 20px; } .card { border-radius:22px; padding:17px; margin-bottom:12px; } .hero { padding:17px; } .hero h1 { font-size:34px; } .hero-hint { font-size:14px; }
-        .connection-badge { min-height:34px; padding:0 11px; font-size:12px; } .scene { height:154px; margin-top:13px; } .hero-metrics { gap:9px; margin-top:11px; } .hero-metrics>div { min-height:76px; padding:11px; } .hero-metrics span { font-size:10px; } .hero-metrics strong { font-size:21px; }
+        .connection-badge { min-height:34px; padding:0 11px; font-size:12px; }
+        .scene { height:154px; margin-top:13px; }
+        .scene-label.station,.scene-state.station { right:98px; }
+        .hero-metrics { gap:9px; margin-top:11px; } .hero-metrics>div { min-height:76px; padding:11px; } .hero-metrics span { font-size:10px; } .hero-metrics strong { font-size:21px; }
         .action { min-height:108px; border-radius:22px; } .action-icon { width:60px; height:60px; flex-basis:60px; } .action-icon ha-icon { --mdc-icon-size:42px; } .action strong { font-size:15px; } .action .action-sub { font-size:10px; }
         .statuses-card { padding:15px 16px 16px; } .statuses-card>h2 { font-size:27px; margin-bottom:12px; } .status-card { min-height:108px; grid-template-columns:46px minmax(0,1fr); gap:10px; padding:12px; }
         .status-icon { width:46px; height:46px; border-radius:15px; } .status-icon ha-icon { --mdc-icon-size:27px; } .status-copy strong { font-size:14px; } .status-copy b { font-size:19px; } .status-copy span { font-size:11px; } .segments.four .segment { font-size:10px; }
         .metric { min-height:116px; padding:15px; } .metric strong { font-size:23px; }
+        .profile-metric { grid-template-columns:34px minmax(0,1fr); gap:8px; }
+        .profile-metric strong { font-size:19px; }
       }
       @media (max-width:360px) {
         .header-title strong { font-size:20px; } .header-title span { font-size:10px; } .hero-top { grid-template-columns:1fr; } .connection-badge { justify-self:start; }
@@ -453,7 +477,7 @@ class S8OmniPanel extends HTMLElement {
 
   _hero() {
     const snap = this._snapshot();
-    const compositeLabel = snap.connection === "disconnected" ? "Нет связи" : snap.connection === "unknown" ? "Связь не подтверждена" : this._label(COMPOSITE_LABELS, snap.composite, "Состояние неизвестно");
+    const compositeLabel = snap.connection === "disconnected" ? "Нет связи" : snap.connection === "unknown" ? "Связь не подтверждена" : this._label(COMPOSITE_LABELS, snap.composite, "Нет данных");
     const robotLabel = snap.unreliable ? "Нет данных" : this._label(ROBOT_LABELS, snap.robot, "Нет данных");
     const stationLabel = snap.unreliable ? "Нет данных" : this._label(STATION_LABELS, snap.station, "Нет данных");
     const connection = this._connectionLabel();
@@ -471,15 +495,20 @@ class S8OmniPanel extends HTMLElement {
     const available = snap.connected && this._available(vacuum);
     const cleaning = vacuum?.state === "cleaning";
     const paused = vacuum?.state === "paused";
-    return `<div class="quick-actions"><button class="action primary" data-action="start" ${available && !cleaning ? "" : "disabled"}><span class="action-icon"><ha-icon icon="mdi:play"></ha-icon></span><strong>${paused ? "Продолжить" : "Уборка"}</strong><span class="action-sub">${paused ? "Возобновить" : "Smart"}</span></button><button class="action" data-action="pause" ${available && cleaning ? "" : "disabled"}><span class="action-icon"><ha-icon icon="mdi:pause"></ha-icon></span><strong>Пауза</strong><span class="action-sub">Приостановить</span></button><button class="action" data-action="home" ${available ? "" : "disabled"}><span class="action-icon"><ha-icon icon="mdi:home-import-outline"></ha-icon></span><strong>Домой</strong><span class="action-sub">На станцию</span></button></div>`;
+    const startClass = cleaning ? "action running" : "action primary";
+    const pauseClass = cleaning ? "action primary" : "action";
+    const startIcon = cleaning ? "mdi:robot-vacuum" : "mdi:play";
+    const startTitle = cleaning ? "Уборка" : paused ? "Продолжить" : "Уборка";
+    const startSub = cleaning ? "Идёт" : paused ? "Возобновить" : "Smart";
+    return `<div class="quick-actions"><button class="${startClass}" data-action="start" ${available && !cleaning ? "" : "disabled"}><span class="action-icon"><ha-icon icon="${startIcon}"></ha-icon></span><strong>${startTitle}</strong><span class="action-sub">${startSub}</span></button><button class="${pauseClass}" data-action="pause" ${available && cleaning ? "" : "disabled"}><span class="action-icon"><ha-icon icon="mdi:pause"></ha-icon></span><strong>Пауза</strong><span class="action-sub">${cleaning ? "Приостановить" : "Недоступно"}</span></button><button class="action" data-action="home" ${available ? "" : "disabled"}><span class="action-icon"><ha-icon icon="mdi:home-import-outline"></ha-icon></span><strong>Домой</strong><span class="action-sub">На станцию</span></button></div>`;
   }
 
   _overview() {
     const snap = this._snapshot();
     const robotLabel = snap.unreliable ? "Нет данных" : this._label(ROBOT_LABELS, snap.robot, "Нет данных");
     const stationLabel = snap.unreliable ? "Нет данных" : this._label(STATION_LABELS, snap.station, "Нет данных");
-    const robotContext = snap.unreliable ? "Нет текущей телеметрии" : snap.onDock === true ? "На базе" : snap.onDock === false ? "Не на базе" : "Положение неизвестно";
-    const operation = snap.unreliable ? "Нет текущей телеметрии" : snap.stationOperations.length ? snap.stationOperations.map((item) => STATION_OPERATION_LABELS[item] || item).join(" · ") : snap.missingStationDps.length ? "Часть данных отсутствует" : "Активных операций нет";
+    const robotContext = snap.unreliable ? "Нет данных" : snap.onDock === true ? "На базе" : snap.onDock === false ? "Не на базе" : "Позиция неизвестна";
+    const operation = snap.unreliable ? "Нет данных" : snap.stationOperations.length ? snap.stationOperations.map((item) => STATION_OPERATION_LABELS[item] || item).join(" · ") : snap.missingStationDps.length ? "Часть данных" : "Нет операций";
     return `<div class="overview-stack">${this._hero()}${this._trustBanner(snap)}${this._quickActions()}<section class="card statuses-card"><h2>Статусы</h2><div class="status-grid"><button class="status-card" data-more="robot_status" type="button"><span class="status-icon"><ha-icon icon="mdi:robot-vacuum"></ha-icon></span><span class="status-copy"><strong>Робот</strong><b>${escapeHtml(robotLabel)}</b><span>${escapeHtml(robotContext)}</span></span></button><button class="status-card" data-more="station_status" type="button"><span class="status-icon"><ha-icon icon="mdi:home-automation"></ha-icon></span><span class="status-copy"><strong>Станция</strong><b>${escapeHtml(stationLabel)}</b><span>${escapeHtml(operation)}</span></span></button></div></section></div>`;
   }
 
@@ -494,7 +523,7 @@ class S8OmniPanel extends HTMLElement {
     const volume = Number.isFinite(volumeValue) ? `${Math.round(volumeValue)}%` : "Нет данных";
     const dndObj = this._state("do_not_disturb");
     const dnd = snap.connected && this._available(dndObj) ? (dndObj.state === "on" ? "Вкл" : "Выкл") : "Нет данных";
-    return `${this._trustBanner(snap)}<section class="card"><div class="section-title"><div><h2>Текущая уборка</h2></div></div><div class="metric-grid"><div class="metric" data-more="clean_time"><ha-icon icon="mdi:timer-outline"></ha-icon><span>Время</span><strong>${cleanTime !== null ? `${escapeHtml(cleanTime)} мин` : "—"}</strong></div><div class="metric" data-more="clean_area"><ha-icon icon="mdi:ruler-square"></ha-icon><span>Площадь</span><strong>${cleanArea !== null ? `${escapeHtml(cleanArea)} м²` : "—"}</strong></div></div></section><section class="card"><div class="section-title"><div><h2>Как убирать</h2></div></div><div class="metric-grid"><div class="metric" data-more="suction"><ha-icon icon="mdi:fan"></ha-icon><span>Всасывание</span><strong>${escapeHtml(suction)}</strong></div><div class="metric" data-more="water"><ha-icon icon="mdi:water-outline"></ha-icon><span>Подача воды</span><strong>${escapeHtml(water)}</strong></div></div><button class="drill-entry" type="button" data-detail="cleaning-settings" style="margin-top:12px"><span class="icon"><ha-icon icon="mdi:tune-variant"></ha-icon></span><span><strong>Настроить уборку</strong><span>Громкость: ${escapeHtml(volume)} · Не беспокоить: ${escapeHtml(dnd)}</span></span><ha-icon icon="mdi:chevron-right"></ha-icon></button></section><section class="future-card"><span class="icon"><ha-icon icon="mdi:map-outline"></ha-icon></span><div><span class="eyebrow">Следующий этап</span><strong>Карта и комнаты</strong><p>Комнатная и зональная уборка появятся после завершения безопасной поддержки в интеграции.</p></div></section>`;
+    return `${this._trustBanner(snap)}<section class="card"><div class="section-title"><div><h2>Текущая уборка</h2></div></div><div class="metric-grid"><div class="metric" data-more="clean_time"><ha-icon icon="mdi:timer-outline"></ha-icon><span>Время</span><strong>${cleanTime !== null ? `${escapeHtml(cleanTime)} мин` : "—"}</strong></div><div class="metric" data-more="clean_area"><ha-icon icon="mdi:ruler-square"></ha-icon><span>Площадь</span><strong>${cleanArea !== null ? `${escapeHtml(cleanArea)} м²` : "—"}</strong></div></div></section><section class="card"><div class="section-title"><div><h2>Как убирать</h2></div></div><div class="metric-grid"><div class="metric profile-metric" data-more="suction"><ha-icon icon="mdi:fan"></ha-icon><span>Всасывание</span><strong>${escapeHtml(suction)}</strong></div><div class="metric profile-metric" data-more="water"><ha-icon icon="mdi:water-outline"></ha-icon><span>Подача воды</span><strong>${escapeHtml(water)}</strong></div></div></section><button class="settings-entry" type="button" data-detail="cleaning-settings"><span class="icon"><ha-icon icon="mdi:tune-variant"></ha-icon></span><span><strong>Настроить уборку</strong><span>Громкость: ${escapeHtml(volume)} · Не беспокоить: ${escapeHtml(dnd)}</span></span><ha-icon icon="mdi:chevron-right"></ha-icon></button><section class="future-card"><span class="icon"><ha-icon icon="mdi:map-outline"></ha-icon></span><div><span class="eyebrow">Следующий этап</span><strong>Карта и комнаты</strong><p>Комнатная и зональная уборка появятся после завершения безопасной поддержки в интеграции.</p></div></section>`;
   }
 
   _segmentControl(key, labels, columnsClass, title, hint) {
@@ -525,7 +554,7 @@ class S8OmniPanel extends HTMLElement {
     const snap = this._snapshot();
     const stationLabel = snap.unreliable ? "Нет данных" : this._label(STATION_LABELS,snap.station,"Нет данных");
     const operation = snap.unreliable ? "Нет данных" : snap.stationOperations.length ? snap.stationOperations.map((item)=>STATION_OPERATION_LABELS[item]||item).join(" · ") : "Ожидание";
-    return `${this._trustBanner(snap)}<section class="card station-hero" data-more="station_status"><div class="station-device"><ha-icon icon="mdi:home-automation"></ha-icon></div><div><span class="eyebrow">Станция S8 OMNI</span><h2>${escapeHtml(stationLabel)}</h2><p>${snap.unreliable ? "Нет подтверждённого текущего состояния станции." : `Текущая операция: ${escapeHtml(operation)}.`}</p></div></section><section class="card"><div class="info-list"><div class="info-row"><span>Робот</span><strong>${snap.unreliable ? "Нет данных" : snap.onDock === true ? "На базе" : snap.onDock === false ? "Не на базе" : "Неизвестно"}</strong></div><div class="info-row"><span>Заряд</span><strong>${snap.battery === null ? "—" : `${Math.round(snap.battery)}%`}</strong></div><div class="info-row"><span>Текущая операция</span><strong>${escapeHtml(operation)}</strong></div></div></section><section class="card"><div class="section-title"><div><span class="eyebrow">Состояние</span><h2>Операции станции</h2></div></div><div class="operation-list">${this._operation("dust_collection","Очистка пылесборника","mdi:delete-sweep-outline",snap.connected)}${this._operation("roller_cleaning","Промывка / очистка","mdi:waves",snap.connected)}${this._operation("roller_drying","Сушка","mdi:weather-windy",snap.connected)}</div></section><section class="future-card"><span class="icon"><ha-icon icon="mdi:shield-check-outline"></ha-icon></span><div><strong>Управление станцией</strong><p>Кнопки операций появятся только после подтверждения публичных команд интеграции.</p></div></section>`;
+    return `${this._trustBanner(snap)}<section class="card station-hero" data-more="station_status"><div class="station-device"><ha-icon icon="mdi:home-automation"></ha-icon></div><div><span class="eyebrow">Станция S8 OMNI</span><h2>${escapeHtml(stationLabel)}</h2><p>${snap.unreliable ? "Нет подтверждённого текущего состояния станции." : `Текущая операция: ${escapeHtml(operation)}.`}</p></div></section><section class="card"><div class="info-list"><div class="info-row"><span>Робот</span><strong>${snap.unreliable ? "Нет данных" : snap.onDock === true ? "На базе" : snap.onDock === false ? "Не на базе" : "Неизвестно"}</strong></div><div class="info-row"><span>Заряд</span><strong>${snap.battery === null ? "—" : `${Math.round(snap.battery)}%`}</strong></div><div class="info-row"><span>Текущая операция</span><strong>${escapeHtml(operation)}</strong></div></div></section><section class="card"><div class="section-title"><div><span class="eyebrow">Состояние</span><h2>Операции станции</h2></div></div><div class="operation-list">${this._operation("dust_collection","Сбор пыли","mdi:delete-sweep-outline",snap.connected)}${this._operation("roller_cleaning","Промывка","mdi:waves",snap.connected)}${this._operation("roller_drying","Сушка","mdi:weather-windy",snap.connected)}</div></section><section class="future-card"><span class="icon"><ha-icon icon="mdi:shield-check-outline"></ha-icon></span><div><strong>Управление станцией</strong><p>Кнопки операций появятся только после подтверждения публичных команд интеграции.</p></div></section>`;
   }
 
   _resource(key,title,icon,connected) {
@@ -538,7 +567,7 @@ class S8OmniPanel extends HTMLElement {
     const fault = snap.connected ? this._formatEntity("fault","—") : "—";
     const child = this._state("child_lock");
     const childUsable = snap.connected && this._available(child);
-    return `${this._trustBanner(snap)}<section class="view-heading"><span class="eyebrow">S8 OMNI</span><h2>Обслуживание</h2><p>Остаточный ресурс расходников.</p></section>${this._resource("filter_life","Фильтр","mdi:air-filter",snap.connected)}${this._resource("side_brush_life","Боковая щётка","mdi:fan",snap.connected)}${this._resource("main_brush_life","Основная щётка","mdi:brush",snap.connected)}<section class="card"><div class="section-title"><div><span class="eyebrow">Система</span><h2>Защита и ошибки</h2></div></div><div class="info-row" data-more="fault"><span>Fault</span><strong>${escapeHtml(fault)}</strong></div><button class="toggle-row" type="button" data-toggle="child_lock" ${childUsable ? "" : "disabled"}><span><strong>Блокировка от детей</strong><small>Защита кнопок робота</small></span><span class="toggle ${childUsable && child?.state === "on" ? "on" : ""}"></span></button></section><section class="future-card"><span class="icon"><ha-icon icon="mdi:restore"></ha-icon></span><div><strong>Сброс ресурса</strong><p>Сброс станет доступен после завершения проверки безопасной команды.</p></div></section>`;
+    return `${this._trustBanner(snap)}<section class="view-heading"><span class="eyebrow">S8 OMNI</span><h2>Обслуживание</h2><p>Остаточный ресурс расходников.</p></section>${this._resource("filter_life","Фильтр","mdi:air-filter",snap.connected)}${this._resource("side_brush_life","Боковая щётка","mdi:fan",snap.connected)}${this._resource("main_brush_life","Основная щётка","mdi:brush",snap.connected)}<section class="card"><div class="section-title"><div><span class="eyebrow">Система</span><h2>Защита и ошибки</h2></div></div><div class="info-row" data-more="fault"><span>Ошибка</span><strong>${escapeHtml(fault)}</strong></div><button class="toggle-row" type="button" data-toggle="child_lock" ${childUsable ? "" : "disabled"}><span><strong>Блокировка от детей</strong><small>Защита кнопок робота</small></span><span class="toggle ${childUsable && child?.state === "on" ? "on" : ""}"></span></button></section><section class="future-card"><span class="icon"><ha-icon icon="mdi:restore"></ha-icon></span><div><strong>Сброс ресурса</strong><p>Сброс станет доступен после завершения проверки безопасной команды.</p></div></section>`;
   }
 
   _diagRow(label,value) {
