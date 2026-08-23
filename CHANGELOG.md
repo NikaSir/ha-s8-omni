@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Added
 
+- `v1.00_b023` / dashboard `v0.6.0`: replace the root-view Back button with the native Home Assistant **Menu** action (`hass-toggle-menu`); the **Настройки уборки** drill-down keeps an explicit Back button to its parent view.
+- `v1.00_b023` / dashboard `v0.6.0`: rebalance the mobile typography scale so large headings are less dominant while labels, secondary text and Bottom Tab Bar captions are easier to read on iPhone Pro Max.
 - `v1.00_b022` / dashboard `v0.5.9`: add a compact daily-use state vocabulary for mobile cards: **Зарядка**, **Уборка**, **Пауза**, **Возврат**, **Сбор пыли**, **Промывка** and other short user-facing labels while raw/diagnostic values remain unchanged.
 - `v1.00_b022` / dashboard `v0.5.9`: make frequent actions state-aware: while cleaning, **Пауза** becomes the primary action and **Уборка** becomes a readable running-state tile instead of looking accidentally disabled.
 - `v1.00_b022` / dashboard `v0.5.9`: enlarge the active OMNI station-operation indicator and add a subtle active-row highlight so station work is visible at a glance.
@@ -45,6 +47,7 @@ All notable project changes are recorded here.
 
 ### Fixed
 
+- `v1.00_b023`: reduce the gap between display headings and small supporting copy by using a tighter 12–31 px mobile type scale instead of the previous 10/11–34+ px spread.
 - `v1.00_b022`: reserve a dedicated safe text zone for station state in the Overview scene so station labels no longer overlap the OMNI illustration.
 - `v1.00_b022`: prevent Russian state/value words from being split inside status and profile cards; use compact labels and safer typography instead.
 - `v1.00_b022`: separate **Как убирать** information cards from the standalone **Настроить уборку** navigation card, fix the child-lock title/subtitle layout, and translate consumable `min` units to `мин` on the user-facing Service screen.
@@ -65,7 +68,7 @@ All notable project changes are recorded here.
 
 ### Known limitations
 
-- Stop command is intentionally not implemented through `v1.00_b022`.
+- Stop command is intentionally not implemented through `v1.00_b023`.
 - Consumable/map reset writes are intentionally deferred pending verification.
 - DND schedule, cleaning timers and raw map/control payloads are intentionally deferred pending verification.
 - Station DP134/135/136 remain read-only until station write semantics are verified end-to-end.
