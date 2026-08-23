@@ -8,7 +8,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.5.4",
+    "dashboard_version": "v0.5.5",
     "template": "NikaS Integration Panel Template v1.0",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -49,7 +49,10 @@
     "mobile_fit": {
       "primary_viewport": "iPhone Pro Max portrait",
       "horizontal_scroll": false,
-      "quick_actions": "three_equal_columns_vertical_content",
+      "quick_actions": "three_equal_columns_icon_first",
+      "quick_action_icon_px": 40,
+      "overview_target": "hero_actions_statuses_without_scroll_when_normal",
+      "status_heading": "Статусы",
       "touch_target_min_px": 44,
       "safe_area": true
     }
