@@ -8,7 +8,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.5.5",
+    "dashboard_version": "v0.5.6",
     "template": "NikaS Integration Panel Template v1.0",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -32,7 +32,7 @@
       "views": ["overview", "cleaning", "station", "maintenance", "diagnostics"],
       "view_responsibilities": {
         "overview": "composite_system_state_health_frequent_actions_and_compact_robot_station_summary",
-        "cleaning": "active_cleaning_workflow_metrics_and_profile_entry",
+        "cleaning": "current_cleaning_metrics_and_read_only_profile_summary_with_settings_drill_down",
         "station": "station_state_and_operations",
         "maintenance": "consumables_and_service",
         "diagnostics": "technical_state_and_raw_context"
@@ -49,9 +49,11 @@
     "mobile_fit": {
       "primary_viewport": "iPhone Pro Max portrait",
       "horizontal_scroll": false,
-      "quick_actions": "three_equal_columns_icon_first",
+      "quick_actions": "overview_only_three_equal_columns_icon_first",
       "quick_action_icon_px": 40,
       "overview_target": "hero_actions_statuses_without_scroll_when_normal",
+      "cleaning_root_actions": false,
+      "cleaning_profile_summary": ["suction", "water", "volume", "do_not_disturb"],
       "status_heading": "Статусы",
       "touch_target_min_px": 44,
       "safe_area": true
