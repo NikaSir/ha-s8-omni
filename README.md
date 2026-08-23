@@ -2,7 +2,7 @@
 
 Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum and OMNI station, built from verified Tuya LAN datapoints.
 
-> Current development line: **v1.00_b022** (`1.0.0b22`). This is an early test build.
+> Current development line: **v1.00_b023** (`1.0.0b23`). This is an early test build.
 
 ## Scope
 
@@ -23,11 +23,12 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 
 `ha-s8-omni` owns its full appliance UI instead of exposing a loose collection of Lovelace entities as the primary experience.
 
-Dashboard **v0.5.9** follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2** and **NikaS Integration Panel Template v1.0**, with the primary acceptance viewport **iPhone Pro Max portrait**:
+Dashboard **v0.6.0** follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2** and **NikaS Integration Panel Template v1.0**, with the primary acceptance viewport **iPhone Pro Max portrait**:
 
-- symmetric Header: 52 px Back / centered title / 52 px Refresh, reduced to 48 px side slots on narrow mobile;
-- Back is icon-only and explicitly navigates to **`/dashboard-actions`** on root views; browser history is not the application contract;
+- symmetric Header: 52 px Menu/Back slot / centered title / 52 px Refresh, reduced to 48 px side slots on narrow mobile;
+- root views use an icon-only **Menu** button that opens the native Home Assistant sidebar; the **Настройки уборки** drill-down uses an explicit Back arrow to return to its parent Cleaning view;
 - Refresh calls the public Home Assistant `button` entity owned by `ha-s8-omni`; the frontend does not write Tuya DP directly;
+- the mobile type scale is deliberately balanced: major display headings are reduced while supporting labels/captions are enlarged, targeting roughly **12–31 px** on iPhone-width layouts;
 - **full-width fixed bottom Tab Bar** is the sole primary navigation between Overview, Cleaning, Station, Maintenance and Diagnostics;
 - the bottom bar spans the useful viewport width, has no floating-card geometry and respects iOS Safe Area;
 - page content reserves enough bottom clearance for the final card to scroll completely above the Tab Bar;
@@ -40,6 +41,7 @@ Dashboard **v0.5.9** follows **Home Assistant NikaS · Integration Dashboard UI 
 - the standalone **Настроить уборку** card is visually separated from those information cards and shows secondary context for **Громкость** and **Не беспокоить**;
 - Start/Pause/Home are not repeated on the root Cleaning tab; daily actions stay on Overview;
 - editable suction, water, volume and DND controls live only one level lower and are not duplicated on the root Cleaning tab;
+- drill-down Back returns to the Cleaning root view while the bottom Tab Bar remains available for switching root sections;
 - Station view keeps independent dust collection / roller cleaning / drying state and uses a prominent active-operation indicator;
 - Maintenance view keeps factual remaining resource and translates user-facing minute units to **мин**;
 - Diagnostics keeps normalized and raw state context;
