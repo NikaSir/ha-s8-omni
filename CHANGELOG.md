@@ -6,6 +6,9 @@ All notable project changes are recorded here.
 
 ### Added
 
+- `v1.00_b021` / dashboard `v0.5.8`: restructure the root **Уборка** tab into **Текущая уборка** + two separate read-only profile cards for **Всасывание** and **Подача воды** + one **Настроить уборку** drill-down entry.
+- `v1.00_b021` / dashboard `v0.5.8`: keep volume and DND as secondary context on the settings entry instead of mixing all four profile values into one dense sentence.
+- `v1.00_b020` / dashboard `v0.5.7`: restore the earlier balanced card proportions as the visual reference: more generous card height/padding, larger scene, larger KPI/status typography and darker action-icon surfaces.
 - `v1.00_b019` / dashboard `v0.5.6`: simplify the root **Уборка** tab into a read-only current-cleaning screen; frequent Start/Pause/Home actions remain on **Обзор** instead of being duplicated on Cleaning.
 - `v1.00_b019` / dashboard `v0.5.6`: rename the root cleaning section to **Текущая уборка** and keep factual time/area metrics there.
 - `v1.00_b019` / dashboard `v0.5.6`: make **Как убирать** show the live current profile — suction, water, volume and DND — and keep the whole summary as the single drill-down entry to **Настройки уборки**.
@@ -39,6 +42,7 @@ All notable project changes are recorded here.
 
 ### Fixed
 
+- `v1.00_b021`: the Cleaning profile summary no longer compresses suction, water, volume and DND into one primary text block; the two cleaning-critical parameters are visually independent while editing still exists only on the drill-down screen.
 - `v1.00_b019`: the root Cleaning tab no longer duplicates the frequent device-action row from Overview.
 - `v1.00_b017`: an offline robot at Home Assistant startup no longer prevents the config entry from loading or makes the S8 OMNI panel disappear from the sidebar. The first refresh is non-gating; failed local polling leaves the panel visible and entities unavailable/disconnected until recovery.
 - `v1.00_b016`: a failed local connection can no longer leave the last robot/station DP snapshot looking like the current state. The daily UI switches to **Нет связи / Нет данных**, keeps telemetry age visible, and disables device commands until local communication is confirmed again.
@@ -55,7 +59,7 @@ All notable project changes are recorded here.
 
 ### Known limitations
 
-- Stop command is intentionally not implemented through `v1.00_b019`.
+- Stop command is intentionally not implemented through `v1.00_b021`.
 - Consumable/map reset writes are intentionally deferred pending verification.
 - DND schedule, cleaning timers and raw map/control payloads are intentionally deferred pending verification.
 - Station DP134/135/136 remain read-only until station write semantics are verified end-to-end.
