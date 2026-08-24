@@ -1,8 +1,12 @@
 from pathlib import Path
+import base64
 import logging
+import re
+
+from aiohttp import web
 
 from homeassistant.components import frontend, panel_custom
-from homeassistant.components.http import StaticPathConfig
+from homeassistant.components.http import HomeAssistantView, StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
@@ -25,9 +29,43 @@ FRONTEND_DIR = Path(__file__).parent / "frontend"
 PANEL_MODULE = f"{PANEL_STATIC_URL}/s8-omni-panel.js?v={DASHBOARD_VERSION}"
 
 _LOGGER = logging.getLogger(__name__)
+_PRODUCT_ART_CACHE: dict[str, bytes] = {}
+
+def _product_art_bytes(mode: str) -> bytes:
+    safe = "dock" if mode == "dock" else "clean"
+    if safe in _PRODUCT_ART_CACHE:
+        return _PRODUCT_ART_CACHE[safe]
+    text = (FRONTEND_DIR / "s8-omni-panel.js").read_text(encoding="utf-8")
+    name = f"PRODUCT_ART_{safe.upper()}_BASE64"
+    match = re.search(rf'const {name} = "([^"]+)";', text)
+    if not match:
+        raise FileNotFoundError(name)
+    data = base64.b64decode(match.group(1), validate=True)
+    if not (data.startswith(b"\xff\xd8") and data.endswith(b"\xff\xd9")):
+        raise ValueError(f"Invalid JPEG payload: {name}")
+    _PRODUCT_ART_CACHE[safe] = data
+    return data
+
+class S8ProductArtView(HomeAssistantView):
+    url = "/s8_omni/product-art/{mode}.jpg"
+    name = "api:s8_omni:product_art"
+    requires_auth = False
+
+    async def get(self, request, mode: str):
+        if mode not in {"clean", "dock"}:
+            return web.Response(status=404)
+        try:
+            data = _product_art_bytes(mode)
+        except (FileNotFoundError, ValueError, base64.binascii.Error):
+            _LOGGER.exception("Unable to serve S8 OMNI product art: %s", mode)
+            return web.Response(status=500)
+        return web.Response(body=data, content_type="image/jpeg", headers={"Cache-Control": "public, max-age=86400"})
 
 
 async def _async_register_panel(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    if not hass.data.get("s8_omni_product_art_view_registered"):
+        hass.http.register_view(S8ProductArtView)
+        hass.data["s8_omni_product_art_view_registered"] = True
     """Serve and register the integration-owned native panel.
 
     Return True only when this call registered the panel. This lets setup clean up
