@@ -28,95 +28,75 @@ jobs:
           import json
           from pathlib import Path
           for path in Path('.').rglob('*.json'):
-              if '.git' in path.parts:
-                  continue
-              with path.open(encoding='utf-8') as handle:
-                  json.load(handle)
-              print(f'OK {path}')
+              if '.git' not in path.parts:
+                  json.loads(path.read_text(encoding='utf-8'))
+                  print(f'OK {path}')
           PY
 
-      - name: Compile Python sources when present
-        run: |
-          if [ -d custom_components ]; then
-            python -m compileall -q custom_components
-          fi
+      - name: Compile Python sources
+        run: python -m compileall -q custom_components
 
-      - name: Validate frontend JavaScript when present
-        shell: bash
-        run: |
-          while IFS= read -r -d '' file; do
-            echo "Checking $file"
-            node --check "$file"
-          done < <(find custom_components -type f -name '*.js' -print0 2>/dev/null || true)
+      - name: Validate frontend JavaScript
+        run: node --check custom_components/s8_omni/frontend/s8-omni-panel.js
 
-      - name: Enforce standalone S8 OMNI production frontend
+      - name: Enforce S8 OMNI production frontend
         shell: bash
         run: |
           frontend_dir="custom_components/s8_omni/frontend"
           production="$frontend_dir/s8-omni-panel.js"
           registration="custom_components/s8_omni/__init__.py"
-          test -f "$production" || { echo "Missing production bundle: $production"; exit 1; }
+          test -f "$production"
           js_count="$(find "$frontend_dir" -maxdepth 1 -type f -name '*.js' | wc -l | tr -d ' ')"
-          test "$js_count" = "1" || { echo "Expected exactly one production JS file; found $js_count"; exit 1; }
-          if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then echo "Runtime imports forbidden"; exit 1; fi
-          if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then echo "Historical panel dependency found"; exit 1; fi
-          grep -q 's8-omni-panel\.js?v=' "$registration" || { echo "Stable panel cache busting missing"; exit 1; }
-          grep -q 'const PRODUCT_ART_CLEAN_BASE64 = "' "$production" || { echo "Approved cleaning product art missing"; exit 1; }
-          grep -q 'const PRODUCT_ART_DOCK_BASE64 = "' "$production" || { echo "Approved dock product art missing"; exit 1; }
-          grep -q 'data:image/jpeg;base64' "$production" || { echo "JPEG data URI product-art delivery missing"; exit 1; }
-          grep -q 'const artMode = chargeActive ? "dock" : "clean"' "$production" || { echo "Live product-art state selector missing"; exit 1; }
-          grep -q 'src="${productArtData(artMode)}"' "$production" || { echo "Overview does not use live approved product art"; exit 1; }
-          if grep -q 'createImageBitmap' "$production"; then echo "Legacy Canvas product-art decoder must not remain"; exit 1; fi
-          echo "Standalone frontend and approved dual product-art contract OK"
+          test "$js_count" = "1"
+          if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
+          if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
+          grep -q 's8-omni-panel\.js?v=' "$registration"
+          grep -q 'const PRODUCT_ART_CLEAN_BASE64 = "' "$production"
+          grep -q 'const PRODUCT_ART_DOCK_BASE64 = "' "$production"
+          grep -q 'productArtUrl(artMode)' "$production"
+          grep -q '/s8_omni/product-art/' "$production"
+          grep -q 'class S8ProductArtView' "$registration"
+          grep -q 'requires_auth = False' "$registration"
+          grep -q 'Чистая вода' "$production"
+          grep -q 'Грязная вода' "$production"
+          grep -q 'Пыль/мешок' "$production"
+          grep -q 'Тёплый воздух' "$production"
+          grep -q 'Зарядка' "$production"
+          grep -q '<strong>Пылесборник</strong>' "$production"
+          if grep -q 'src="${productArtData' "$production"; then exit 1; fi
+          if grep -q 'createImageBitmap' "$production"; then exit 1; fi
+          echo "Standalone frontend, same-origin product art and Overview contract OK"
 
       - name: Validate embedded JPEG product art
         run: |
           python - <<'PY'
-          import base64
-          import re
+          import base64,re
           from pathlib import Path
-          text = Path('custom_components/s8_omni/frontend/s8-omni-panel.js').read_text(encoding='utf-8')
-          for name in ('PRODUCT_ART_CLEAN_BASE64', 'PRODUCT_ART_DOCK_BASE64'):
-              match = re.search(rf'const {name} = "([^"]+)";', text)
-              if not match:
-                  raise SystemExit(f'Missing {name}')
-              data = base64.b64decode(match.group(1), validate=True)
-              if not (data.startswith(b'\xff\xd8') and data.endswith(b'\xff\xd9')):
-                  raise SystemExit(f'{name} is not a complete JPEG')
-              if len(data) < 10000:
-                  raise SystemExit(f'{name} is suspiciously small')
+          text=Path('custom_components/s8_omni/frontend/s8-omni-panel.js').read_text(encoding='utf-8')
+          for name in ('PRODUCT_ART_CLEAN_BASE64','PRODUCT_ART_DOCK_BASE64'):
+              m=re.search(rf'const {name} = "([^"]+)";',text)
+              if not m: raise SystemExit(f'Missing {name}')
+              data=base64.b64decode(m.group(1),validate=True)
+              if not (data.startswith(b'\xff\xd8') and data.endswith(b'\xff\xd9') and len(data)>10000):
+                  raise SystemExit(f'Invalid JPEG {name}')
               print(f'OK {name}: {len(data)} bytes')
           PY
 
-      - name: Enforce offline-safe S8 OMNI panel lifecycle
+      - name: Enforce offline-safe panel lifecycle
         run: |
           python - <<'PY'
           from pathlib import Path
-          path = Path("custom_components/s8_omni/__init__.py")
-          text = path.read_text(encoding="utf-8")
-          try:
-              setup = text.split("async def async_setup_entry", 1)[1].split("async def async_unload_entry", 1)[0]
-          except IndexError as err:
-              raise SystemExit("Unable to locate S8 OMNI setup lifecycle") from err
-          if "async_config_entry_first_refresh" in setup:
-              raise SystemExit("S8 OMNI setup must not gate panel registration on first refresh")
-          markers = [
-              "await _async_register_panel(hass, entry)",
-              "await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)",
-              "await coordinator.async_refresh()",
-          ]
-          positions = [setup.find(marker) for marker in markers]
-          if any(pos < 0 for pos in positions) or positions != sorted(positions):
-              raise SystemExit("Lifecycle order must be panel registration -> platform setup -> non-gating device refresh")
-          print("Offline-safe panel lifecycle contract OK")
+          text=Path('custom_components/s8_omni/__init__.py').read_text(encoding='utf-8')
+          setup=text.split('async def async_setup_entry',1)[1].split('async def async_unload_entry',1)[0]
+          if 'async_config_entry_first_refresh' in setup: raise SystemExit('first refresh must not gate setup')
+          markers=['await _async_register_panel(hass, entry)','await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)','await coordinator.async_refresh()']
+          pos=[setup.find(x) for x in markers]
+          if any(x<0 for x in pos) or pos!=sorted(pos): raise SystemExit('invalid lifecycle order')
+          print('Offline-safe lifecycle OK')
           PY
 
       - name: Reject tracked credential/key files
         shell: bash
         run: |
           forbidden="$(git ls-files | grep -E '(^|/)(secrets\.yaml|\.env($|\.)|.*\.(pem|key|p12)$)' | grep -v -E '(^|/)\.env\.example$' || true)"
-          if [ -n "$forbidden" ]; then
-            echo 'Forbidden credential/key-like files are tracked:'
-            echo "$forbidden"
-            exit 1
-          fi
+          if [ -n "$forbidden" ]; then echo "$forbidden"; exit 1; fi
