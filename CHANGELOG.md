@@ -1,5 +1,12 @@
 ## v1.00_b031 / UI v0.6.8
 
+## v1.00_b033 / UI v0.7.0
+
+- Replaced the hand-drawn Overview robot/station SVG with the approved product-art composition from the target render.
+- Kept verified Home Assistant state dynamic by overlaying live wash, dust, drying and dock/charge highlights on the product illustration.
+- Refined hero metrics, quick actions and status cards with lighter product-style surfaces and softer depth.
+- No synthetic tank percentages and no unverified station commands were added.
+
 ## v1.00_b032 / UI v0.6.9
 
 - Increased contrast and opacity of the Overview OMNI process legend for reliable readability on the bright hero illustration.
