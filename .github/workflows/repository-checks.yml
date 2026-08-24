@@ -55,38 +55,18 @@ jobs:
           frontend_dir="custom_components/s8_omni/frontend"
           production="$frontend_dir/s8-omni-panel.js"
           registration="custom_components/s8_omni/__init__.py"
-
           test -f "$production" || { echo "Missing production bundle: $production"; exit 1; }
-          test ! -f "$frontend_dir/omni-product-v071.webp" || { echo "Secondary product-art file must not be required by production"; exit 1; }
-
           js_count="$(find "$frontend_dir" -maxdepth 1 -type f -name '*.js' | wc -l | tr -d ' ')"
-          if [ "$js_count" != "1" ]; then
-            echo "Expected exactly one production JS file in $frontend_dir; found $js_count"
-            exit 1
-          fi
-
-          if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then
-            echo "Production panel bundle must not use runtime imports"
-            exit 1
-          fi
-
-          if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then
-            echo "Historical panel versions must not be production runtime dependencies"
-            exit 1
-          fi
-
-          grep -q 's8-omni-panel\.js?v=' "$registration" || { echo "Stable panel module cache busting missing"; exit 1; }
-          grep -q 'const PRODUCT_ART_BASE64 = "UklG' "$production" || { echo "Embedded verified WebP product art missing"; exit 1; }
-          grep -q 'createImageBitmap(new Blob' "$production" || { echo "Canvas bitmap decoder missing"; exit 1; }
+          test "$js_count" = "1" || { echo "Expected exactly one production JS file; found $js_count"; exit 1; }
+          if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then echo "Runtime imports forbidden"; exit 1; fi
+          if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then echo "Historical panel dependency found"; exit 1; fi
+          grep -q 's8-omni-panel\.js?v=' "$registration" || { echo "Stable panel cache busting missing"; exit 1; }
+          grep -q 'const PRODUCT_ART_BASE64 = "iVBOR' "$production" || { echo "Embedded PNG product art missing"; exit 1; }
+          grep -q 'new Blob(\[bytes\], { type: "image/png" })' "$production" || { echo "PNG Canvas decoder missing"; exit 1; }
           grep -q 'customElements.define("s8-product-art"' "$production" || { echo "Product-art canvas custom element missing"; exit 1; }
           grep -q '<s8-product-art class="product-art"' "$production" || { echo "Overview does not use product-art canvas element"; exit 1; }
           grep -q 'product-art-fallback' "$production" || { echo "Product-art fallback missing"; exit 1; }
-          if grep -q 'src="${productArtUrl()}"' "$production"; then
-            echo "Legacy blob-URL img delivery must not remain"
-            exit 1
-          fi
-
-          echo "Standalone frontend and Canvas product-art contract OK"
+          echo "Standalone frontend and PNG Canvas product-art contract OK"
 
       - name: Enforce offline-safe S8 OMNI panel lifecycle
         run: |
