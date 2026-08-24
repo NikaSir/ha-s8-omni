@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   validate:
@@ -16,26 +16,11 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-
-      - name: Apply temporary v0.7.4 PNG product-art patch
-        if: ${{ github.event_name == 'pull_request' }}
-        run: |
-          python -m pip install --quiet Pillow
-          python .github/patch_v074.py
-          if ! git diff --quiet; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add -A
-            git commit -m "fix: decode Overview product art from embedded PNG in v0.7.4"
-            git push origin HEAD:${{ github.head_ref }}
-          fi
 
       - name: Validate JSON files
         run: |
@@ -70,7 +55,6 @@ jobs:
           frontend_dir="custom_components/s8_omni/frontend"
           production="$frontend_dir/s8-omni-panel.js"
           registration="custom_components/s8_omni/__init__.py"
-
           test -f "$production" || { echo "Missing production bundle: $production"; exit 1; }
           js_count="$(find "$frontend_dir" -maxdepth 1 -type f -name '*.js' | wc -l | tr -d ' ')"
           test "$js_count" = "1" || { echo "Expected exactly one production JS file; found $js_count"; exit 1; }
