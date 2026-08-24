@@ -1,3 +1,8 @@
+## v1.00_b030 — UI v0.6.7
+
+- Rebuilt the Overview robot/station scene as a premium product illustration: deeper OMNI body, glass-like tanks, larger detailed robot, stronger dock geometry and cleaner live process paths.
+- Preserved verified-state-only behavior; no synthetic tank percentages or unverified station commands.
+
 # Changelog
 
 All notable project changes are recorded here.
