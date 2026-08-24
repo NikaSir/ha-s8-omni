@@ -233,7 +233,7 @@ class S8OmniPanel extends HTMLElement {
       <div class="hero-top"><div><span class="eyebrow">Состояние</span><h1>${escapeHtml(compositeLabel)}</h1><p class="hero-hint">${escapeHtml(this._heroHint(snap))}</p></div><div class="connection-badge ${connection !== "Локально" ? "bad" : ""}"><i class="dot"></i>${escapeHtml(connection)}</div></div>
       <div class="omni-scene">
         <div class="omni-art ${snap.unreliable ? "muted" : ""}">
-          <img class="product-art" src="${PRODUCT_ART}" alt="S8 OMNI robot and station" />
+          <img class="product-art" src="${productArtUrl()}" alt="S8 OMNI robot and station" />
           <i class="tank-glow wash ${wash ? "on" : ""}"></i>
           <i class="tank-glow dust ${dust ? "on" : ""}"></i>
           <i class="tank-glow dry ${dry ? "on" : ""}"></i>
