@@ -1,3 +1,8 @@
+## v1.00_b031 / UI v0.6.8
+
+- Rebalanced Overview hero to match the approved render composition: larger robot and station, less empty space, narrower legend, deeper product materials and larger glass-like tanks.
+- Verified HA state remains the only source for process highlighting; no synthetic tank levels or unverified station writes were added.
+
 ## v1.00_b030 — UI v0.6.7
 
 - Rebuilt the Overview robot/station scene as a premium product illustration: deeper OMNI body, glass-like tanks, larger detailed robot, stronger dock geometry and cleaner live process paths.
