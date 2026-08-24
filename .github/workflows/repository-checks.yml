@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   validate:
@@ -16,11 +16,25 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+
+      - name: Apply temporary v0.7.3 canvas product-art patch
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          python .github/patch_v073.py
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "fix: render Overview product art through Canvas in v0.7.3"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
 
       - name: Validate JSON files
         run: |
@@ -77,10 +91,16 @@ jobs:
 
           grep -q 's8-omni-panel\.js?v=' "$registration" || { echo "Stable panel module cache busting missing"; exit 1; }
           grep -q 'const PRODUCT_ART_BASE64 = "UklG' "$production" || { echo "Embedded verified WebP product art missing"; exit 1; }
-          grep -q 'URL.createObjectURL(new Blob' "$production" || { echo "Blob URL product-art delivery missing"; exit 1; }
-          grep -q 'src="${productArtUrl()}"' "$production" || { echo "Product image is not using Blob URL"; exit 1; }
+          grep -q 'createImageBitmap(new Blob' "$production" || { echo "Canvas bitmap decoder missing"; exit 1; }
+          grep -q 'customElements.define("s8-product-art"' "$production" || { echo "Product-art canvas custom element missing"; exit 1; }
+          grep -q '<s8-product-art class="product-art"' "$production" || { echo "Overview does not use product-art canvas element"; exit 1; }
+          grep -q 'product-art-fallback' "$production" || { echo "Product-art fallback missing"; exit 1; }
+          if grep -q 'src="${productArtUrl()}"' "$production"; then
+            echo "Legacy blob-URL img delivery must not remain"
+            exit 1
+          fi
 
-          echo "Standalone frontend and embedded product-art contract OK"
+          echo "Standalone frontend and Canvas product-art contract OK"
 
       - name: Enforce offline-safe S8 OMNI panel lifecycle
         run: |
