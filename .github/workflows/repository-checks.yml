@@ -4,11 +4,12 @@ on:
   push:
     branches:
       - main
+      - feat/hero-visual-polish-v065b
   pull_request:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   validate:
@@ -16,11 +17,29 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+
+      - name: Apply one-shot S8 OMNI v0.6.5 hero patch
+        if: github.ref == 'refs/heads/feat/hero-visual-polish-v065b'
+        shell: bash
+        run: |
+          python .github/patch_v065.py
+          if git diff --quiet; then
+            echo "Patch already applied"
+          else
+            node --check custom_components/s8_omni/frontend/s8-omni-panel.js
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add custom_components/s8_omni/frontend/s8-omni-panel.js custom_components/s8_omni/const.py custom_components/s8_omni/manifest.json panel.json
+            git commit -m "ui: polish illustrated OMNI hero in v1.00_b028"
+            git push origin HEAD:feat/hero-visual-polish-v065b
+          fi
 
       - name: Validate JSON files
         run: |
