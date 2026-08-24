@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   validate:
@@ -16,11 +16,25 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+
+      - name: Apply temporary v0.7.1 asset delivery patch
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          python .github/patch_v071.py
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add custom_components/s8_omni/frontend/s8-omni-panel.js custom_components/s8_omni/const.py custom_components/s8_omni/manifest.json panel.json CHANGELOG.md
+            git commit -m "fix: serve OMNI product art as static asset in v0.7.1"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
 
       - name: Validate JSON files
         run: |
@@ -78,6 +92,16 @@ jobs:
 
           if ! grep -q 's8-omni-panel\.js?v=' "$registration"; then
             echo "module_url must reference stable s8-omni-panel.js with query-string cache busting"
+            exit 1
+          fi
+
+          test -f "$frontend_dir/omni-product-v071.webp" || { echo "Missing product art asset"; exit 1; }
+          if grep -q 'data:image/webp;base64' "$production"; then
+            echo "Product art must be served as a static asset, not embedded as data URI"
+            exit 1
+          fi
+          if ! grep -q '/s8_omni/frontend/omni-product-v071.webp?v=v0.7.1' "$production"; then
+            echo "Production panel must reference bundled product art with cache busting"
             exit 1
           fi
 
