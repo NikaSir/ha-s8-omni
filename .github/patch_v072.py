@@ -1,7 +1,7 @@
 from pathlib import Path
 import base64
 import json
-import re
+import subprocess
 
 ROOT = Path(".")
 JS = ROOT / "custom_components/s8_omni/frontend/s8-omni-panel.js"
@@ -10,32 +10,38 @@ CONST = ROOT / "custom_components/s8_omni/const.py"
 MANIFEST = ROOT / "custom_components/s8_omni/manifest.json"
 PANEL = ROOT / "panel.json"
 CHANGELOG = ROOT / "CHANGELOG.md"
+ART_REPO_PATH = "custom_components/s8_omni/frontend/omni-product-v071.webp"
 
-if not ART.exists():
-    raise SystemExit("Verified product-art source asset is missing")
-product_b64 = base64.b64encode(ART.read_bytes()).decode("ascii")
+if ART.exists():
+    product_bytes = ART.read_bytes()
+else:
+    product_bytes = subprocess.check_output(["git", "show", f"origin/main:{ART_REPO_PATH}"])
+product_b64 = base64.b64encode(product_bytes).decode("ascii")
 
 text = JS.read_text(encoding="utf-8")
-text = re.sub(
-    r'^const UI_VERSION = "v0\\.7\\.1";\\nconst PRODUCT_ART = .*?;\\n',
-    'const UI_VERSION = "v0.7.2";\\n'
-    + f'const PRODUCT_ART_BASE64 = "{product_b64}";\\n'
-    + 'let _productArtUrl = null;\\n'
-    + 'function productArtUrl() {\\n'
-    + '  if (_productArtUrl) return _productArtUrl;\\n'
-    + '  const binary = atob(PRODUCT_ART_BASE64);\\n'
-    + '  const bytes = new Uint8Array(binary.length);\\n'
-    + '  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);\\n'
-    + '  _productArtUrl = URL.createObjectURL(new Blob([bytes], { type: "image/webp" }));\\n'
-    + '  return _productArtUrl;\\n'
-    + '}\\n',
-    text,
-    count=1,
-    flags=re.M,
-)
-if 'src="${PRODUCT_ART}"' not in text:
-    raise SystemExit("PRODUCT_ART image source not found")
-text = text.replace('src="${PRODUCT_ART}"', 'src="${productArtUrl()}"', 1)
+old_header = 'const UI_VERSION = "v0.7.1";\nconst PRODUCT_ART = "/s8_omni/frontend/omni-product-v071.webp?v=v0.7.1";\n'
+if old_header in text:
+    new_header = (
+        'const UI_VERSION = "v0.7.2";\n'
+        + f'const PRODUCT_ART_BASE64 = "{product_b64}";\n'
+        + 'let _productArtUrl = null;\n'
+        + 'function productArtUrl() {\n'
+        + '  if (_productArtUrl) return _productArtUrl;\n'
+        + '  const binary = atob(PRODUCT_ART_BASE64);\n'
+        + '  const bytes = new Uint8Array(binary.length);\n'
+        + '  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);\n'
+        + '  _productArtUrl = URL.createObjectURL(new Blob([bytes], { type: "image/webp" }));\n'
+        + '  return _productArtUrl;\n'
+        + '}\n'
+    )
+    text = text.replace(old_header, new_header, 1)
+elif 'const UI_VERSION = "v0.7.2";' not in text or 'const PRODUCT_ART_BASE64 = "UklG' not in text:
+    raise SystemExit("Unexpected product-art header state")
+
+if 'src="${PRODUCT_ART}"' in text:
+    text = text.replace('src="${PRODUCT_ART}"', 'src="${productArtUrl()}"', 1)
+elif 'src="${productArtUrl()}"' not in text:
+    raise SystemExit("Product-art image source not found")
 JS.write_text(text, encoding="utf-8")
 
 const = CONST.read_text(encoding="utf-8")
@@ -62,6 +68,5 @@ ch = CHANGELOG.read_text(encoding="utf-8")
 if entry not in ch:
     CHANGELOG.write_text(entry + ch, encoding="utf-8")
 
-# The asset bytes are now embedded into the production bundle; remove the secondary file
-# so HACS installation cannot diverge from the JS bundle again.
-ART.unlink()
+if ART.exists():
+    ART.unlink()
