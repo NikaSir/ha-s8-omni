@@ -25,13 +25,14 @@ from .coordinator import S8OmniCoordinator
 
 PLATFORMS = ["vacuum", "sensor", "binary_sensor", "switch", "select", "number", "button"]
 FRONTEND_DIR = Path(__file__).parent / "frontend"
-# Production frontend contract: one stable, self-contained bundle with query-string cache busting.
 PANEL_MODULE = f"{PANEL_STATIC_URL}/s8-omni-panel.js?v={DASHBOARD_VERSION}"
 
 _LOGGER = logging.getLogger(__name__)
 _PRODUCT_ART_CACHE: dict[str, bytes] = {}
 
+
 def _product_art_bytes(mode: str) -> bytes:
+    """Decode and cache the verified product-art JPEG embedded in the frontend bundle."""
     safe = "dock" if mode == "dock" else "clean"
     if safe in _PRODUCT_ART_CACHE:
         return _PRODUCT_ART_CACHE[safe]
@@ -46,7 +47,10 @@ def _product_art_bytes(mode: str) -> bytes:
     _PRODUCT_ART_CACHE[safe] = data
     return data
 
+
 class S8ProductArtView(HomeAssistantView):
+    """Serve non-sensitive product artwork from a normal same-origin URL."""
+
     url = "/s8_omni/product-art/{mode}.jpg"
     name = "api:s8_omni:product_art"
     requires_auth = False
@@ -59,25 +63,29 @@ class S8ProductArtView(HomeAssistantView):
         except (FileNotFoundError, ValueError, base64.binascii.Error):
             _LOGGER.exception("Unable to serve S8 OMNI product art: %s", mode)
             return web.Response(status=500)
-        return web.Response(body=data, content_type="image/jpeg", headers={"Cache-Control": "public, max-age=86400"})
+        return web.Response(
+            body=data,
+            content_type="image/jpeg",
+            headers={"Cache-Control": "public, max-age=86400"},
+        )
 
 
 async def _async_register_panel(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    if not hass.data.get("s8_omni_product_art_view_registered"):
-        hass.http.register_view(S8ProductArtView)
-        hass.data["s8_omni_product_art_view_registered"] = True
     """Serve and register the integration-owned native panel.
 
     Return True only when this call registered the panel. This lets setup clean up
     safely after a real platform/setup exception without removing somebody else's
     route in the unlikely event of a path collision.
     """
+    if not hass.data.get("s8_omni_product_art_view_registered"):
+        hass.http.register_view(S8ProductArtView)
+        hass.data["s8_omni_product_art_view_registered"] = True
+
     try:
         await hass.http.async_register_static_paths(
             [StaticPathConfig(PANEL_STATIC_URL, str(FRONTEND_DIR), True)]
         )
     except RuntimeError:
-        # Static paths survive a config-entry reload; duplicate registration is benign.
         pass
 
     if frontend.async_panel_exists(hass, PANEL_PATH):
@@ -95,7 +103,6 @@ async def _async_register_panel(hass: HomeAssistant, entry: ConfigEntry) -> bool
         sidebar_title=PANEL_TITLE,
         sidebar_icon=PANEL_ICON,
         require_admin=False,
-        # The panel applies iOS top/bottom/side safe-area insets to its app shell.
         handle_safe_area=True,
         config={
             "entry_id": entry.entry_id,
@@ -117,21 +124,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     domain_data = hass.data.setdefault(DOMAIN, {})
     domain_data[entry.entry_id] = coordinator
 
-    # Application shell first: the panel and HA entities must exist even when the
-    # robot is powered off or unreachable during Home Assistant startup.
     panel_registered = False
     try:
         panel_registered = await _async_register_panel(hass, entry)
         await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-
-        # This refresh is deliberately non-gating. S8OmniCoordinator converts local
-        # Tuya failures to UpdateFailed, so DataUpdateCoordinator records the failed
-        # poll and keeps the config entry loaded. Entities then become unavailable
-        # while the local-connection entity remains visible as disconnected.
         await coordinator.async_refresh()
     except Exception:
-        # Real integration/platform setup defects should still fail visibly. Clean
-        # up only resources created by this setup attempt.
         domain_data.pop(entry.entry_id, None)
         if panel_registered and not domain_data:
             frontend.async_remove_panel(hass, PANEL_PATH, warn_if_unknown=False)
