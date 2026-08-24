@@ -1,3 +1,9 @@
+## v1.00_b035 / UI v0.7.2
+
+- Replaced static/data-URI Overview product-art delivery with a Blob URL built from verified WebP bytes embedded in the standalone frontend bundle.
+- Product artwork no longer depends on HACS copying a secondary frontend asset or on `data:` image handling in the Home Assistant iOS WebView.
+- Preserved the approved product illustration, live verified overlays, process legend, controls, and verified-only state semantics.
+
 ## v1.00_b031 / UI v0.6.8
 
 ## v1.00_b034 / UI v0.7.1
