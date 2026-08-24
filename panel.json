@@ -8,7 +8,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.6.1",
+    "dashboard_version": "v0.6.2",
     "template": "NikaS Integration Panel Template v1.0",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -32,7 +32,7 @@
       "browser_history_back": false,
       "views": ["overview", "cleaning", "station", "maintenance", "diagnostics"],
       "view_responsibilities": {
-        "overview": "composite_system_state_health_frequent_actions_and_compact_robot_station_summary",
+        "overview": "composite_system_state_health_frequent_actions_dynamic_state_visual_and_compact_robot_station_summary",
         "cleaning": "current_cleaning_metrics_key_profile_cards_and_separate_settings_drill_down",
         "station": "compact_station_state_summary_and_operations",
         "maintenance": "consumables_and_service",
@@ -46,6 +46,13 @@
           "content_scope": "editable_cleaning_profile_only"
         }
       }
+    },
+    "visual_state_model": {
+      "cleaning": "robot_route_suction_and_water_from_public_entities",
+      "returning": "robot_route_to_omni_dock",
+      "station_active": "normalized_station_operation_visual",
+      "idle_docked": "illustrative_clean_dirty_water_and_filter_modules_without_invented_tank_telemetry",
+      "unavailable": "explicit_no_current_visual_state"
     },
     "mobile_fit": {
       "primary_viewport": "iPhone Pro Max portrait",
