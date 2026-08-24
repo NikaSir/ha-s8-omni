@@ -6,6 +6,8 @@ All notable project changes are recorded here.
 
 ### Added
 
+- `v1.00_b029` / dashboard `v0.6.6`: refine the Overview OMNI illustration toward the approved render with a larger robot, deeper station shell, three visibly tinted modules, stronger dock geometry and softer floor/shadow depth.
+- `v1.00_b029` / dashboard `v0.6.6`: keep blue/gray/orange/green process paths tied only to verified Home Assistant state while inactive modules retain a subtle presentation tint rather than looking blank.
 - `v1.00_b024` / dashboard `v0.6.1`: compact the Station root view for iPhone Pro Max: replace three tall status rows with a three-column **Робот / Заряд / Операция** summary, reduce Station hero height and tighten the OMNI operation list.
 - `v1.00_b024` / dashboard `v0.6.1`: define the Station acceptance target as a typical operational state that does not require vertical scrolling while preserving the fixed Bottom Tab Bar, readable operation rows and the existing active-operation indicator.
 - `v1.00_b023` / dashboard `v0.6.0`: replace the root-view Back button with the native Home Assistant **Menu** action (`hass-toggle-menu`); the **Настройки уборки** drill-down keeps an explicit Back button to its parent view.

@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.6.5";
+const UI_VERSION = "v0.6.6";
 
 const ROBOT_LABELS = {
   idle: "Ожидание", cleaning: "Уборка", zone_cleaning: "Зона", room_cleaning: "Комнаты",
@@ -170,7 +170,7 @@ class S8OmniPanel extends HTMLElement {
       .header-title{text-align:center;display:flex;flex-direction:column;gap:2px;overflow:hidden}.header-title strong{font-size:22px;line-height:1.05;white-space:nowrap}.header-title span{color:var(--secondary-text-color);font-size:12px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .content{width:min(100%,900px);margin:0 auto;padding:12px 10px 18px}.card{background:var(--card-background-color);border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:22px;padding:15px;margin-bottom:12px;box-shadow:0 6px 18px rgba(0,0,0,.04)}.eyebrow{display:block;color:var(--secondary-text-color);font-size:11px;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
       .hero{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--card-background-color) 62%,color-mix(in srgb,var(--primary-color) 7%,var(--card-background-color)) 100%)}.hero::after{content:"";position:absolute;width:205px;height:205px;right:-70px;top:-92px;border-radius:50%;background:color-mix(in srgb,var(--primary-color) 7%,transparent);pointer-events:none}.hero-top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:10px;position:relative;z-index:2}.hero h1{margin-top:5px;font-size:30px;line-height:1.02;letter-spacing:-.035em}.hero-hint{margin-top:6px;color:var(--secondary-text-color);font-size:13px;line-height:1.28}.connection-badge{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 11px;border-radius:999px;background:var(--secondary-background-color);color:var(--secondary-text-color);font-size:12px;font-weight:800;white-space:nowrap}.dot{width:8px;height:8px;border-radius:50%;background:var(--success-color,#43a047)}.connection-badge.bad .dot{background:var(--error-color,#db4437)}
-      .omni-scene{position:relative;z-index:1;height:188px;margin-top:12px;border-radius:22px;border:1px solid color-mix(in srgb,var(--divider-color) 74%,transparent);background:linear-gradient(135deg,#f8fafb 0%,#f1f5f7 58%,#eef9fd 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.92);overflow:hidden}.omni-scene::before{content:"";position:absolute;inset:auto 14px 12px 14px;height:44px;border-radius:18px;background:linear-gradient(180deg,rgba(230,236,239,.2),rgba(223,231,235,.75));filter:blur(.4px)}.omni-scene::after{content:"";position:absolute;right:-28px;bottom:-34px;width:146px;height:146px;border-radius:50%;background:radial-gradient(circle,#d9f1fb 0%,rgba(217,241,251,0) 68%)}.omni-art{position:absolute;left:0;top:0;width:68%;height:100%;padding:8px 4px 2px 8px}.omni-art svg{width:100%;height:100%;display:block}.omni-legend{position:absolute;right:10px;top:12px;bottom:12px;width:29%;display:flex;flex-direction:column;justify-content:center;gap:8px;padding:10px 9px;border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(255,255,255,.83));box-shadow:0 8px 22px rgba(0,0,0,.05);backdrop-filter:blur(12px)}.legend-row{display:grid;grid-template-columns:25px 1fr;gap:8px;align-items:center;min-height:32px;padding:4px 2px;color:#6d6f73;font-size:11px;font-weight:760;line-height:1.14;border-radius:12px}.legend-row ha-icon{--mdc-icon-size:21px}.legend-row.active{color:var(--primary-text-color);background:rgba(255,255,255,.72);box-shadow:inset 0 0 0 1px rgba(0,0,0,.04)}.legend-row.water.active{background:#eef8ff}.legend-row.water.active ha-icon{color:#1da8e5}.legend-row.dust.active{background:#f3f4f5}.legend-row.dust.active ha-icon{color:#68727c}.legend-row.dry.active{background:#fff5ed}.legend-row.dry.active ha-icon{color:#ff944d}.legend-row.charge.active{background:#f0fbf2;color:#2e9a50}.legend-row.charge.active ha-icon{color:#35ad5c}
+      .omni-scene{position:relative;z-index:1;height:194px;margin-top:12px;border-radius:22px;border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);background:linear-gradient(145deg,#fbfcfd 0%,#f3f7f9 56%,#edf8fc 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.97);overflow:hidden}.omni-scene::before{content:"";position:absolute;left:16px;right:132px;bottom:11px;height:38px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(188,198,204,.58) 0%,rgba(188,198,204,.16) 58%,rgba(188,198,204,0) 78%)}.omni-scene::after{content:"";position:absolute;right:-18px;top:-8px;width:164px;height:164px;border-radius:50%;background:radial-gradient(circle,#dff4fd 0%,rgba(223,244,253,0) 69%)}.omni-art{position:absolute;left:0;top:0;width:69%;height:100%;padding:6px 0 0 5px}.omni-art svg{width:100%;height:100%;display:block}.omni-legend{position:absolute;right:10px;top:12px;bottom:12px;width:29%;display:flex;flex-direction:column;justify-content:center;gap:7px;padding:10px;border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,255,255,.87));box-shadow:0 10px 24px rgba(0,0,0,.06);backdrop-filter:blur(12px)}.legend-row{display:grid;grid-template-columns:25px 1fr;gap:8px;align-items:center;min-height:32px;padding:5px 4px;color:#6f7378;font-size:11px;font-weight:760;line-height:1.14;border-radius:12px}.legend-row ha-icon{--mdc-icon-size:21px}.legend-row.active{color:var(--primary-text-color);background:rgba(255,255,255,.78);box-shadow:inset 0 0 0 1px rgba(0,0,0,.035)}.legend-row.water.active{background:#edf8ff}.legend-row.water.active ha-icon{color:#1baae8}.legend-row.dust.active{background:#f2f4f5}.legend-row.dust.active ha-icon{color:#68727c}.legend-row.dry.active{background:#fff4eb}.legend-row.dry.active ha-icon{color:#f49b54}.legend-row.charge.active{background:#effbf2;color:#2f9a52}.legend-row.charge.active ha-icon{color:#35ad5c}
       .hero-metrics{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.hero-metrics>div{min-height:68px;border-radius:18px;padding:10px;background:var(--secondary-background-color);overflow:hidden}.hero-metrics span{display:block;color:var(--secondary-text-color);font-size:10px;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}.hero-metrics strong{display:block;margin-top:4px;font-size:19px;line-height:1.05;white-space:nowrap}.battery-bar{height:4px;border-radius:999px;background:var(--divider-color);margin-top:8px;overflow:hidden}.battery-bar i{display:block;height:100%;border-radius:inherit;background:var(--primary-color)}
       .trust-banner{display:flex;gap:10px;padding:11px 13px;margin:0 0 10px;border-radius:17px;background:color-mix(in srgb,var(--error-color,#db4437) 9%,var(--card-background-color));border:1px solid color-mix(in srgb,var(--error-color,#db4437) 32%,transparent)}.trust-banner ha-icon{color:var(--error-color,#db4437);--mdc-icon-size:22px}.trust-banner strong{display:block;font-size:14px}.trust-banner span{display:block;color:var(--secondary-text-color);font-size:12px;margin-top:2px}
       .quick-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:11px}.action{min-height:94px;border:1px solid color-mix(in srgb,var(--divider-color) 80%,transparent);border-radius:22px;padding:8px 5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:var(--card-background-color);color:var(--primary-text-color);text-align:center}.action.primary{background:var(--primary-color);color:var(--text-primary-color,white);border-color:transparent}.action:disabled{opacity:.34}.action.running{background:color-mix(in srgb,var(--primary-color) 15%,var(--card-background-color));color:var(--primary-color)}.action.running:disabled{opacity:1}.action-icon{width:50px;height:50px;border-radius:16px;display:grid;place-items:center;background:rgba(0,0,0,.09)}.action.primary .action-icon{background:rgba(0,0,0,.15)}.action-icon ha-icon{--mdc-icon-size:34px}.action strong{font-size:14px;line-height:1}.action .action-sub{font-size:11px;opacity:.72;white-space:nowrap}
@@ -227,57 +227,76 @@ class S8OmniPanel extends HTMLElement {
     const battery = snap.battery === null ? "—" : `${Math.round(snap.battery)}%`;
     const age = snap.age === null ? "—" : this._formatDuration(snap.age);
     const chargeActive = charging || charged || docked;
-    const blue = wash ? "#21aae8" : "#cfd7db";
-    const gray = dust ? "#6f7880" : "#d1d6d9";
-    const orange = dry ? "#f39b52" : "#dbd7d4";
-    const green = chargeActive ? "#39b55f" : "#d4ddd7";
+    const blue = wash ? "#17afe9" : "#88cde8";
+    const gray = dust ? "#6f7880" : "#a9b0b6";
+    const orange = dry ? "#f39a4d" : "#efbb93";
+    const green = chargeActive ? "#38b55d" : "#a7c9b1";
+    const blueOpacity = wash ? "1" : ".42";
+    const grayOpacity = dust ? "1" : ".34";
+    const orangeOpacity = dry ? "1" : ".38";
 
     return `<section class="card hero" data-more="composite_status">
       <div class="hero-top"><div><span class="eyebrow">Состояние</span><h1>${escapeHtml(compositeLabel)}</h1><p class="hero-hint">${escapeHtml(this._heroHint(snap))}</p></div><div class="connection-badge ${connection !== "Локально" ? "bad" : ""}"><i class="dot"></i>${escapeHtml(connection)}</div></div>
       <div class="omni-scene">
         <div class="omni-art">
-          <svg viewBox="0 0 430 190" aria-label="OMNI station live visualization" role="img">
+          <svg viewBox="0 0 430 198" aria-label="OMNI station live visualization" role="img">
             <defs>
-              <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#edf1f3"/></linearGradient>
-              <linearGradient id="dockBase" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3a3b"/><stop offset="1" stop-color="#1e1f20"/></linearGradient>
-              <linearGradient id="robotTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#eceeef"/></linearGradient>
-              <linearGradient id="glassBlue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${wash ? '#d8f3ff' : '#f4f7f9'}"/><stop offset="1" stop-color="${wash ? '#78d1f5' : '#e9edef'}"/></linearGradient>
-              <linearGradient id="glassGray" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${dust ? '#d7dde1' : '#f4f7f8'}"/><stop offset="1" stop-color="${dust ? '#9ea6ad' : '#e8ebed'}"/></linearGradient>
-              <linearGradient id="glassWarm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${dry ? '#ffe0c4' : '#f6f3f1'}"/><stop offset="1" stop-color="${dry ? '#ffab63' : '#ebe7e4'}"/></linearGradient>
-              <filter id="shadow" x="-20%" y="-20%" width="160%" height="180%"><feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#000" flood-opacity=".10"/></filter>
-              <filter id="shadowSoft" x="-20%" y="-20%" width="160%" height="180%"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000" flood-opacity=".08"/></filter>
-              <filter id="glowBlue" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-              <filter id="glowGray" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-              <filter id="glowWarm" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <linearGradient id="stationShell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".62" stop-color="#f6f8f9"/><stop offset="1" stop-color="#e8edf0"/></linearGradient>
+              <linearGradient id="baseDark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b3c3d"/><stop offset="1" stop-color="#1c1d1e"/></linearGradient>
+              <linearGradient id="robotShell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".75" stop-color="#f2f4f5"/><stop offset="1" stop-color="#e7ebed"/></linearGradient>
+              <linearGradient id="tankBlue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${wash ? '#d8f4ff' : '#eff9fd'}"/><stop offset="1" stop-color="${wash ? '#70cff5' : '#cce9f5'}"/></linearGradient>
+              <linearGradient id="tankGray" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${dust ? '#d5dce1' : '#eef1f3'}"/><stop offset="1" stop-color="${dust ? '#929ca4' : '#cfd5d9'}"/></linearGradient>
+              <linearGradient id="tankWarm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${dry ? '#ffe2c8' : '#fff3e9'}"/><stop offset="1" stop-color="${dry ? '#ffa75e' : '#f3d2b8'}"/></linearGradient>
+              <filter id="shadow" x="-20%" y="-20%" width="160%" height="180%"><feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#000" flood-opacity=".12"/></filter>
+              <filter id="softShadow" x="-20%" y="-20%" width="160%" height="180%"><feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#000" flood-opacity=".10"/></filter>
+              <filter id="glowBlue" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <filter id="glowGray" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <filter id="glowWarm" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
             </defs>
-            <g opacity=".55"><ellipse cx="93" cy="153" rx="66" ry="14" fill="#d8dee2"/><ellipse cx="282" cy="155" rx="140" ry="16" fill="#d9e0e4"/></g>
+
+            <ellipse cx="91" cy="167" rx="68" ry="14" fill="#d8e0e4" opacity=".70"/>
+            <ellipse cx="281" cy="168" rx="136" ry="16" fill="#d6dee3" opacity=".78"/>
+
             <g filter="url(#shadow)">
-              <rect x="150" y="16" width="246" height="134" rx="26" fill="url(#shell)" stroke="#cfd6da" stroke-width="2"/>
-              <rect x="168" y="30" width="58" height="86" rx="13" fill="url(#glassBlue)" stroke="#d6dce0"/>
-              <rect x="236" y="30" width="58" height="86" rx="13" fill="url(#glassGray)" stroke="#d6dce0"/>
-              <rect x="304" y="30" width="58" height="86" rx="13" fill="url(#glassWarm)" stroke="#d6dce0"/>
-              <rect x="162" y="116" width="222" height="34" rx="15" fill="url(#dockBase)"/>
-              <rect x="195" y="124" width="157" height="20" rx="10" fill="#111315"/>
-              <rect x="182" y="41" width="30" height="56" rx="9" fill="rgba(255,255,255,.18)"/>
-              <rect x="250" y="41" width="30" height="56" rx="9" fill="rgba(255,255,255,.16)"/>
-              <rect x="318" y="41" width="30" height="56" rx="9" fill="rgba(255,255,255,.16)"/>
+              <rect x="136" y="14" width="268" height="141" rx="27" fill="url(#stationShell)" stroke="#cdd5da" stroke-width="2"/>
+              <rect x="153" y="28" width="67" height="86" rx="14" fill="url(#tankBlue)" stroke="#cfd8dc"/>
+              <rect x="229" y="28" width="67" height="86" rx="14" fill="url(#tankGray)" stroke="#cfd8dc"/>
+              <rect x="305" y="28" width="67" height="86" rx="14" fill="url(#tankWarm)" stroke="#cfd8dc"/>
+              <rect x="149" y="109" width="238" height="46" rx="17" fill="url(#baseDark)"/>
+              <rect x="180" y="119" width="179" height="25" rx="12.5" fill="#0d0f10"/>
+              <rect x="169" y="39" width="34" height="56" rx="10" fill="rgba(255,255,255,.20)"/>
+              <rect x="245" y="39" width="34" height="56" rx="10" fill="rgba(255,255,255,.17)"/>
+              <rect x="321" y="39" width="34" height="56" rx="10" fill="rgba(255,255,255,.17)"/>
+              <rect x="164" y="150" width="208" height="7" rx="3.5" fill="#ccd3d7" opacity=".75"/>
             </g>
-            <g opacity=".55" stroke="#d8dddf" stroke-width="2"><line x1="196" y1="118" x2="196" y2="150"/><line x1="265" y1="118" x2="265" y2="150"/><line x1="333" y1="118" x2="333" y2="150"/></g>
-            <path d="M197 116 L197 144 L122 144 L98 137" fill="none" stroke="${blue}" stroke-width="4.5" stroke-linecap="round" ${wash ? 'filter="url(#glowBlue)"' : ''}/>
-            <path d="M266 116 L266 149 L126 149 L101 143" fill="none" stroke="${gray}" stroke-width="3.5" stroke-linecap="round" ${dust ? 'filter="url(#glowGray)"' : ''}/>
-            <path d="M334 116 L334 154 L132 154 L104 148" fill="none" stroke="${orange}" stroke-width="4.5" stroke-linecap="round" ${dry ? 'filter="url(#glowWarm)"' : ''}/>
-            <path d="M154 132 L118 132" fill="none" stroke="${green}" stroke-width="5" stroke-linecap="round"/>
-            <g transform="translate(22,96)" filter="url(#shadowSoft)">
-              <ellipse cx="60" cy="34" rx="58" ry="29" fill="#f4f6f7" stroke="#d2d8dc" stroke-width="2"/>
-              <ellipse cx="60" cy="28" rx="52" ry="23" fill="url(#robotTop)" stroke="#dadfe3"/>
-              <rect x="14" y="36" width="92" height="10" rx="5" fill="#25282a"/>
-              <rect x="18" y="39" width="28" height="4" rx="2" fill="#111315" opacity=".95"/>
-              <circle cx="60" cy="18" r="12" fill="#ebeff1" stroke="#d0d6da"/>
-              <circle cx="60" cy="18" r="6" fill="#cfd5d8"/>
-              <circle cx="60" cy="28" r="2" fill="#dee3e6"/>
+
+            <g opacity=".62" stroke="#d3dade" stroke-width="2.2"><line x1="186" y1="113" x2="186" y2="154"/><line x1="262" y1="113" x2="262" y2="154"/><line x1="338" y1="113" x2="338" y2="154"/></g>
+            <g fill="none" stroke-linecap="round">
+              <path d="M186 112 L186 146 L126 146 L101 139" stroke="${blue}" opacity="${blueOpacity}" stroke-width="5" ${wash ? 'filter="url(#glowBlue)"' : ''}/>
+              <path d="M262 112 L262 152 L132 152 L104 145" stroke="${gray}" opacity="${grayOpacity}" stroke-width="4" ${dust ? 'filter="url(#glowGray)"' : ''}/>
+              <path d="M338 112 L338 158 L138 158 L108 150" stroke="${orange}" opacity="${orangeOpacity}" stroke-width="5" ${dry ? 'filter="url(#glowWarm)"' : ''}/>
+              <path d="M152 136 L121 136" stroke="${green}" stroke-width="5.5"/>
             </g>
-            <circle cx="145" cy="132" r="17" fill="#ffffff" stroke="${green}" stroke-width="3"/>
-            <path d="M141 121 L150 121 L146 130 L152 130 L141 144 L144 134 L137 134 Z" fill="${green}"/>
+
+            <g transform="translate(13,91)" filter="url(#softShadow)">
+              <ellipse cx="67" cy="39" rx="64" ry="31" fill="#f1f3f4" stroke="#cfd6da" stroke-width="2"/>
+              <ellipse cx="67" cy="33" rx="58" ry="26" fill="url(#robotShell)" stroke="#d9dfe2"/>
+              <rect x="14" y="40" width="106" height="10" rx="5" fill="#25282a"/>
+              <rect x="20" y="42" width="30" height="4" rx="2" fill="#101315" opacity=".98"/>
+              <circle cx="67" cy="18" r="13" fill="#eef2f4" stroke="#cfd6da"/>
+              <circle cx="67" cy="18" r="6" fill="#c9d0d4"/>
+              <circle cx="67" cy="31" r="2.2" fill="#d6dde1"/>
+              <path d="M112 34 Q121 38 121 44" fill="none" stroke="#c7ced2" stroke-width="2"/>
+            </g>
+
+            <circle cx="141" cy="136" r="18" fill="#ffffff" stroke="${green}" stroke-width="3"/>
+            <path d="M137 124 L147 124 L143 134 L150 134 L137 149 L141 138 L133 138 Z" fill="${green}"/>
+
+            <g opacity=".82">
+              <path d="M181 54 C175 63 173 68 173 73 A13 13 0 0 0 199 73 C199 67 195 61 189 53 C187 50 184 50 181 54 Z" fill="none" stroke="${blue}" stroke-width="3"/>
+              <path d="M249 58 h27 l-3 29 h-21 z" fill="none" stroke="${gray}" stroke-width="3"/><path d="M253 54 h19" stroke="${gray}" stroke-width="3" stroke-linecap="round"/>
+              <path d="M326 58 c-6 7 6 7 0 14 c-6 7 6 7 0 14 M338 58 c-6 7 6 7 0 14 c-6 7 6 7 0 14 M350 58 c-6 7 6 7 0 14 c-6 7 6 7 0 14" fill="none" stroke="${orange}" stroke-width="3" stroke-linecap="round"/>
+            </g>
           </svg>
         </div>
         <div class="omni-legend">

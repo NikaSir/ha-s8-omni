@@ -8,7 +8,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.6.5",
+    "dashboard_version": "v0.6.6",
     "template": "NikaS Integration Panel Template v1.0",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -64,7 +64,7 @@
       "card_proportions": "target_reference_compact",
       "typography_scale": "compact_balanced_mobile",
       "overview_target": "approved_target_mockup_composition",
-      "overview_scene": "illustrated_three_tank_omni_station_with_verified_live_process_paths",
+      "overview_scene": "render_quality_live_omni_illustration",
       "overview_scene_sources": [
         "robot_on_dock",
         "robot_status",
@@ -99,7 +99,9 @@
       "split_words_inside_values": false,
       "status_heading": "Статусы",
       "touch_target_min_px": 44,
-      "safe_area": true
+      "safe_area": true,
+      "overview_scene_visual_depth": "soft_3d_station_robot_shadows_and_tinted_modules",
+      "overview_scene_verified_only": true
     }
   },
   "generated_ui": {
