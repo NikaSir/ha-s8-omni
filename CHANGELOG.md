@@ -1,5 +1,10 @@
 ## v1.00_b031 / UI v0.6.8
 
+## v1.00_b032 / UI v0.6.9
+
+- Increased contrast and opacity of the Overview OMNI process legend for reliable readability on the bright hero illustration.
+- Preserved verified-only process highlighting and the existing robot/station composition.
+
 - Rebalanced Overview hero to match the approved render composition: larger robot and station, less empty space, narrower legend, deeper product materials and larger glass-like tanks.
 - Verified HA state remains the only source for process highlighting; no synthetic tank levels or unverified station writes were added.
 
