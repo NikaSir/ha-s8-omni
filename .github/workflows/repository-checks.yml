@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   validate:
@@ -16,18 +16,31 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
+      - name: Apply temporary v0.6.7 hero patch
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          python .github/patch_v067.py
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add custom_components/s8_omni/frontend/s8-omni-panel.js custom_components/s8_omni/const.py custom_components/s8_omni/manifest.json panel.json CHANGELOG.md
+            git commit -m "ui: rebuild premium OMNI hero in v0.6.7"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
+
       - name: Validate JSON files
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-
           for path in Path('.').rglob('*.json'):
               if '.git' in path.parts:
                   continue
@@ -56,67 +69,47 @@ jobs:
           frontend_dir="custom_components/s8_omni/frontend"
           production="$frontend_dir/s8-omni-panel.js"
           registration="custom_components/s8_omni/__init__.py"
-
           test -f "$production" || { echo "Missing production bundle: $production"; exit 1; }
-
           js_count="$(find "$frontend_dir" -maxdepth 1 -type f -name '*.js' | wc -l | tr -d ' ')"
           if [ "$js_count" != "1" ]; then
             echo "Expected exactly one production JS file in $frontend_dir; found $js_count"
             find "$frontend_dir" -maxdepth 1 -type f -name '*.js' -print
             exit 1
           fi
-
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then
             echo "Production panel bundle must not use runtime imports"
             exit 1
           fi
-
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then
             echo "Historical panel versions must not be production runtime dependencies"
             exit 1
           fi
-
           if ! grep -q 's8-omni-panel\.js?v=' "$registration"; then
             echo "module_url must reference stable s8-omni-panel.js with query-string cache busting"
             exit 1
           fi
-
           echo "Standalone frontend bundle contract OK"
 
       - name: Enforce offline-safe S8 OMNI panel lifecycle
         run: |
           python - <<'PY'
           from pathlib import Path
-
           path = Path("custom_components/s8_omni/__init__.py")
           text = path.read_text(encoding="utf-8")
           try:
               setup = text.split("async def async_setup_entry", 1)[1].split("async def async_unload_entry", 1)[0]
           except IndexError as err:
               raise SystemExit("Unable to locate S8 OMNI setup lifecycle") from err
-
           if "async_config_entry_first_refresh" in setup:
-              raise SystemExit(
-                  "S8 OMNI setup must not gate panel/platform registration on async_config_entry_first_refresh()"
-              )
-
-          markers = [
-              "await _async_register_panel(hass, entry)",
-              "await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)",
-              "await coordinator.async_refresh()",
-          ]
-          positions = []
+              raise SystemExit("S8 OMNI setup must not gate panel/platform registration on async_config_entry_first_refresh()")
+          markers = ["await _async_register_panel(hass, entry)","await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)","await coordinator.async_refresh()"]
+          positions=[]
           for marker in markers:
-              pos = setup.find(marker)
-              if pos < 0:
-                  raise SystemExit(f"Missing lifecycle marker: {marker}")
+              pos=setup.find(marker)
+              if pos < 0: raise SystemExit(f"Missing lifecycle marker: {marker}")
               positions.append(pos)
-
           if positions != sorted(positions):
-              raise SystemExit(
-                  "Lifecycle order must be panel registration -> platform setup -> non-gating device refresh"
-              )
-
+              raise SystemExit("Lifecycle order must be panel registration -> platform setup -> non-gating device refresh")
           print("Offline-safe panel lifecycle contract OK")
           PY
 
