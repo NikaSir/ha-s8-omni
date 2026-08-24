@@ -1,3 +1,10 @@
+## v1.00_b036 / UI v0.7.3
+
+- Replaced product-art `<img>` delivery with Canvas rendering via `createImageBitmap()` from the verified WebP bytes already embedded in the standalone bundle.
+- This bypasses Home Assistant/iOS WebView image-source restrictions affecting both `data:` and `blob:` URLs in `<img>`.
+- Added a local SVG fallback so the Overview hero can no longer become visually blank if bitmap decoding is unavailable.
+- Preserved the approved product illustration, live verified overlays, legend, controls, and verified-only state semantics.
+
 ## v1.00_b035 / UI v0.7.2
 
 - Replaced static/data-URI Overview product-art delivery with a Blob URL built from verified WebP bytes embedded in the standalone frontend bundle.
