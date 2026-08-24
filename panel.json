@@ -8,7 +8,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.6.1",
+    "dashboard_version": "v0.6.2",
     "template": "NikaS Integration Panel Template v1.0",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -32,7 +32,7 @@
       "browser_history_back": false,
       "views": ["overview", "cleaning", "station", "maintenance", "diagnostics"],
       "view_responsibilities": {
-        "overview": "composite_system_state_health_frequent_actions_and_compact_robot_station_summary",
+        "overview": "composite_system_state_health_live_station_scene_frequent_actions_and_robot_station_summary",
         "cleaning": "current_cleaning_metrics_key_profile_cards_and_separate_settings_drill_down",
         "station": "compact_station_state_summary_and_operations",
         "maintenance": "consumables_and_service",
@@ -55,6 +55,9 @@
       "card_proportions": "balanced_reference_not_forced_compact",
       "typography_scale": "balanced_12_to_31_px_mobile",
       "overview_target": "balanced_readability_with_natural_vertical_scroll_when_needed",
+      "overview_scene": "live_verified_station_operation_visualization",
+      "overview_scene_sources": ["robot_on_dock", "robot_status", "station_operations", "dp134", "dp135", "dp136"],
+      "overview_scene_synthetic_levels": false,
       "station_target": "typical_state_without_required_vertical_scroll",
       "station_summary_layout": "three_equal_compact_columns",
       "station_operation_density": "compact_without_reducing_touch_readability",
@@ -76,10 +79,7 @@
     "vacuum_entity_unique_id_suffix": "vacuum",
     "connection_entity_unique_id_suffix": "local_connection",
     "refresh_entity_unique_id_suffix": "refresh",
-    "quick_actions": [
-      "vacuum.start",
-      "vacuum.return_to_base"
-    ],
+    "quick_actions": ["vacuum.start", "vacuum.return_to_base"],
     "details_path": "/dashboard-s8-omni"
   },
   "ownership": {
