@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.6.4";
+const UI_VERSION = "v0.6.5";
 
 const ROBOT_LABELS = {
   idle: "Ожидание", cleaning: "Уборка", zone_cleaning: "Зона", room_cleaning: "Комнаты",
@@ -170,7 +170,7 @@ class S8OmniPanel extends HTMLElement {
       .header-title{text-align:center;display:flex;flex-direction:column;gap:2px;overflow:hidden}.header-title strong{font-size:22px;line-height:1.05;white-space:nowrap}.header-title span{color:var(--secondary-text-color);font-size:12px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .content{width:min(100%,900px);margin:0 auto;padding:12px 10px 18px}.card{background:var(--card-background-color);border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:22px;padding:15px;margin-bottom:12px;box-shadow:0 6px 18px rgba(0,0,0,.04)}.eyebrow{display:block;color:var(--secondary-text-color);font-size:11px;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
       .hero{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--card-background-color) 62%,color-mix(in srgb,var(--primary-color) 7%,var(--card-background-color)) 100%)}.hero::after{content:"";position:absolute;width:205px;height:205px;right:-70px;top:-92px;border-radius:50%;background:color-mix(in srgb,var(--primary-color) 7%,transparent);pointer-events:none}.hero-top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:10px;position:relative;z-index:2}.hero h1{margin-top:5px;font-size:30px;line-height:1.02;letter-spacing:-.035em}.hero-hint{margin-top:6px;color:var(--secondary-text-color);font-size:13px;line-height:1.28}.connection-badge{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 11px;border-radius:999px;background:var(--secondary-background-color);color:var(--secondary-text-color);font-size:12px;font-weight:800;white-space:nowrap}.dot{width:8px;height:8px;border-radius:50%;background:var(--success-color,#43a047)}.connection-badge.bad .dot{background:var(--error-color,#db4437)}
-      .omni-scene{position:relative;z-index:1;height:185px;margin-top:12px;border-radius:20px;border:1px solid color-mix(in srgb,var(--divider-color) 76%,transparent);background:linear-gradient(145deg,#f7f8f9 0%,#eef2f4 65%,#eef9fc 100%);overflow:hidden}.omni-art{position:absolute;left:0;top:0;width:69%;height:100%;padding:8px 2px 2px 8px}.omni-art svg{width:100%;height:100%;display:block}.omni-legend{position:absolute;right:9px;top:11px;bottom:11px;width:29%;display:flex;flex-direction:column;justify-content:center;gap:7px;padding:9px 8px;border-radius:18px;background:rgba(255,255,255,.78);box-shadow:0 7px 18px rgba(0,0,0,.04);backdrop-filter:blur(8px)}.legend-row{display:grid;grid-template-columns:24px 1fr;gap:7px;align-items:center;min-height:30px;color:#6a6a6a;font-size:11px;font-weight:750;line-height:1.12}.legend-row ha-icon{--mdc-icon-size:21px}.legend-row.active{color:var(--primary-text-color)}.legend-row.water.active ha-icon{color:#1da8e5}.legend-row.dust.active ha-icon{color:#68727c}.legend-row.dry.active ha-icon{color:#ff944d}.legend-row.charge.active ha-icon{color:#35ad5c}.legend-row.charge.active{color:#2e9a50}
+      .omni-scene{position:relative;z-index:1;height:188px;margin-top:12px;border-radius:22px;border:1px solid color-mix(in srgb,var(--divider-color) 74%,transparent);background:linear-gradient(135deg,#f8fafb 0%,#f1f5f7 58%,#eef9fd 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.92);overflow:hidden}.omni-scene::before{content:"";position:absolute;inset:auto 14px 12px 14px;height:44px;border-radius:18px;background:linear-gradient(180deg,rgba(230,236,239,.2),rgba(223,231,235,.75));filter:blur(.4px)}.omni-scene::after{content:"";position:absolute;right:-28px;bottom:-34px;width:146px;height:146px;border-radius:50%;background:radial-gradient(circle,#d9f1fb 0%,rgba(217,241,251,0) 68%)}.omni-art{position:absolute;left:0;top:0;width:68%;height:100%;padding:8px 4px 2px 8px}.omni-art svg{width:100%;height:100%;display:block}.omni-legend{position:absolute;right:10px;top:12px;bottom:12px;width:29%;display:flex;flex-direction:column;justify-content:center;gap:8px;padding:10px 9px;border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(255,255,255,.83));box-shadow:0 8px 22px rgba(0,0,0,.05);backdrop-filter:blur(12px)}.legend-row{display:grid;grid-template-columns:25px 1fr;gap:8px;align-items:center;min-height:32px;padding:4px 2px;color:#6d6f73;font-size:11px;font-weight:760;line-height:1.14;border-radius:12px}.legend-row ha-icon{--mdc-icon-size:21px}.legend-row.active{color:var(--primary-text-color);background:rgba(255,255,255,.72);box-shadow:inset 0 0 0 1px rgba(0,0,0,.04)}.legend-row.water.active{background:#eef8ff}.legend-row.water.active ha-icon{color:#1da8e5}.legend-row.dust.active{background:#f3f4f5}.legend-row.dust.active ha-icon{color:#68727c}.legend-row.dry.active{background:#fff5ed}.legend-row.dry.active ha-icon{color:#ff944d}.legend-row.charge.active{background:#f0fbf2;color:#2e9a50}.legend-row.charge.active ha-icon{color:#35ad5c}
       .hero-metrics{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.hero-metrics>div{min-height:68px;border-radius:18px;padding:10px;background:var(--secondary-background-color);overflow:hidden}.hero-metrics span{display:block;color:var(--secondary-text-color);font-size:10px;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}.hero-metrics strong{display:block;margin-top:4px;font-size:19px;line-height:1.05;white-space:nowrap}.battery-bar{height:4px;border-radius:999px;background:var(--divider-color);margin-top:8px;overflow:hidden}.battery-bar i{display:block;height:100%;border-radius:inherit;background:var(--primary-color)}
       .trust-banner{display:flex;gap:10px;padding:11px 13px;margin:0 0 10px;border-radius:17px;background:color-mix(in srgb,var(--error-color,#db4437) 9%,var(--card-background-color));border:1px solid color-mix(in srgb,var(--error-color,#db4437) 32%,transparent)}.trust-banner ha-icon{color:var(--error-color,#db4437);--mdc-icon-size:22px}.trust-banner strong{display:block;font-size:14px}.trust-banner span{display:block;color:var(--secondary-text-color);font-size:12px;margin-top:2px}
       .quick-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:11px}.action{min-height:94px;border:1px solid color-mix(in srgb,var(--divider-color) 80%,transparent);border-radius:22px;padding:8px 5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:var(--card-background-color);color:var(--primary-text-color);text-align:center}.action.primary{background:var(--primary-color);color:var(--text-primary-color,white);border-color:transparent}.action:disabled{opacity:.34}.action.running{background:color-mix(in srgb,var(--primary-color) 15%,var(--card-background-color));color:var(--primary-color)}.action.running:disabled{opacity:1}.action-icon{width:50px;height:50px;border-radius:16px;display:grid;place-items:center;background:rgba(0,0,0,.09)}.action.primary .action-icon{background:rgba(0,0,0,.15)}.action-icon ha-icon{--mdc-icon-size:34px}.action strong{font-size:14px;line-height:1}.action .action-sub{font-size:11px;opacity:.72;white-space:nowrap}
@@ -226,12 +226,11 @@ class S8OmniPanel extends HTMLElement {
     const docked = !snap.unreliable && snap.onDock === true;
     const battery = snap.battery === null ? "—" : `${Math.round(snap.battery)}%`;
     const age = snap.age === null ? "—" : this._formatDuration(snap.age);
-
-    const cleanStroke = wash ? "#25aee7" : "#cbd2d6";
-    const dirtyStroke = wash ? "#6f7880" : "#d1d5d8";
-    const dustStroke = dust ? "#7a838b" : "#d0d5d8";
-    const dryStroke = dry ? "#ff944d" : "#d8d4d1";
-    const chargeStroke = (charging || charged || docked) ? "#36b55d" : "#cfd7d1";
+    const chargeActive = charging || charged || docked;
+    const blue = wash ? "#21aae8" : "#cfd7db";
+    const gray = dust ? "#6f7880" : "#d1d6d9";
+    const orange = dry ? "#f39b52" : "#dbd7d4";
+    const green = chargeActive ? "#39b55f" : "#d4ddd7";
 
     return `<section class="card hero" data-more="composite_status">
       <div class="hero-top"><div><span class="eyebrow">Состояние</span><h1>${escapeHtml(compositeLabel)}</h1><p class="hero-hint">${escapeHtml(this._heroHint(snap))}</p></div><div class="connection-badge ${connection !== "Локально" ? "bad" : ""}"><i class="dot"></i>${escapeHtml(connection)}</div></div>
@@ -239,47 +238,53 @@ class S8OmniPanel extends HTMLElement {
         <div class="omni-art">
           <svg viewBox="0 0 430 190" aria-label="OMNI station live visualization" role="img">
             <defs>
-              <linearGradient id="stationShell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e9edf0"/></linearGradient>
-              <linearGradient id="tankBlue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${wash ? "#bfeaff" : "#eef3f6"}"/><stop offset="1" stop-color="${wash ? "#6cccf5" : "#e2e7ea"}"/></linearGradient>
-              <linearGradient id="tankGray" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${wash ? "#c8ced3" : "#f0f2f3"}"/><stop offset="1" stop-color="${wash ? "#8d969e" : "#e1e5e7"}"/></linearGradient>
-              <linearGradient id="tankWarm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${dry ? "#ffd0ac" : "#f2f1f0"}"/><stop offset="1" stop-color="${dry ? "#ff9d59" : "#e6e4e3"}"/></linearGradient>
-              <filter id="shadow" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="7" stdDeviation="6" flood-color="#000" flood-opacity=".12"/></filter>
-              <filter id="glowBlue" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <linearGradient id="shell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#edf1f3"/></linearGradient>
+              <linearGradient id="dockBase" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3a3b"/><stop offset="1" stop-color="#1e1f20"/></linearGradient>
+              <linearGradient id="robotTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#eceeef"/></linearGradient>
+              <linearGradient id="glassBlue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${wash ? '#d8f3ff' : '#f4f7f9'}"/><stop offset="1" stop-color="${wash ? '#78d1f5' : '#e9edef'}"/></linearGradient>
+              <linearGradient id="glassGray" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${dust ? '#d7dde1' : '#f4f7f8'}"/><stop offset="1" stop-color="${dust ? '#9ea6ad' : '#e8ebed'}"/></linearGradient>
+              <linearGradient id="glassWarm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${dry ? '#ffe0c4' : '#f6f3f1'}"/><stop offset="1" stop-color="${dry ? '#ffab63' : '#ebe7e4'}"/></linearGradient>
+              <filter id="shadow" x="-20%" y="-20%" width="160%" height="180%"><feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#000" flood-opacity=".10"/></filter>
+              <filter id="shadowSoft" x="-20%" y="-20%" width="160%" height="180%"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000" flood-opacity=".08"/></filter>
+              <filter id="glowBlue" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <filter id="glowGray" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <filter id="glowWarm" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
             </defs>
-
+            <g opacity=".55"><ellipse cx="93" cy="153" rx="66" ry="14" fill="#d8dee2"/><ellipse cx="282" cy="155" rx="140" ry="16" fill="#d9e0e4"/></g>
             <g filter="url(#shadow)">
-              <rect x="142" y="18" width="257" height="128" rx="20" fill="url(#stationShell)" stroke="#cfd5d8" stroke-width="2"/>
-              <rect x="158" y="31" width="68" height="82" rx="13" fill="url(#tankBlue)" stroke="#d0d5d8"/>
-              <rect x="237" y="31" width="68" height="82" rx="13" fill="url(#tankGray)" stroke="#d0d5d8"/>
-              <rect x="316" y="31" width="68" height="82" rx="13" fill="url(#tankWarm)" stroke="#d0d5d8"/>
-              <rect x="155" y="112" width="232" height="34" rx="13" fill="#292929"/>
-              <rect x="184" y="119" width="176" height="21" rx="11" fill="#111"/>
+              <rect x="150" y="16" width="246" height="134" rx="26" fill="url(#shell)" stroke="#cfd6da" stroke-width="2"/>
+              <rect x="168" y="30" width="58" height="86" rx="13" fill="url(#glassBlue)" stroke="#d6dce0"/>
+              <rect x="236" y="30" width="58" height="86" rx="13" fill="url(#glassGray)" stroke="#d6dce0"/>
+              <rect x="304" y="30" width="58" height="86" rx="13" fill="url(#glassWarm)" stroke="#d6dce0"/>
+              <rect x="162" y="116" width="222" height="34" rx="15" fill="url(#dockBase)"/>
+              <rect x="195" y="124" width="157" height="20" rx="10" fill="#111315"/>
+              <rect x="182" y="41" width="30" height="56" rx="9" fill="rgba(255,255,255,.18)"/>
+              <rect x="250" y="41" width="30" height="56" rx="9" fill="rgba(255,255,255,.16)"/>
+              <rect x="318" y="41" width="30" height="56" rx="9" fill="rgba(255,255,255,.16)"/>
             </g>
-
-            <path d="M192 110 L192 142 L120 142 L98 135" fill="none" stroke="${cleanStroke}" stroke-width="4" stroke-linecap="round" ${wash ? 'filter="url(#glowBlue)"' : ""}/>
-            <path d="M271 110 L271 151 L130 151 L101 143" fill="none" stroke="${dirtyStroke}" stroke-width="3" stroke-linecap="round"/>
-            <path d="M271 110 L271 128 L146 128 L110 132" fill="none" stroke="${dustStroke}" stroke-width="3" stroke-linecap="round" stroke-dasharray="${dust ? "0" : "5 6"}"/>
-            <path d="M350 110 L350 157 L132 157 L103 147" fill="none" stroke="${dryStroke}" stroke-width="4" stroke-linecap="round"/>
-            <path d="M165 137 L131 137" fill="none" stroke="${chargeStroke}" stroke-width="5" stroke-linecap="round"/>
-
-            <g transform="translate(18,96)" filter="url(#shadow)">
-              <ellipse cx="63" cy="33" rx="61" ry="31" fill="#f8f8f8" stroke="#ccd1d4" stroke-width="2"/>
-              <ellipse cx="63" cy="26" rx="55" ry="25" fill="#ffffff" stroke="#d5d9dc"/>
-              <rect x="13" y="38" width="100" height="10" rx="5" fill="#2a2d2f"/>
-              <circle cx="64" cy="21" r="10" fill="#e8ecef" stroke="#c8cdd1"/>
-              <circle cx="64" cy="19" r="5" fill="#d4d9dd"/>
-              <rect x="18" y="36" width="22" height="6" rx="3" fill="#1f2528"/>
+            <g opacity=".55" stroke="#d8dddf" stroke-width="2"><line x1="196" y1="118" x2="196" y2="150"/><line x1="265" y1="118" x2="265" y2="150"/><line x1="333" y1="118" x2="333" y2="150"/></g>
+            <path d="M197 116 L197 144 L122 144 L98 137" fill="none" stroke="${blue}" stroke-width="4.5" stroke-linecap="round" ${wash ? 'filter="url(#glowBlue)"' : ''}/>
+            <path d="M266 116 L266 149 L126 149 L101 143" fill="none" stroke="${gray}" stroke-width="3.5" stroke-linecap="round" ${dust ? 'filter="url(#glowGray)"' : ''}/>
+            <path d="M334 116 L334 154 L132 154 L104 148" fill="none" stroke="${orange}" stroke-width="4.5" stroke-linecap="round" ${dry ? 'filter="url(#glowWarm)"' : ''}/>
+            <path d="M154 132 L118 132" fill="none" stroke="${green}" stroke-width="5" stroke-linecap="round"/>
+            <g transform="translate(22,96)" filter="url(#shadowSoft)">
+              <ellipse cx="60" cy="34" rx="58" ry="29" fill="#f4f6f7" stroke="#d2d8dc" stroke-width="2"/>
+              <ellipse cx="60" cy="28" rx="52" ry="23" fill="url(#robotTop)" stroke="#dadfe3"/>
+              <rect x="14" y="36" width="92" height="10" rx="5" fill="#25282a"/>
+              <rect x="18" y="39" width="28" height="4" rx="2" fill="#111315" opacity=".95"/>
+              <circle cx="60" cy="18" r="12" fill="#ebeff1" stroke="#d0d6da"/>
+              <circle cx="60" cy="18" r="6" fill="#cfd5d8"/>
+              <circle cx="60" cy="28" r="2" fill="#dee3e6"/>
             </g>
-
-            <circle cx="144" cy="137" r="17" fill="#ffffff" stroke="${chargeStroke}" stroke-width="3"/>
-            <path d="M140 126 L149 126 L145 135 L151 135 L140 149 L143 139 L136 139 Z" fill="${chargeStroke}"/>
+            <circle cx="145" cy="132" r="17" fill="#ffffff" stroke="${green}" stroke-width="3"/>
+            <path d="M141 121 L150 121 L146 130 L152 130 L141 144 L144 134 L137 134 Z" fill="${green}"/>
           </svg>
         </div>
         <div class="omni-legend">
-          <div class="legend-row water ${wash ? "active" : ""}"><ha-icon icon="mdi:water-outline"></ha-icon><span>Промывка</span></div>
-          <div class="legend-row dust ${dust ? "active" : ""}"><ha-icon icon="mdi:delete-outline"></ha-icon><span>Пыль/мешок</span></div>
-          <div class="legend-row dry ${dry ? "active" : ""}"><ha-icon icon="mdi:weather-windy"></ha-icon><span>Тёплый воздух</span></div>
-          <div class="legend-row charge ${(charging || charged || docked) ? "active" : ""}"><ha-icon icon="${charging ? "mdi:battery-charging" : "mdi:flash"}"></ha-icon><span>${charging ? "Зарядка" : docked ? "На базе" : "Заряд"}</span></div>
+          <div class="legend-row water ${wash ? 'active' : ''}"><ha-icon icon="mdi:water-outline"></ha-icon><span>Промывка</span></div>
+          <div class="legend-row dust ${dust ? 'active' : ''}"><ha-icon icon="mdi:delete-outline"></ha-icon><span>Пыль/мешок</span></div>
+          <div class="legend-row dry ${dry ? 'active' : ''}"><ha-icon icon="mdi:weather-windy"></ha-icon><span>Тёплый воздух</span></div>
+          <div class="legend-row charge ${chargeActive ? 'active' : ''}"><ha-icon icon="${charging ? 'mdi:battery-charging' : 'mdi:flash'}"></ha-icon><span>${charging ? 'Зарядка' : docked ? 'На базе' : 'Заряд'}</span></div>
         </div>
       </div>
       <div class="hero-metrics"><div data-more="battery"><span>АКБ</span><strong>${battery}</strong><div class="battery-bar"><i style="width:${snap.battery ?? 0}%"></i></div></div><div data-more="mode"><span>Режим</span><strong>${escapeHtml(this._modeLabel(snap))}</strong></div><div data-more="telemetry_age"><span>Телеметрия</span><strong>${escapeHtml(age)}</strong></div></div>

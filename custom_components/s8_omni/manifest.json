@@ -3,8 +3,14 @@
   "name": "S8 OMNI",
   "codeowners": [],
   "config_flow": true,
-  "dependencies": ["frontend", "http", "panel_custom"],
+  "dependencies": [
+    "frontend",
+    "http",
+    "panel_custom"
+  ],
   "iot_class": "local_polling",
-  "requirements": ["tinytuya>=1.17.0"],
-  "version": "1.0.0b27"
+  "requirements": [
+    "tinytuya>=1.17.0"
+  ],
+  "version": "1.0.0b28"
 }
