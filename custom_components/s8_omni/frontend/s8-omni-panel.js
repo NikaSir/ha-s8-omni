@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.6.6";
+const UI_VERSION = "v0.6.7";
 
 const ROBOT_LABELS = {
   idle: "Ожидание", cleaning: "Уборка", zone_cleaning: "Зона", room_cleaning: "Комнаты",
@@ -170,7 +170,7 @@ class S8OmniPanel extends HTMLElement {
       .header-title{text-align:center;display:flex;flex-direction:column;gap:2px;overflow:hidden}.header-title strong{font-size:22px;line-height:1.05;white-space:nowrap}.header-title span{color:var(--secondary-text-color);font-size:12px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .content{width:min(100%,900px);margin:0 auto;padding:12px 10px 18px}.card{background:var(--card-background-color);border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:22px;padding:15px;margin-bottom:12px;box-shadow:0 6px 18px rgba(0,0,0,.04)}.eyebrow{display:block;color:var(--secondary-text-color);font-size:11px;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
       .hero{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--card-background-color) 62%,color-mix(in srgb,var(--primary-color) 7%,var(--card-background-color)) 100%)}.hero::after{content:"";position:absolute;width:205px;height:205px;right:-70px;top:-92px;border-radius:50%;background:color-mix(in srgb,var(--primary-color) 7%,transparent);pointer-events:none}.hero-top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:10px;position:relative;z-index:2}.hero h1{margin-top:5px;font-size:30px;line-height:1.02;letter-spacing:-.035em}.hero-hint{margin-top:6px;color:var(--secondary-text-color);font-size:13px;line-height:1.28}.connection-badge{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 11px;border-radius:999px;background:var(--secondary-background-color);color:var(--secondary-text-color);font-size:12px;font-weight:800;white-space:nowrap}.dot{width:8px;height:8px;border-radius:50%;background:var(--success-color,#43a047)}.connection-badge.bad .dot{background:var(--error-color,#db4437)}
-      .omni-scene{position:relative;z-index:1;height:194px;margin-top:12px;border-radius:22px;border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);background:linear-gradient(145deg,#fbfcfd 0%,#f3f7f9 56%,#edf8fc 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.97);overflow:hidden}.omni-scene::before{content:"";position:absolute;left:16px;right:132px;bottom:11px;height:38px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(188,198,204,.58) 0%,rgba(188,198,204,.16) 58%,rgba(188,198,204,0) 78%)}.omni-scene::after{content:"";position:absolute;right:-18px;top:-8px;width:164px;height:164px;border-radius:50%;background:radial-gradient(circle,#dff4fd 0%,rgba(223,244,253,0) 69%)}.omni-art{position:absolute;left:0;top:0;width:69%;height:100%;padding:6px 0 0 5px}.omni-art svg{width:100%;height:100%;display:block}.omni-legend{position:absolute;right:10px;top:12px;bottom:12px;width:29%;display:flex;flex-direction:column;justify-content:center;gap:7px;padding:10px;border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,255,255,.87));box-shadow:0 10px 24px rgba(0,0,0,.06);backdrop-filter:blur(12px)}.legend-row{display:grid;grid-template-columns:25px 1fr;gap:8px;align-items:center;min-height:32px;padding:5px 4px;color:#6f7378;font-size:11px;font-weight:760;line-height:1.14;border-radius:12px}.legend-row ha-icon{--mdc-icon-size:21px}.legend-row.active{color:var(--primary-text-color);background:rgba(255,255,255,.78);box-shadow:inset 0 0 0 1px rgba(0,0,0,.035)}.legend-row.water.active{background:#edf8ff}.legend-row.water.active ha-icon{color:#1baae8}.legend-row.dust.active{background:#f2f4f5}.legend-row.dust.active ha-icon{color:#68727c}.legend-row.dry.active{background:#fff4eb}.legend-row.dry.active ha-icon{color:#f49b54}.legend-row.charge.active{background:#effbf2;color:#2f9a52}.legend-row.charge.active ha-icon{color:#35ad5c}
+      .omni-scene{position:relative;z-index:1;height:200px;margin-top:12px;border-radius:22px;border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);background:linear-gradient(145deg,#fbfcfd 0%,#f3f7f9 56%,#edf8fc 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.97);overflow:hidden}.omni-scene::before{content:"";position:absolute;left:16px;right:132px;bottom:11px;height:38px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(188,198,204,.58) 0%,rgba(188,198,204,.16) 58%,rgba(188,198,204,0) 78%)}.omni-scene::after{content:"";position:absolute;right:-18px;top:-8px;width:164px;height:164px;border-radius:50%;background:radial-gradient(circle,#dff4fd 0%,rgba(223,244,253,0) 69%)}.omni-art{position:absolute;left:0;top:0;width:72%;height:100%;padding:4px 0 0 3px}.omni-art svg{width:100%;height:100%;display:block}.omni-legend{position:absolute;right:9px;top:12px;bottom:12px;width:27%;display:flex;flex-direction:column;justify-content:center;gap:7px;padding:10px;border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,255,255,.87));box-shadow:0 10px 24px rgba(0,0,0,.06);backdrop-filter:blur(12px)}.legend-row{display:grid;grid-template-columns:25px 1fr;gap:8px;align-items:center;min-height:32px;padding:5px 4px;color:#555d62;font-size:10.5px;font-weight:780;line-height:1.14;border-radius:12px}.legend-row ha-icon{--mdc-icon-size:21px}.legend-row.active{color:var(--primary-text-color);background:rgba(255,255,255,.78);box-shadow:inset 0 0 0 1px rgba(0,0,0,.035)}.legend-row.water.active{background:#edf8ff}.legend-row.water.active ha-icon{color:#1baae8}.legend-row.dust.active{background:#f2f4f5}.legend-row.dust.active ha-icon{color:#68727c}.legend-row.dry.active{background:#fff4eb}.legend-row.dry.active ha-icon{color:#f49b54}.legend-row.charge.active{background:#effbf2;color:#2f9a52}.legend-row.charge.active ha-icon{color:#35ad5c}
       .hero-metrics{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.hero-metrics>div{min-height:68px;border-radius:18px;padding:10px;background:var(--secondary-background-color);overflow:hidden}.hero-metrics span{display:block;color:var(--secondary-text-color);font-size:10px;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}.hero-metrics strong{display:block;margin-top:4px;font-size:19px;line-height:1.05;white-space:nowrap}.battery-bar{height:4px;border-radius:999px;background:var(--divider-color);margin-top:8px;overflow:hidden}.battery-bar i{display:block;height:100%;border-radius:inherit;background:var(--primary-color)}
       .trust-banner{display:flex;gap:10px;padding:11px 13px;margin:0 0 10px;border-radius:17px;background:color-mix(in srgb,var(--error-color,#db4437) 9%,var(--card-background-color));border:1px solid color-mix(in srgb,var(--error-color,#db4437) 32%,transparent)}.trust-banner ha-icon{color:var(--error-color,#db4437);--mdc-icon-size:22px}.trust-banner strong{display:block;font-size:14px}.trust-banner span{display:block;color:var(--secondary-text-color);font-size:12px;margin-top:2px}
       .quick-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:11px}.action{min-height:94px;border:1px solid color-mix(in srgb,var(--divider-color) 80%,transparent);border-radius:22px;padding:8px 5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:var(--card-background-color);color:var(--primary-text-color);text-align:center}.action.primary{background:var(--primary-color);color:var(--text-primary-color,white);border-color:transparent}.action:disabled{opacity:.34}.action.running{background:color-mix(in srgb,var(--primary-color) 15%,var(--card-background-color));color:var(--primary-color)}.action.running:disabled{opacity:1}.action-icon{width:50px;height:50px;border-radius:16px;display:grid;place-items:center;background:rgba(0,0,0,.09)}.action.primary .action-icon{background:rgba(0,0,0,.15)}.action-icon ha-icon{--mdc-icon-size:34px}.action strong{font-size:14px;line-height:1}.action .action-sub{font-size:11px;opacity:.72;white-space:nowrap}
@@ -227,10 +227,10 @@ class S8OmniPanel extends HTMLElement {
     const battery = snap.battery === null ? "—" : `${Math.round(snap.battery)}%`;
     const age = snap.age === null ? "—" : this._formatDuration(snap.age);
     const chargeActive = charging || charged || docked;
-    const blue = wash ? "#17afe9" : "#88cde8";
-    const gray = dust ? "#6f7880" : "#a9b0b6";
-    const orange = dry ? "#f39a4d" : "#efbb93";
-    const green = chargeActive ? "#38b55d" : "#a7c9b1";
+    const blue = wash ? "#0faeea" : "#72c6e8";
+    const gray = dust ? "#616c74" : "#9ca6ad";
+    const orange = dry ? "#f28e42" : "#e8a574";
+    const green = chargeActive ? "#2fb157" : "#86bd96";
     const blueOpacity = wash ? "1" : ".42";
     const grayOpacity = dust ? "1" : ".34";
     const orangeOpacity = dry ? "1" : ".38";
@@ -239,7 +239,7 @@ class S8OmniPanel extends HTMLElement {
       <div class="hero-top"><div><span class="eyebrow">Состояние</span><h1>${escapeHtml(compositeLabel)}</h1><p class="hero-hint">${escapeHtml(this._heroHint(snap))}</p></div><div class="connection-badge ${connection !== "Локально" ? "bad" : ""}"><i class="dot"></i>${escapeHtml(connection)}</div></div>
       <div class="omni-scene">
         <div class="omni-art">
-          <svg viewBox="0 0 430 198" aria-label="OMNI station live visualization" role="img">
+          <svg viewBox="0 0 455 205" aria-label="OMNI station live visualization" role="img">
             <defs>
               <linearGradient id="stationShell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".62" stop-color="#f6f8f9"/><stop offset="1" stop-color="#e8edf0"/></linearGradient>
               <linearGradient id="baseDark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b3c3d"/><stop offset="1" stop-color="#1c1d1e"/></linearGradient>
@@ -258,39 +258,45 @@ class S8OmniPanel extends HTMLElement {
             <ellipse cx="281" cy="168" rx="136" ry="16" fill="#d6dee3" opacity=".78"/>
 
             <g filter="url(#shadow)">
-              <rect x="136" y="14" width="268" height="141" rx="27" fill="url(#stationShell)" stroke="#cdd5da" stroke-width="2"/>
-              <rect x="153" y="28" width="67" height="86" rx="14" fill="url(#tankBlue)" stroke="#cfd8dc"/>
-              <rect x="229" y="28" width="67" height="86" rx="14" fill="url(#tankGray)" stroke="#cfd8dc"/>
-              <rect x="305" y="28" width="67" height="86" rx="14" fill="url(#tankWarm)" stroke="#cfd8dc"/>
-              <rect x="149" y="109" width="238" height="46" rx="17" fill="url(#baseDark)"/>
-              <rect x="180" y="119" width="179" height="25" rx="12.5" fill="#0d0f10"/>
-              <rect x="169" y="39" width="34" height="56" rx="10" fill="rgba(255,255,255,.20)"/>
-              <rect x="245" y="39" width="34" height="56" rx="10" fill="rgba(255,255,255,.17)"/>
-              <rect x="321" y="39" width="34" height="56" rx="10" fill="rgba(255,255,255,.17)"/>
-              <rect x="164" y="150" width="208" height="7" rx="3.5" fill="#ccd3d7" opacity=".75"/>
+              <path d="M151 22 Q151 12 164 12 H378 Q391 12 397 23 L409 38 V142 Q409 156 394 160 H168 Q151 158 151 142 Z" fill="url(#stationShell)" stroke="#c9d3d8" stroke-width="1.8"/>
+              <path d="M390 18 L409 38 V142 Q409 154 397 158 L390 153 Z" fill="#dfe6e9" opacity=".88"/>
+              <rect x="166" y="29" width="66" height="88" rx="14" fill="url(#tankBlue)" stroke="#c7d5db"/>
+              <rect x="240" y="29" width="66" height="88" rx="14" fill="url(#tankGray)" stroke="#cbd3d7"/>
+              <rect x="314" y="29" width="66" height="88" rx="14" fill="url(#tankWarm)" stroke="#d7d0ca"/>
+              <path d="M160 112 H397 V143 Q397 158 382 158 H176 Q160 158 160 143 Z" fill="url(#baseDark)"/>
+              <rect x="190" y="123" width="174" height="24" rx="12" fill="#0b0d0e"/>
+              <path d="M177 154 H376" stroke="#cbd3d7" stroke-width="5" stroke-linecap="round" opacity=".72"/>
+              <path d="M175 37 Q185 30 202 30 H222 V108 H175 Z" fill="rgba(255,255,255,.26)"/>
+              <path d="M249 37 Q259 30 276 30 H296 V108 H249 Z" fill="rgba(255,255,255,.22)"/>
+              <path d="M323 37 Q333 30 350 30 H370 V108 H323 Z" fill="rgba(255,255,255,.22)"/>
+              <path d="M170 92 Q199 84 228 92 V112 H170 Z" fill="${blue}" opacity="${wash ? '.38' : '.18'}"/>
+              <path d="M244 91 Q273 85 302 91 V112 H244 Z" fill="${gray}" opacity="${dust ? '.32' : '.15'}"/>
+              <path d="M318 91 Q347 84 376 91 V112 H318 Z" fill="${orange}" opacity="${dry ? '.36' : '.17'}"/>
             </g>
 
-            <g opacity=".62" stroke="#d3dade" stroke-width="2.2"><line x1="186" y1="113" x2="186" y2="154"/><line x1="262" y1="113" x2="262" y2="154"/><line x1="338" y1="113" x2="338" y2="154"/></g>
+            <g opacity=".52" stroke="#d1d9dd" stroke-width="2"><line x1="199" y1="114" x2="199" y2="158"/><line x1="273" y1="114" x2="273" y2="158"/><line x1="347" y1="114" x2="347" y2="158"/></g>
             <g fill="none" stroke-linecap="round">
-              <path d="M186 112 L186 146 L126 146 L101 139" stroke="${blue}" opacity="${blueOpacity}" stroke-width="5" ${wash ? 'filter="url(#glowBlue)"' : ''}/>
-              <path d="M262 112 L262 152 L132 152 L104 145" stroke="${gray}" opacity="${grayOpacity}" stroke-width="4" ${dust ? 'filter="url(#glowGray)"' : ''}/>
-              <path d="M338 112 L338 158 L138 158 L108 150" stroke="${orange}" opacity="${orangeOpacity}" stroke-width="5" ${dry ? 'filter="url(#glowWarm)"' : ''}/>
-              <path d="M152 136 L121 136" stroke="${green}" stroke-width="5.5"/>
+              <path d="M199 113 L199 149 L132 149 L105 141" stroke="${blue}" opacity="${blueOpacity}" stroke-width="5" ${wash ? 'filter="url(#glowBlue)"' : ''}/>
+              <path d="M273 113 L273 155 L138 155 L108 147" stroke="${gray}" opacity="${grayOpacity}" stroke-width="4" ${dust ? 'filter="url(#glowGray)"' : ''}/>
+              <path d="M347 113 L347 161 L144 161 L112 153" stroke="${orange}" opacity="${orangeOpacity}" stroke-width="5" ${dry ? 'filter="url(#glowWarm)"' : ''}/>
+              <path d="M161 138 L126 138" stroke="${green}" stroke-width="5.5"/>
             </g>
 
-            <g transform="translate(13,91)" filter="url(#softShadow)">
-              <ellipse cx="67" cy="39" rx="64" ry="31" fill="#f1f3f4" stroke="#cfd6da" stroke-width="2"/>
-              <ellipse cx="67" cy="33" rx="58" ry="26" fill="url(#robotShell)" stroke="#d9dfe2"/>
-              <rect x="14" y="40" width="106" height="10" rx="5" fill="#25282a"/>
-              <rect x="20" y="42" width="30" height="4" rx="2" fill="#101315" opacity=".98"/>
-              <circle cx="67" cy="18" r="13" fill="#eef2f4" stroke="#cfd6da"/>
-              <circle cx="67" cy="18" r="6" fill="#c9d0d4"/>
-              <circle cx="67" cy="31" r="2.2" fill="#d6dde1"/>
-              <path d="M112 34 Q121 38 121 44" fill="none" stroke="#c7ced2" stroke-width="2"/>
+            <g transform="translate(7,91)" filter="url(#softShadow)">
+              <ellipse cx="72" cy="45" rx="70" ry="31" fill="#dce3e7" opacity=".55"/>
+              <path d="M7 34 Q10 13 35 8 Q72 0 108 9 Q132 15 137 35 V45 Q131 60 72 62 Q15 60 7 45 Z" fill="url(#robotShell)" stroke="#cbd4d9" stroke-width="2"/>
+              <path d="M12 37 Q72 45 132 37 V48 Q119 59 72 60 Q24 59 12 48 Z" fill="#24282b"/>
+              <rect x="24" y="40" width="35" height="8" rx="4" fill="#0d1113"/>
+              <rect x="64" y="40" width="20" height="8" rx="4" fill="#343a3e"/>
+              <circle cx="73" cy="17" r="14" fill="#f0f3f5" stroke="#cbd4d9"/>
+              <circle cx="73" cy="16" r="7" fill="#c9d1d6"/>
+              <ellipse cx="73" cy="11" rx="5" ry="2" fill="#ffffff" opacity=".65"/>
+              <path d="M19 27 Q71 12 125 27" fill="none" stroke="#ffffff" stroke-width="2.2" opacity=".8"/>
+              <circle cx="116" cy="41" r="3" fill="#1ba8dc" opacity=".75"/>
             </g>
 
-            <circle cx="141" cy="136" r="18" fill="#ffffff" stroke="${green}" stroke-width="3"/>
-            <path d="M137 124 L147 124 L143 134 L150 134 L137 149 L141 138 L133 138 Z" fill="${green}"/>
+            <circle cx="150" cy="138" r="18" fill="#ffffff" stroke="${green}" stroke-width="3"/>
+            <path d="M146 126 L156 126 L152 136 L159 136 L146 151 L150 140 L142 140 Z" fill="${green}"/>
 
             <g opacity=".82">
               <path d="M181 54 C175 63 173 68 173 73 A13 13 0 0 0 199 73 C199 67 195 61 189 53 C187 50 184 50 181 54 Z" fill="none" stroke="${blue}" stroke-width="3"/>

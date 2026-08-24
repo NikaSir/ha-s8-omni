@@ -8,7 +8,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.6.6",
+    "dashboard_version": "v0.6.7",
     "template": "NikaS Integration Panel Template v1.0",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -64,7 +64,7 @@
       "card_proportions": "target_reference_compact",
       "typography_scale": "compact_balanced_mobile",
       "overview_target": "approved_target_mockup_composition",
-      "overview_scene": "render_quality_live_omni_illustration",
+      "overview_scene": "premium_product_illustration_live_omni_scene",
       "overview_scene_sources": [
         "robot_on_dock",
         "robot_status",
