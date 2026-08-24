@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.6.0";
+const UI_VERSION = "v0.6.1";
 
 const ROBOT_LABELS = {
   idle: "Ожидание",
@@ -408,20 +408,35 @@ class S8OmniPanel extends HTMLElement {
       .toggle { width:48px; height:28px; border-radius:999px; background:var(--disabled-color,#bdbdbd); padding:3px; flex:0 0 auto; }
       .toggle::after { content:""; display:block; width:22px; height:22px; border-radius:50%; background:white; transition:transform .18s ease; box-shadow:0 1px 5px rgba(0,0,0,.18); }
       .toggle.on { background:var(--primary-color); } .toggle.on::after { transform:translateX(20px); }
-      .station-hero { display:grid; grid-template-columns:92px minmax(0,1fr); gap:16px; align-items:center; }
-      .station-device { width:92px; height:122px; border-radius:24px; background:var(--secondary-background-color); border:1px solid var(--divider-color); display:grid; place-items:center; color:var(--primary-color); }
-      .station-device ha-icon { --mdc-icon-size:42px; }
-      .station-hero h2 { font-size:32px; line-height:1.05; margin-top:6px; overflow-wrap:normal; word-break:normal; }
-      .station-hero p { margin-top:9px; color:var(--secondary-text-color); font-size:14px; line-height:1.38; }
-      .operation-list { display:grid; gap:9px; }
-      .operation { min-height:74px; border-radius:20px; padding:12px; background:var(--secondary-background-color); display:grid; grid-template-columns:48px minmax(0,1fr) 34px; gap:12px; align-items:center; border:1px solid transparent; }
+      .station-view { display:block; }
+      .station-hero { display:grid; grid-template-columns:78px minmax(0,1fr); gap:14px; align-items:center; padding:14px 16px; margin-bottom:10px; }
+      .station-device { width:78px; height:96px; border-radius:22px; background:var(--secondary-background-color); border:1px solid var(--divider-color); display:grid; place-items:center; color:var(--primary-color); }
+      .station-device ha-icon { --mdc-icon-size:38px; }
+      .station-hero h2 { font-size:30px; line-height:1.05; margin-top:5px; overflow-wrap:normal; word-break:normal; }
+      .station-hero p { margin-top:6px; color:var(--secondary-text-color); font-size:14px; line-height:1.3; }
+      .station-summary-card { padding:9px 12px; margin-bottom:10px; }
+      .station-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
+      .station-summary-item { min-height:56px; padding:7px 10px; display:flex; flex-direction:column; justify-content:center; border-left:1px solid var(--divider-color); }
+      .station-summary-item:first-child { border-left:0; }
+      .station-summary-item span { color:var(--secondary-text-color); font-size:12px; line-height:1.15; white-space:nowrap; }
+      .station-summary-item strong { display:block; margin-top:5px; font-size:17px; line-height:1.1; overflow-wrap:normal; word-break:normal; hyphens:none; }
+      .station-operations-card { padding:14px 16px; margin-bottom:10px; }
+      .station-operations-card .section-title { margin-bottom:10px; }
+      .station-operations-card .section-title h2 { font-size:23px; }
+      .operation-list { display:grid; gap:7px; }
+      .operation { min-height:66px; border-radius:18px; padding:9px 10px; background:var(--secondary-background-color); display:grid; grid-template-columns:44px minmax(0,1fr) 32px; gap:10px; align-items:center; border:1px solid transparent; }
       .operation.active { background:color-mix(in srgb,var(--primary-color) 9%,var(--secondary-background-color)); border-color:color-mix(in srgb,var(--primary-color) 24%,transparent); }
-      .operation .icon { width:48px; height:48px; border-radius:16px; display:grid; place-items:center; background:var(--card-background-color); color:var(--primary-color); }
+      .operation .icon { width:44px; height:44px; border-radius:14px; display:grid; place-items:center; background:var(--card-background-color); color:var(--primary-color); }
+      .operation .icon ha-icon { --mdc-icon-size:27px; }
       .operation strong { display:block; font-size:15px; }
-      .operation span { display:block; margin-top:3px; color:var(--secondary-text-color); font-size:13px; }
+      .operation span { display:block; margin-top:2px; color:var(--secondary-text-color); font-size:13px; }
       .operation i { width:10px; height:10px; justify-self:center; border-radius:50%; background:var(--divider-color); position:relative; }
       .operation.active i { width:28px; height:28px; background:color-mix(in srgb,var(--primary-color) 18%,transparent); border:2px solid color-mix(in srgb,var(--primary-color) 34%,transparent); box-shadow:0 0 0 4px color-mix(in srgb,var(--primary-color) 8%,transparent); }
       .operation.active i::after { content:""; position:absolute; inset:7px; border-radius:50%; background:var(--primary-color); }
+      .station-future { grid-template-columns:44px minmax(0,1fr); gap:10px; padding:11px 13px; margin-bottom:10px; border-radius:20px; }
+      .station-future .icon { width:44px; height:44px; border-radius:14px; }
+      .station-future strong { font-size:15px; }
+      .station-future p { margin-top:3px; font-size:12px; line-height:1.28; }
       .resource { min-height:98px; border-radius:22px; padding:15px; margin-bottom:10px; background:var(--card-background-color); border:1px solid color-mix(in srgb,var(--divider-color) 70%,transparent); display:grid; grid-template-columns:58px minmax(0,1fr) auto; gap:13px; align-items:center; }
       .resource .icon { width:58px; height:58px; border-radius:18px; display:grid; place-items:center; background:color-mix(in srgb,var(--primary-color) 12%,var(--secondary-background-color)); color:var(--primary-color); }
       .resource strong { font-size:16px; }
@@ -481,7 +496,21 @@ class S8OmniPanel extends HTMLElement {
         .profile-metric strong { font-size:19px; }
         .view-heading h2 { font-size:28px; }
         .view-heading p { font-size:14px; }
-        .station-hero h2 { font-size:30px; }
+        .station-hero { grid-template-columns:72px minmax(0,1fr); gap:12px; padding:12px 14px; margin-bottom:9px; }
+        .station-device { width:72px; height:88px; border-radius:20px; }
+        .station-device ha-icon { --mdc-icon-size:35px; }
+        .station-hero h2 { font-size:28px; }
+        .station-hero p { font-size:13px; }
+        .station-summary-card { padding:8px 10px; margin-bottom:9px; }
+        .station-summary-item { min-height:52px; padding:6px 8px; }
+        .station-summary-item span { font-size:11px; }
+        .station-summary-item strong { font-size:16px; }
+        .station-operations-card { padding:12px 14px; margin-bottom:9px; }
+        .station-operations-card .section-title { margin-bottom:8px; }
+        .station-operations-card .section-title h2 { font-size:22px; }
+        .operation { min-height:62px; padding:8px 9px; grid-template-columns:42px minmax(0,1fr) 32px; gap:9px; }
+        .operation .icon { width:42px; height:42px; }
+        .station-future { padding:10px 12px; margin-bottom:8px; }
       }
       @media (max-width:360px) {
         .header-title strong { font-size:20px; }
@@ -499,6 +528,8 @@ class S8OmniPanel extends HTMLElement {
         .status-grid { grid-template-columns:1fr; }
         .segments.four { grid-template-columns:repeat(2,1fr); }
         .diagnostic-strip { grid-template-columns:1fr; }
+        .station-summary-item { padding-left:6px; padding-right:6px; }
+        .station-summary-item strong { font-size:15px; }
       }
       @media (prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto !important; transition:none !important; animation:none !important; } }
     `;
@@ -607,7 +638,9 @@ class S8OmniPanel extends HTMLElement {
     const snap = this._snapshot();
     const stationLabel = snap.unreliable ? "Нет данных" : this._label(STATION_LABELS,snap.station,"Нет данных");
     const operation = snap.unreliable ? "Нет данных" : snap.stationOperations.length ? snap.stationOperations.map((item)=>STATION_OPERATION_LABELS[item]||item).join(" · ") : "Ожидание";
-    return `${this._trustBanner(snap)}<section class="card station-hero" data-more="station_status"><div class="station-device"><ha-icon icon="mdi:home-automation"></ha-icon></div><div><span class="eyebrow">Станция S8 OMNI</span><h2>${escapeHtml(stationLabel)}</h2><p>${snap.unreliable ? "Нет подтверждённого текущего состояния станции." : `Текущая операция: ${escapeHtml(operation)}.`}</p></div></section><section class="card"><div class="info-list"><div class="info-row"><span>Робот</span><strong>${snap.unreliable ? "Нет данных" : snap.onDock === true ? "На базе" : snap.onDock === false ? "Не на базе" : "Неизвестно"}</strong></div><div class="info-row"><span>Заряд</span><strong>${snap.battery === null ? "—" : `${Math.round(snap.battery)}%`}</strong></div><div class="info-row"><span>Текущая операция</span><strong>${escapeHtml(operation)}</strong></div></div></section><section class="card"><div class="section-title"><div><span class="eyebrow">Состояние</span><h2>Операции станции</h2></div></div><div class="operation-list">${this._operation("dust_collection","Сбор пыли","mdi:delete-sweep-outline",snap.connected)}${this._operation("roller_cleaning","Промывка","mdi:waves",snap.connected)}${this._operation("roller_drying","Сушка","mdi:weather-windy",snap.connected)}</div></section><section class="future-card"><span class="icon"><ha-icon icon="mdi:shield-check-outline"></ha-icon></span><div><strong>Управление станцией</strong><p>Кнопки операций появятся только после подтверждения публичных команд интеграции.</p></div></section>`;
+    const robotPosition = snap.unreliable ? "Нет данных" : snap.onDock === true ? "На базе" : snap.onDock === false ? "Не на базе" : "Неизвестно";
+    const charge = snap.battery === null ? "—" : `${Math.round(snap.battery)}%`;
+    return `<div class="station-view">${this._trustBanner(snap)}<section class="card station-hero" data-more="station_status"><div class="station-device"><ha-icon icon="mdi:home-automation"></ha-icon></div><div><span class="eyebrow">Станция S8 OMNI</span><h2>${escapeHtml(stationLabel)}</h2><p>${snap.unreliable ? "Нет подтверждённого текущего состояния станции." : `Текущая операция: ${escapeHtml(operation)}.`}</p></div></section><section class="card station-summary-card"><div class="station-summary"><div class="station-summary-item"><span>Робот</span><strong>${escapeHtml(robotPosition)}</strong></div><div class="station-summary-item"><span>Заряд</span><strong>${escapeHtml(charge)}</strong></div><div class="station-summary-item"><span>Операция</span><strong>${escapeHtml(operation)}</strong></div></div></section><section class="card station-operations-card"><div class="section-title"><div><span class="eyebrow">Состояние</span><h2>Операции станции</h2></div></div><div class="operation-list">${this._operation("dust_collection","Сбор пыли","mdi:delete-sweep-outline",snap.connected)}${this._operation("roller_cleaning","Промывка","mdi:waves",snap.connected)}${this._operation("roller_drying","Сушка","mdi:weather-windy",snap.connected)}</div></section><section class="future-card station-future"><span class="icon"><ha-icon icon="mdi:shield-check-outline"></ha-icon></span><div><strong>Управление станцией</strong><p>Команды появятся после подтверждения публичного API интеграции.</p></div></section></div>`;
   }
 
   _resource(key,title,icon,connected) {
