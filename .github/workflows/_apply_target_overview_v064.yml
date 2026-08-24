@@ -1,0 +1,125 @@
+name: Apply target Overview v0.6.4
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  patch:
+    if: github.head_ref == 'feat/target-overview-v064'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - name: Apply target-style Overview
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+
+          p = Path('custom_components/s8_omni/frontend/s8-omni-panel.js')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('const UI_VERSION = "v0.6.3";', 'const UI_VERSION = "v0.6.4";')
+
+          new_scene_css = r'''
+      .omni-scene{position:relative;z-index:1;height:185px;margin-top:12px;border-radius:20px;border:1px solid color-mix(in srgb,var(--divider-color) 76%,transparent);background:linear-gradient(145deg,#f7f8f9 0%,#eef2f4 65%,#eef9fc 100%);overflow:hidden}.omni-art{position:absolute;left:0;top:0;width:69%;height:100%;padding:8px 2px 2px 8px}.omni-art svg{width:100%;height:100%;display:block}.omni-legend{position:absolute;right:9px;top:11px;bottom:11px;width:29%;display:flex;flex-direction:column;justify-content:center;gap:7px;padding:9px 8px;border-radius:18px;background:rgba(255,255,255,.78);box-shadow:0 7px 18px rgba(0,0,0,.04);backdrop-filter:blur(8px)}.legend-row{display:grid;grid-template-columns:24px 1fr;gap:7px;align-items:center;min-height:30px;color:#6a6a6a;font-size:11px;font-weight:750;line-height:1.12}.legend-row ha-icon{--mdc-icon-size:21px}.legend-row.active{color:var(--primary-text-color)}.legend-row.water.active ha-icon{color:#1da8e5}.legend-row.dust.active ha-icon{color:#68727c}.legend-row.dry.active ha-icon{color:#ff944d}.legend-row.charge.active ha-icon{color:#35ad5c}.legend-row.charge.active{color:#2e9a50}
+'''
+          s, n = re.subn(r'      \.omni-scene\{.*?(?=      \.hero-metrics\{)', new_scene_css, s, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit('Unable to replace OMNI scene CSS')
+
+          s = re.sub(r'      \.hero-metrics\{.*?      \.battery-bar i\{[^\n]*\}\n', '''      .hero-metrics{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.hero-metrics>div{min-height:68px;border-radius:18px;padding:10px;background:var(--secondary-background-color);overflow:hidden}.hero-metrics span{display:block;color:var(--secondary-text-color);font-size:10px;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}.hero-metrics strong{display:block;margin-top:4px;font-size:19px;line-height:1.05;white-space:nowrap}.battery-bar{height:4px;border-radius:999px;background:var(--divider-color);margin-top:8px;overflow:hidden}.battery-bar i{display:block;height:100%;border-radius:inherit;background:var(--primary-color)}\n''', s, count=1, flags=re.S)
+
+          s = re.sub(r'      \.quick-actions\{.*?(?=      \.statuses-card\{)', '''      .quick-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:11px}.action{min-height:94px;border:1px solid color-mix(in srgb,var(--divider-color) 80%,transparent);border-radius:22px;padding:8px 5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:var(--card-background-color);color:var(--primary-text-color);text-align:center}.action.primary{background:var(--primary-color);color:var(--text-primary-color,white);border-color:transparent}.action:disabled{opacity:.34}.action.running{background:color-mix(in srgb,var(--primary-color) 15%,var(--card-background-color));color:var(--primary-color)}.action.running:disabled{opacity:1}.action-icon{width:50px;height:50px;border-radius:16px;display:grid;place-items:center;background:rgba(0,0,0,.09)}.action.primary .action-icon{background:rgba(0,0,0,.15)}.action-icon ha-icon{--mdc-icon-size:34px}.action strong{font-size:14px;line-height:1}.action .action-sub{font-size:11px;opacity:.72;white-space:nowrap}\n''', s, count=1, flags=re.S)
+
+          s = re.sub(r'      \.statuses-card\{.*?(?=      \.section-title\{)', '''      .statuses-card{padding:14px}.statuses-card>h2{font-size:24px;line-height:1;margin-bottom:12px;letter-spacing:-.02em}.status-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.status-card{min-height:100px;border:0;border-radius:18px;padding:10px 7px;background:var(--secondary-background-color);color:var(--primary-text-color);text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}.status-icon{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:var(--card-background-color);color:var(--primary-color);margin-bottom:7px}.status-icon ha-icon{--mdc-icon-size:25px}.status-card strong{font-size:11px}.status-card b{display:block;margin-top:3px;font-size:14px;line-height:1.05;white-space:nowrap}.status-card span.meta{display:block;margin-top:3px;color:var(--secondary-text-color);font-size:10px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}.status-card.good b,.status-card.good .status-icon{color:var(--success-color,#43a047)}.status-card.warn b,.status-card.warn .status-icon{color:var(--error-color,#db4437)}\n''', s, count=1, flags=re.S)
+
+          new_hero = r'''  _hero() {
+    const snap = this._snapshot();
+    const compositeLabel = snap.connection === "disconnected" ? "Нет связи" : snap.connection === "unknown" ? "Связь не подтверждена" : this._label(COMPOSITE_LABELS, snap.composite, "Нет данных");
+    const connection = this._connectionLabel();
+    const ops = new Set(snap.stationOperations || []);
+    const wash = !snap.unreliable && (ops.has("roller_cleaning") || snap.station === "roller_cleaning");
+    const dust = !snap.unreliable && (ops.has("dust_collection") || snap.station === "dust_collection");
+    const dry = !snap.unreliable && (ops.has("drying") || snap.station === "drying");
+    const charging = !snap.unreliable && snap.robot === "charging";
+    const charged = !snap.unreliable && snap.robot === "charged";
+    const docked = !snap.unreliable && snap.onDock === true;
+    const battery = snap.battery === null ? "—" : `${Math.round(snap.battery)}%`;
+    const age = snap.age === null ? "—" : this._formatDuration(snap.age);
+    const cleanStroke = wash ? "#25aee7" : "#cbd2d6";
+    const dirtyStroke = wash ? "#6f7880" : "#d1d5d8";
+    const dustStroke = dust ? "#7a838b" : "#d0d5d8";
+    const dryStroke = dry ? "#ff944d" : "#d8d4d1";
+    const chargeStroke = (charging || charged || docked) ? "#36b55d" : "#cfd7d1";
+    return `<section class="card hero" data-more="composite_status"><div class="hero-top"><div><span class="eyebrow">Состояние</span><h1>${escapeHtml(compositeLabel)}</h1><p class="hero-hint">${escapeHtml(this._heroHint(snap))}</p></div><div class="connection-badge ${connection !== "Локально" ? "bad" : ""}"><i class="dot"></i>${escapeHtml(connection)}</div></div><div class="omni-scene"><div class="omni-art"><svg viewBox="0 0 430 190" aria-label="OMNI station live visualization" role="img"><defs><linearGradient id="stationShell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e9edf0"/></linearGradient><linearGradient id="tankBlue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${wash ? "#bfeaff" : "#eef3f6"}"/><stop offset="1" stop-color="${wash ? "#6cccf5" : "#e2e7ea"}"/></linearGradient><linearGradient id="tankGray" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${wash ? "#c8ced3" : "#f0f2f3"}"/><stop offset="1" stop-color="${wash ? "#8d969e" : "#e1e5e7"}"/></linearGradient><linearGradient id="tankWarm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${dry ? "#ffd0ac" : "#f2f1f0"}"/><stop offset="1" stop-color="${dry ? "#ff9d59" : "#e6e4e3"}"/></linearGradient><filter id="shadow" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="7" stdDeviation="6" flood-color="#000" flood-opacity=".12"/></filter><filter id="glowBlue" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g filter="url(#shadow)"><rect x="142" y="18" width="257" height="128" rx="20" fill="url(#stationShell)" stroke="#cfd5d8" stroke-width="2"/><rect x="158" y="31" width="68" height="82" rx="13" fill="url(#tankBlue)" stroke="#d0d5d8"/><rect x="237" y="31" width="68" height="82" rx="13" fill="url(#tankGray)" stroke="#d0d5d8"/><rect x="316" y="31" width="68" height="82" rx="13" fill="url(#tankWarm)" stroke="#d0d5d8"/><rect x="155" y="112" width="232" height="34" rx="13" fill="#292929"/><rect x="184" y="119" width="176" height="21" rx="11" fill="#111"/></g><path d="M192 110 L192 142 L120 142 L98 135" fill="none" stroke="${cleanStroke}" stroke-width="4" stroke-linecap="round" ${wash ? 'filter="url(#glowBlue)"' : ""}/><path d="M271 110 L271 151 L130 151 L101 143" fill="none" stroke="${dirtyStroke}" stroke-width="3" stroke-linecap="round"/><path d="M271 110 L271 128 L146 128 L110 132" fill="none" stroke="${dustStroke}" stroke-width="3" stroke-linecap="round" stroke-dasharray="${dust ? "0" : "5 6"}"/><path d="M350 110 L350 157 L132 157 L103 147" fill="none" stroke="${dryStroke}" stroke-width="4" stroke-linecap="round"/><path d="M165 137 L131 137" fill="none" stroke="${chargeStroke}" stroke-width="5" stroke-linecap="round"/><g transform="translate(18,96)" filter="url(#shadow)"><ellipse cx="63" cy="33" rx="61" ry="31" fill="#f8f8f8" stroke="#ccd1d4" stroke-width="2"/><ellipse cx="63" cy="26" rx="55" ry="25" fill="#ffffff" stroke="#d5d9dc"/><rect x="13" y="38" width="100" height="10" rx="5" fill="#2a2d2f"/><circle cx="64" cy="21" r="10" fill="#e8ecef" stroke="#c8cdd1"/><circle cx="64" cy="19" r="5" fill="#d4d9dd"/><rect x="18" y="36" width="22" height="6" rx="3" fill="#1f2528"/></g><circle cx="144" cy="137" r="17" fill="#ffffff" stroke="${chargeStroke}" stroke-width="3"/><path d="M140 126 L149 126 L145 135 L151 135 L140 149 L143 139 L136 139 Z" fill="${chargeStroke}"/></svg></div><div class="omni-legend"><div class="legend-row water ${wash ? "active" : ""}"><ha-icon icon="mdi:water-outline"></ha-icon><span>Промывка</span></div><div class="legend-row dust ${dust ? "active" : ""}"><ha-icon icon="mdi:delete-outline"></ha-icon><span>Пыль/мешок</span></div><div class="legend-row dry ${dry ? "active" : ""}"><ha-icon icon="mdi:weather-windy"></ha-icon><span>Тёплый воздух</span></div><div class="legend-row charge ${(charging || charged || docked) ? "active" : ""}"><ha-icon icon="${charging ? "mdi:battery-charging" : "mdi:flash"}"></ha-icon><span>${charging ? "Зарядка" : docked ? "На базе" : "Заряд"}</span></div></div></div><div class="hero-metrics"><div data-more="battery"><span>АКБ</span><strong>${battery}</strong><div class="battery-bar"><i style="width:${snap.battery ?? 0}%"></i></div></div><div data-more="mode"><span>Режим</span><strong>${escapeHtml(this._modeLabel(snap))}</strong></div><div data-more="telemetry_age"><span>Телеметрия</span><strong>${escapeHtml(age)}</strong></div></div></section>`;
+  }
+'''
+          s, n = re.subn(r'  _hero\(\) \{.*?(?=\n  _quickActions\(\) \{)', new_hero + '\n', s, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit('Unable to replace _hero')
+
+          new_overview = r'''  _overview() {
+    const snap = this._snapshot();
+    const robot = snap.unreliable ? "Нет данных" : this._label(ROBOT_LABELS, snap.robot, "Нет данных");
+    const station = snap.unreliable ? "Нет данных" : this._label(STATION_LABELS, snap.station, "Нет данных");
+    const robotContext = snap.unreliable ? "Нет данных" : snap.onDock === true ? "На базе" : snap.onDock === false ? "Не на базе" : "Позиция неизвестна";
+    const operation = snap.unreliable ? "Нет данных" : snap.stationOperations.length ? snap.stationOperations.map((x) => STATION_OPERATION_LABELS[x] || x).join(" · ") : snap.missingStationDps.length ? "Часть данных" : "Нет операций";
+    const conn = snap.connected ? "Локально" : snap.connection === "disconnected" ? "Нет связи" : "Неизвестно";
+    const faultObj = this._state("fault");
+    const faultRaw = snap.connected && this._available(faultObj) ? String(faultObj.state) : null;
+    const faultOk = faultRaw === "0";
+    const faultTitle = faultRaw === null ? "Нет данных" : faultOk ? "OK" : "Ошибка";
+    const faultMeta = faultRaw === null ? "Недоступно" : faultOk ? "Ошибок нет" : `Код ${faultRaw}`;
+    return `<div>${this._hero()}${this._trustBanner(snap)}${this._quickActions()}<section class="card statuses-card"><h2>Статусы</h2><div class="status-grid"><button class="status-card" data-more="robot_status" type="button"><span class="status-icon"><ha-icon icon="mdi:robot-vacuum"></ha-icon></span><strong>Робот</strong><b>${escapeHtml(robot)}</b><span class="meta">${escapeHtml(robotContext)}</span></button><button class="status-card" data-more="station_status" type="button"><span class="status-icon"><ha-icon icon="mdi:home-automation"></ha-icon></span><strong>Станция</strong><b>${escapeHtml(station)}</b><span class="meta">${escapeHtml(operation)}</span></button><button class="status-card ${snap.connected ? "good" : "warn"}" data-more="local_connection" type="button"><span class="status-icon"><ha-icon icon="mdi:lan-connect"></ha-icon></span><strong>Связь</strong><b>${escapeHtml(conn)}</b><span class="meta">${snap.age === null ? "—" : escapeHtml(this._formatDuration(snap.age))}</span></button><button class="status-card ${faultOk ? "good" : faultRaw === null ? "" : "warn"}" data-more="fault" type="button"><span class="status-icon"><ha-icon icon="mdi:shield-check-outline"></ha-icon></span><strong>Система</strong><b>${escapeHtml(faultTitle)}</b><span class="meta">${escapeHtml(faultMeta)}</span></button></div></section></div>`;
+  }
+'''
+          s, n = re.subn(r'  _overview\(\) \{.*?(?=\n  _cleaning\(\) \{)', new_overview + '\n', s, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit('Unable to replace _overview')
+
+          s = s.replace('@media(max-width:360px){.header-title', '@media(max-width:360px){.status-grid{grid-template-columns:repeat(2,1fr)}.header-title')
+          p.write_text(s, encoding='utf-8')
+
+          const = Path('custom_components/s8_omni/const.py')
+          t = const.read_text(encoding='utf-8').replace('VERSION = "v1.00_b026"', 'VERSION = "v1.00_b027"').replace('DASHBOARD_VERSION = "v0.6.3"', 'DASHBOARD_VERSION = "v0.6.4"')
+          const.write_text(t, encoding='utf-8')
+
+          manifest = Path('custom_components/s8_omni/manifest.json')
+          data = json.loads(manifest.read_text(encoding='utf-8')); data['version'] = '1.0.0b27'; manifest.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          panel = Path('panel.json')
+          data = json.loads(panel.read_text(encoding='utf-8')); data['panel']['dashboard_version'] = 'v0.6.4'; data['panel']['mobile_fit']['overview_target'] = 'target_mockup_composition_with_verified_live_telemetry'; data['panel']['mobile_fit']['overview_scene'] = 'inline_svg_robot_station_tanks_and_verified_process_flows'; data['panel']['mobile_fit']['status_layout'] = 'four_compact_verified_cards'; panel.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          changelog = Path('CHANGELOG.md')
+          c = changelog.read_text(encoding='utf-8')
+          marker = '### Added\n\n'
+          lines = '- `v1.00_b027` / dashboard `v0.6.4`: redraw Overview to match the approved target composition with a robot + three-tank OMNI station illustration, verified process-flow highlights and a compact right-side legend.\n- `v1.00_b027` / dashboard `v0.6.4`: replace the two large status cards with four compact verified cards (Robot, Station, local connection and fault/system state) without inventing water or dust-bin percentages.\n'
+          c = c.replace(marker, marker + lines, 1)
+          changelog.write_text(c, encoding='utf-8')
+          PY
+          node --check custom_components/s8_omni/frontend/s8-omni-panel.js
+          python -m compileall -q custom_components
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for p in Path('.').rglob('*.json'):
+              if '.git' not in p.parts:
+                  json.loads(p.read_text(encoding='utf-8'))
+          PY
+      - name: Commit patched panel and remove patcher
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/_apply_target_overview_v064.yml
+          git add custom_components/s8_omni/frontend/s8-omni-panel.js custom_components/s8_omni/const.py custom_components/s8_omni/manifest.json panel.json CHANGELOG.md
+          git commit -m "ui: match approved Overview target in v1.00_b027"
+          git push origin HEAD:${{ github.head_ref }}
