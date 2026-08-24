@@ -2,7 +2,7 @@
 
 Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum and OMNI station, built from verified Tuya LAN datapoints.
 
-> Current development line: **v1.00_b023** (`1.0.0b23`). This is an early test build.
+> Current development line: **v1.00_b024** (`1.0.0b24`). This is an early test build.
 
 ## Scope
 
@@ -23,7 +23,7 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 
 `ha-s8-omni` owns its full appliance UI instead of exposing a loose collection of Lovelace entities as the primary experience.
 
-Dashboard **v0.6.0** follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2** and **NikaS Integration Panel Template v1.0**, with the primary acceptance viewport **iPhone Pro Max portrait**:
+Dashboard **v0.6.1** follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2** and **NikaS Integration Panel Template v1.0**, with the primary acceptance viewport **iPhone Pro Max portrait**:
 
 - symmetric Header: 52 px Menu/Back slot / centered title / 52 px Refresh, reduced to 48 px side slots on narrow mobile;
 - root views use an icon-only **Menu** button that opens the native Home Assistant sidebar; the **Настройки уборки** drill-down uses an explicit Back arrow to return to its parent Cleaning view;
@@ -42,6 +42,7 @@ Dashboard **v0.6.0** follows **Home Assistant NikaS · Integration Dashboard UI 
 - Start/Pause/Home are not repeated on the root Cleaning tab; daily actions stay on Overview;
 - editable suction, water, volume and DND controls live only one level lower and are not duplicated on the root Cleaning tab;
 - drill-down Back returns to the Cleaning root view while the bottom Tab Bar remains available for switching root sections;
+- Station view uses a compact three-column summary (**Робот / Заряд / Операция**) instead of three tall rows, keeps the three OMNI operation rows compact, and targets a typical iPhone Pro Max state without required vertical scrolling;
 - Station view keeps independent dust collection / roller cleaning / drying state and uses a prominent active-operation indicator;
 - Maintenance view keeps factual remaining resource and translates user-facing minute units to **мин**;
 - Diagnostics keeps normalized and raw state context;
