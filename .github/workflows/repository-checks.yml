@@ -61,12 +61,32 @@ jobs:
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then echo "Runtime imports forbidden"; exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then echo "Historical panel dependency found"; exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration" || { echo "Stable panel cache busting missing"; exit 1; }
-          grep -q 'const PRODUCT_ART_BASE64 = "iVBOR' "$production" || { echo "Embedded PNG product art missing"; exit 1; }
-          grep -q 'new Blob(\[bytes\], { type: "image/png" })' "$production" || { echo "PNG Canvas decoder missing"; exit 1; }
-          grep -q 'customElements.define("s8-product-art"' "$production" || { echo "Product-art canvas custom element missing"; exit 1; }
-          grep -q '<s8-product-art class="product-art"' "$production" || { echo "Overview does not use product-art canvas element"; exit 1; }
-          grep -q 'product-art-fallback' "$production" || { echo "Product-art fallback missing"; exit 1; }
-          echo "Standalone frontend and PNG Canvas product-art contract OK"
+          grep -q 'const PRODUCT_ART_CLEAN_BASE64 = "' "$production" || { echo "Approved cleaning product art missing"; exit 1; }
+          grep -q 'const PRODUCT_ART_DOCK_BASE64 = "' "$production" || { echo "Approved dock product art missing"; exit 1; }
+          grep -q 'data:image/jpeg;base64' "$production" || { echo "JPEG data URI product-art delivery missing"; exit 1; }
+          grep -q 'const artMode = chargeActive ? "dock" : "clean"' "$production" || { echo "Live product-art state selector missing"; exit 1; }
+          grep -q 'src="${productArtData(artMode)}"' "$production" || { echo "Overview does not use live approved product art"; exit 1; }
+          if grep -q 'createImageBitmap' "$production"; then echo "Legacy Canvas product-art decoder must not remain"; exit 1; fi
+          echo "Standalone frontend and approved dual product-art contract OK"
+
+      - name: Validate embedded JPEG product art
+        run: |
+          python - <<'PY'
+          import base64
+          import re
+          from pathlib import Path
+          text = Path('custom_components/s8_omni/frontend/s8-omni-panel.js').read_text(encoding='utf-8')
+          for name in ('PRODUCT_ART_CLEAN_BASE64', 'PRODUCT_ART_DOCK_BASE64'):
+              match = re.search(rf'const {name} = "([^"]+)";', text)
+              if not match:
+                  raise SystemExit(f'Missing {name}')
+              data = base64.b64decode(match.group(1), validate=True)
+              if not (data.startswith(b'\xff\xd8') and data.endswith(b'\xff\xd9')):
+                  raise SystemExit(f'{name} is not a complete JPEG')
+              if len(data) < 10000:
+                  raise SystemExit(f'{name} is suspiciously small')
+              print(f'OK {name}: {len(data)} bytes')
+          PY
 
       - name: Enforce offline-safe S8 OMNI panel lifecycle
         run: |

@@ -1,3 +1,17 @@
+## v1.00_b038 / UI v0.7.5
+
+- Installed the two approved product scenes from the accepted UI renders: cleaning and docked.
+- The hero selects the scene from verified dock state: cleaning/away uses the cleaning scene; charging/charged/docked/station operation uses the dock scene.
+- Product art is embedded as compact verified JPEG data URIs inside the standalone frontend bundle.
+- Preserved the HA menu header, live composite state, verified process legend, controls, status cards, navigation and no-synthetic-data rules.
+
+## v1.00_b038 / UI v0.7.5
+
+- Replaced the schematic/fallback Overview artwork with two approved product scenes taken from the accepted UI renders: cleaning and docked.
+- The hero selects the scene from verified robot/dock state: cleaning/away uses the cleaning scene; charging/charged/docked/station operation uses the dock scene.
+- Product art is embedded as verified JPEG data URIs inside the standalone frontend bundle, removing WebP/Canvas decoding failure modes.
+- Preserved the existing HA menu header, live composite state, verified process legend, controls, status cards, navigation and no-synthetic-data rules.
+
 ## v1.00_b037 / UI v0.7.4
 
 - Replaced the broken embedded WebP payload with a verified PNG source for reliable Canvas decoding in Home Assistant iOS WebView.
