@@ -1,5 +1,11 @@
 ## v1.00_b031 / UI v0.6.8
 
+## v1.00_b034 / UI v0.7.1
+
+- Fixed Overview product-art delivery on iOS/Home Assistant WebView by replacing the embedded data URI with a bundled static WebP asset served by Home Assistant.
+- Kept the approved product-art composition and all verified live process overlays unchanged.
+- Added cache busting to the product-art asset URL.
+
 ## v1.00_b033 / UI v0.7.0
 
 - Replaced the hand-drawn Overview robot/station SVG with the approved product-art composition from the target render.
