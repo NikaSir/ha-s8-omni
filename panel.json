@@ -8,14 +8,14 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.7.3",
+    "dashboard_version": "v0.7.4",
     "template": "NikaS Integration Panel Template v1.0",
     "frontend": {
       "module": "s8-omni-panel.js",
       "bundle": "self_contained",
       "runtime_historical_imports": false,
       "cache_busting": "query_string_dashboard_version",
-      "product_art_delivery": "embedded_webp_bytes_to_canvas_via_createImageBitmap"
+      "product_art_delivery": "embedded_png_bytes_to_canvas_via_createImageBitmap"
     },
     "availability": {
       "current_truth": [

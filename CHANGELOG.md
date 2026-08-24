@@ -1,3 +1,9 @@
+## v1.00_b037 / UI v0.7.4
+
+- Replaced the broken embedded WebP payload with a verified PNG source for reliable Canvas decoding in Home Assistant iOS WebView.
+- Rebalanced the hero art/legend split so all process labels remain readable on iPhone portrait.
+- Preserved Canvas rendering, verified-only process overlays, controls, and the SVG emergency fallback.
+
 ## v1.00_b036 / UI v0.7.3
 
 - Replaced product-art `<img>` delivery with Canvas rendering via `createImageBitmap()` from the verified WebP bytes already embedded in the standalone bundle.
