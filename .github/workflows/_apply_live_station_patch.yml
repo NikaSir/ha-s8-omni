@@ -1,0 +1,151 @@
+name: Apply live station overview patch
+
+on:
+  push:
+    branches:
+      - feat/live-station-overview-v062
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/live-station-overview-v062
+
+      - name: Patch standalone panel
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          import re
+
+          panel = Path('custom_components/s8_omni/frontend/s8-omni-panel.js')
+          text = panel.read_text(encoding='utf-8')
+          text = text.replace('const UI_VERSION = "v0.6.1";', 'const UI_VERSION = "v0.6.2";', 1)
+
+          css_marker = '      .hero-metrics { position:relative; z-index:1; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:13px; }'
+          live_css = r'''
+      /* v0.6.2 — live OMNI scene. Every active highlight is backed by verified telemetry. */
+      .live-omni-scene { position:relative; z-index:1; min-height:220px; margin-top:15px; padding:14px; border-radius:22px; border:1px solid color-mix(in srgb,var(--divider-color) 80%,transparent); background:linear-gradient(145deg,color-mix(in srgb,var(--secondary-background-color) 80%,transparent),color-mix(in srgb,var(--primary-color) 5%,var(--card-background-color))); overflow:hidden; }
+      .live-omni-scene::before { content:""; position:absolute; inset:auto -70px -100px auto; width:260px; height:260px; border-radius:50%; background:color-mix(in srgb,var(--primary-color) 6%,transparent); pointer-events:none; }
+      .live-stage { position:relative; min-height:146px; }
+      .live-station { position:absolute; right:4px; bottom:4px; width:49%; max-width:240px; height:136px; border-radius:22px 22px 17px 17px; background:linear-gradient(180deg,color-mix(in srgb,var(--card-background-color) 93%,white),color-mix(in srgb,var(--secondary-background-color) 91%,black)); border:1px solid color-mix(in srgb,var(--divider-color) 85%,transparent); box-shadow:0 11px 24px rgba(0,0,0,.09); overflow:hidden; }
+      .live-station-top { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; height:88px; padding:8px 8px 5px; }
+      .live-module { position:relative; border-radius:13px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; background:color-mix(in srgb,var(--secondary-background-color) 84%,transparent); color:var(--secondary-text-color); border:1px solid color-mix(in srgb,var(--divider-color) 78%,transparent); transition:transform .18s ease,box-shadow .18s ease,background .18s ease; }
+      .live-module ha-icon { --mdc-icon-size:24px; }
+      .live-module small { font-size:9px; font-weight:800; line-height:1; white-space:nowrap; }
+      .live-module.wash.active { color:#1487d4; background:color-mix(in srgb,#36a9ff 18%,var(--card-background-color)); border-color:color-mix(in srgb,#36a9ff 46%,transparent); box-shadow:0 0 18px color-mix(in srgb,#36a9ff 27%,transparent); }
+      .live-module.dust.active { color:var(--primary-text-color); background:color-mix(in srgb,var(--primary-text-color) 10%,var(--card-background-color)); border-color:color-mix(in srgb,var(--primary-text-color) 26%,transparent); box-shadow:0 0 16px rgba(70,70,70,.12); }
+      .live-module.dry.active { color:#df721e; background:color-mix(in srgb,#ff8a32 18%,var(--card-background-color)); border-color:color-mix(in srgb,#ff8a32 48%,transparent); box-shadow:0 0 20px color-mix(in srgb,#ff8a32 30%,transparent); }
+      .live-station-base { position:absolute; left:7px; right:7px; bottom:7px; height:35px; border-radius:10px 10px 14px 14px; background:color-mix(in srgb,var(--primary-text-color) 84%,var(--card-background-color)); }
+      .live-station-base::after { content:""; position:absolute; left:20%; right:20%; bottom:-1px; height:9px; border-radius:8px 8px 2px 2px; background:color-mix(in srgb,var(--secondary-text-color) 30%,var(--card-background-color)); }
+      .live-robot { position:absolute; left:2px; bottom:7px; width:112px; height:60px; border-radius:56px 56px 25px 25px; background:linear-gradient(180deg,color-mix(in srgb,var(--card-background-color) 94%,white),color-mix(in srgb,var(--secondary-background-color) 92%,black)); border:1px solid color-mix(in srgb,var(--divider-color) 88%,transparent); box-shadow:0 9px 18px rgba(0,0,0,.10); transition:left .28s ease,right .28s ease,transform .28s ease; }
+      .live-robot::before { content:""; position:absolute; width:32px; height:14px; left:40px; top:-7px; border-radius:12px 12px 5px 5px; background:var(--card-background-color); border:1px solid var(--divider-color); }
+      .live-robot ha-icon { position:absolute; left:13px; top:20px; color:var(--primary-color); --mdc-icon-size:26px; }
+      .live-robot.docked { left:43%; transform:translateX(-30%); }
+      .live-robot.unknown { opacity:.46; filter:saturate(.35); }
+      .live-route { position:absolute; left:86px; right:42%; bottom:29px; height:0; border-top:3px dotted color-mix(in srgb,var(--secondary-text-color) 28%,transparent); }
+      .live-route.away { border-color:color-mix(in srgb,var(--primary-color) 48%,transparent); }
+      .live-flow { position:absolute; height:4px; border-radius:999px; opacity:.13; transform-origin:left center; }
+      .live-flow::after { content:""; position:absolute; right:-3px; top:-3px; width:10px; height:10px; border-radius:50%; background:currentColor; box-shadow:0 0 13px currentColor; }
+      .live-flow.active { opacity:.95; animation:flowPulse 1.35s ease-in-out infinite alternate; }
+      .live-flow.wash { color:#24a7ff; background:currentColor; width:31%; right:28%; bottom:46px; transform:rotate(180deg); }
+      .live-flow.dust { color:#71767d; background:currentColor; width:28%; left:39%; bottom:65px; transform:rotate(-8deg); }
+      .live-flow.dry { color:#ff842d; background:currentColor; width:29%; right:25%; bottom:31px; transform:rotate(175deg); }
+      .live-charge { position:absolute; right:44%; bottom:12px; width:34px; height:34px; border-radius:50%; display:grid; place-items:center; color:var(--secondary-text-color); background:var(--card-background-color); border:1px solid var(--divider-color); z-index:2; }
+      .live-charge ha-icon { --mdc-icon-size:21px; }
+      .live-charge.active { color:var(--success-color,#43a047); border-color:color-mix(in srgb,var(--success-color,#43a047) 45%,transparent); box-shadow:0 0 18px color-mix(in srgb,var(--success-color,#43a047) 26%,transparent); }
+      .live-legend { position:relative; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; margin-top:8px; }
+      .live-chip { min-height:46px; padding:6px 4px; border-radius:13px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; background:color-mix(in srgb,var(--secondary-background-color) 80%,transparent); color:var(--secondary-text-color); border:1px solid transparent; text-align:center; }
+      .live-chip ha-icon { --mdc-icon-size:19px; }
+      .live-chip span { font-size:9px; font-weight:800; line-height:1.05; white-space:nowrap; }
+      .live-chip.active { color:var(--primary-color); border-color:color-mix(in srgb,var(--primary-color) 28%,transparent); background:color-mix(in srgb,var(--primary-color) 10%,var(--card-background-color)); }
+      .live-chip.wash.active { color:#1487d4; border-color:color-mix(in srgb,#36a9ff 38%,transparent); background:color-mix(in srgb,#36a9ff 10%,var(--card-background-color)); }
+      .live-chip.dry.active { color:#df721e; border-color:color-mix(in srgb,#ff8a32 38%,transparent); background:color-mix(in srgb,#ff8a32 10%,var(--card-background-color)); }
+      .live-chip.charge.active { color:var(--success-color,#43a047); border-color:color-mix(in srgb,var(--success-color,#43a047) 36%,transparent); background:color-mix(in srgb,var(--success-color,#43a047) 9%,var(--card-background-color)); }
+      .live-scene-caption { position:absolute; left:3px; top:3px; display:flex; flex-direction:column; gap:2px; max-width:42%; z-index:3; }
+      .live-scene-caption strong { font-size:13px; line-height:1.1; }
+      .live-scene-caption span { color:var(--secondary-text-color); font-size:10px; line-height:1.2; }
+      @keyframes flowPulse { from { filter:brightness(.9); transform-origin:center; } to { filter:brightness(1.2); } }
+'''
+          if 'v0.6.2 — live OMNI scene' not in text:
+              if css_marker not in text:
+                  raise SystemExit('hero metrics CSS marker not found')
+              text = text.replace(css_marker, live_css + '\n' + css_marker, 1)
+
+          new_hero = r'''  _hero() {
+    const snap = this._snapshot();
+    const compositeLabel = snap.connection === "disconnected" ? "Нет связи" : snap.connection === "unknown" ? "Связь не подтверждена" : this._label(COMPOSITE_LABELS, snap.composite, "Нет данных");
+    const connection = this._connectionLabel();
+    const connectionBad = connection !== "Локально";
+    const operations = new Set(snap.stationOperations || []);
+    const dustActive = !snap.unreliable && (operations.has("dust_collection") || snap.station === "dust_collection");
+    const washActive = !snap.unreliable && (operations.has("roller_cleaning") || snap.station === "roller_cleaning");
+    const dryActive = !snap.unreliable && (operations.has("drying") || snap.station === "drying");
+    const charging = !snap.unreliable && snap.robot === "charging";
+    const charged = !snap.unreliable && snap.robot === "charged";
+    const docked = !snap.unreliable && snap.onDock === true;
+    const away = !snap.unreliable && snap.onDock === false;
+    const robotPositionClass = snap.unreliable ? "unknown" : docked ? "docked" : "away";
+    const battery = snap.battery === null ? "—" : `${Math.round(snap.battery)}%`;
+    const age = snap.age === null ? "—" : this._formatDuration(snap.age);
+    const stationOperation = snap.unreliable ? "Нет данных" : snap.stationOperations.length ? snap.stationOperations.map((item) => STATION_OPERATION_LABELS[item] || item).join(" · ") : "Ожидание";
+    return `<section class="card hero" data-more="composite_status"><div class="hero-top"><div><span class="eyebrow">Состояние</span><h1>${escapeHtml(compositeLabel)}</h1><p class="hero-hint">${escapeHtml(this._heroHint(snap))}</p></div><div class="connection-badge ${connectionBad ? "bad" : ""}"><i class="dot"></i>${escapeHtml(connection)}</div></div><div class="live-omni-scene"><div class="live-stage"><div class="live-scene-caption"><strong>OMNI · живое состояние</strong><span>${escapeHtml(stationOperation)}</span></div><div class="live-route ${away ? "away" : ""}"></div><div class="live-flow wash ${washActive ? "active" : ""}"></div><div class="live-flow dust ${dustActive ? "active" : ""}"></div><div class="live-flow dry ${dryActive ? "active" : ""}"></div><div class="live-robot ${robotPositionClass}"><ha-icon icon="${snap.unreliable ? "mdi:robot-vacuum-alert" : "mdi:robot-vacuum"}"></ha-icon></div><div class="live-station"><div class="live-station-top"><div class="live-module wash ${washActive ? "active" : ""}"><ha-icon icon="mdi:waves"></ha-icon><small>Промывка</small></div><div class="live-module dust ${dustActive ? "active" : ""}"><ha-icon icon="mdi:delete-sweep-outline"></ha-icon><small>Пыль</small></div><div class="live-module dry ${dryActive ? "active" : ""}"><ha-icon icon="mdi:weather-windy"></ha-icon><small>Сушка</small></div></div><div class="live-station-base"></div></div><div class="live-charge ${charging || charged || docked ? "active" : ""}"><ha-icon icon="${charging ? "mdi:battery-charging" : charged ? "mdi:battery-check" : "mdi:flash"}"></ha-icon></div></div><div class="live-legend"><div class="live-chip wash ${washActive ? "active" : ""}"><ha-icon icon="mdi:waves"></ha-icon><span>Промывка</span></div><div class="live-chip ${dustActive ? "active" : ""}"><ha-icon icon="mdi:delete-sweep-outline"></ha-icon><span>Сбор пыли</span></div><div class="live-chip dry ${dryActive ? "active" : ""}"><ha-icon icon="mdi:weather-windy"></ha-icon><span>Сушка</span></div><div class="live-chip charge ${charging || charged || docked ? "active" : ""}"><ha-icon icon="${charging ? "mdi:battery-charging" : "mdi:flash"}"></ha-icon><span>${charging ? "Зарядка" : docked ? "На базе" : "Заряд"}</span></div></div></div><div class="hero-metrics"><div data-more="battery"><span>АКБ</span><strong>${battery}</strong><div class="battery-bar"><i style="width:${snap.battery ?? 0}%"></i></div></div><div data-more="mode"><span>Режим</span><strong>${escapeHtml(this._modeLabel(snap))}</strong></div><div data-more="telemetry_age"><span>Телеметрия</span><strong>${escapeHtml(age)}</strong></div></div></section>`;
+  }'''
+          pattern = re.compile(r'  _hero\(\) \{.*?\n  \}\n\n  _quickActions\(\) \{', re.S)
+          replacement = new_hero + '\n\n  _quickActions() {'
+          text, count = pattern.subn(lambda _m: replacement, text, count=1)
+          if count != 1:
+              raise SystemExit(f'hero replacement count={count}')
+          panel.write_text(text, encoding='utf-8')
+
+          const = Path('custom_components/s8_omni/const.py')
+          c = const.read_text(encoding='utf-8').replace('VERSION = "v1.00_b024"', 'VERSION = "v1.00_b025"', 1).replace('DASHBOARD_VERSION = "v0.6.1"', 'DASHBOARD_VERSION = "v0.6.2"', 1)
+          const.write_text(c, encoding='utf-8')
+
+          manifest = Path('custom_components/s8_omni/manifest.json')
+          data = json.loads(manifest.read_text(encoding='utf-8'))
+          data['version'] = '1.0.0b25'
+          manifest.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          meta = Path('panel.json')
+          pdata = json.loads(meta.read_text(encoding='utf-8'))
+          pdata['panel']['dashboard_version'] = 'v0.6.2'
+          pdata['panel']['mobile_fit']['overview_scene'] = 'live_verified_station_operation_visualization'
+          pdata['panel']['mobile_fit']['overview_scene_sources'] = ['robot_on_dock', 'robot_status', 'station_operations', 'dp134', 'dp135', 'dp136']
+          meta.write_text(json.dumps(pdata, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          changelog = Path('CHANGELOG.md')
+          ch = changelog.read_text(encoding='utf-8')
+          marker = '### Added\n'
+          entry = ('\n- `v1.00_b025` / dashboard `v0.6.2`: replace the symbolic Overview robot/station scene with a live OMNI visualization driven only by verified robot dock/charge state and station DP134/135/136 telemetry.\n'
+                   '- `v1.00_b025` / dashboard `v0.6.2`: highlight dust collection, roller washing, roller drying and charging independently; inactive paths remain visually neutral and no synthetic tank/bag percentages are introduced.\n')
+          if 'v1.00_b025` / dashboard `v0.6.2' not in ch:
+              ch = ch.replace(marker, marker + entry, 1)
+          changelog.write_text(ch, encoding='utf-8')
+          PY
+
+      - name: Syntax and repository checks
+        run: |
+          node --check custom_components/s8_omni/frontend/s8-omni-panel.js
+          python -m compileall -q custom_components
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          json.loads(Path('custom_components/s8_omni/manifest.json').read_text())
+          json.loads(Path('panel.json').read_text())
+          PY
+
+      - name: Commit generated patch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add custom_components/s8_omni/frontend/s8-omni-panel.js custom_components/s8_omni/const.py custom_components/s8_omni/manifest.json panel.json CHANGELOG.md
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: add live OMNI overview scene in v1.00_b025"
+          git push origin HEAD:feat/live-station-overview-v062
