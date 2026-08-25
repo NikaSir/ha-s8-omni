@@ -33,6 +33,8 @@ This document records datapoints verified through Tuya Developer Platform, Local
 - **Pause:** `power_go=false` → `pause=true`.
 - **Return home:** `mode=chargego` → `pause=false` → `power_go=true`.
 
+DP4 also carries the user-selected Clean Mode. Because `chargego` is a temporary service value used by return-to-base, the integration remembers the last non-service Clean Mode (`smart`, `selectroom`, `zone`, `pose`, or observed `part`) and exposes that remembered value through the Home Assistant `mode` select while docked. DP41 `work_mode` is a separate device work-type signal and is not used as the Clean Mode selector.
+
 DP5 `status` is treated as report-only and is never written.
 
 ## Normalized status contract
