@@ -39,7 +39,7 @@ jobs:
       - name: Validate frontend JavaScript
         run: node --check custom_components/s8_omni/frontend/s8-omni-panel.js
 
-      - name: Enforce S8 OMNI local frontend-assets contract
+      - name: Enforce S8 OMNI local frontend-assets and Clean Mode contract
         shell: bash
         run: |
           frontend_dir="custom_components/s8_omni/frontend"
@@ -58,18 +58,14 @@ jobs:
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.11"' "$production"
-          grep -q 'v0.7.10 approved-render geometry' "$production"
+          grep -q 'const UI_VERSION = "v0.7.12"' "$production"
           grep -q 'const ASSET_ROOT = "/s8_omni/frontend/assets"' "$production"
           grep -q 'PRODUCT_CLEAN_IMAGE' "$production"
           grep -q 'PRODUCT_DOCK_IMAGE' "$production"
           grep -q '${ASSET_ROOT}/status-${name}.jpg' "$production"
           grep -q 'status-thumb' "$production"
-          grep -q 'work_mode' "$production"
-          grep -q 'const WORK_MODE_LABELS = { both_work: "Комби" }' "$production"
-          grep -q '_modeMeta(snap, label)' "$production"
           grep -q 'DP41 work_mode' "$production"
-          if grep -Fq 'if (MODE_LABELS[work]) return MODE_LABELS[work];' "$production"; then exit 1; fi
+          if grep -q 'WORK_MODE_LABELS' "$production"; then exit 1; fi
           grep -q 'Чистая вода' "$production"
           grep -q 'Грязная вода' "$production"
           grep -q 'Пыль/мешок' "$production"
@@ -83,7 +79,14 @@ jobs:
           if grep -q 'createImageBitmap' "$production"; then exit 1; fi
           if grep -q 'S8ProductArtView' "$registration"; then exit 1; fi
           if grep -q '_product_art_bytes' "$registration"; then exit 1; fi
-          echo "S8 OMNI v0.7.11 local frontend-assets contract OK"
+          grep -q 'CLEAN_MODE_OPTIONS' custom_components/s8_omni/const.py
+          grep -q 'DEFAULT_CLEAN_MODE = "smart"' custom_components/s8_omni/const.py
+          grep -q 'effective_clean_mode' custom_components/s8_omni/coordinator.py
+          grep -q '_clean_mode_store' custom_components/s8_omni/coordinator.py
+          grep -q 'raw_dp4_mode' custom_components/s8_omni/select.py
+          grep -q 'Desc("mode", "Режим уборки", DP_MODE, CLEAN_MODE_OPTIONS)' custom_components/s8_omni/select.py
+          grep -q 'Desc("work_mode", "Тип работы", DP_WORK_MODE' custom_components/s8_omni/sensor.py
+          echo "S8 OMNI v0.7.12 Clean Mode contract OK"
 
       - name: Validate panel asset manifest
         run: |
@@ -92,7 +95,7 @@ jobs:
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.11':
+          if panel.get('dashboard_version') != 'v0.7.12':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':

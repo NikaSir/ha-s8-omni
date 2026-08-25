@@ -4,6 +4,7 @@ import logging
 
 import tinytuya
 
+from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
@@ -11,9 +12,12 @@ from .const import (
     CONF_LOCAL_KEY,
     CONF_PROTOCOL_VERSION,
     CONF_SCAN_INTERVAL,
+    CLEAN_MODE_OPTIONS,
+    DEFAULT_CLEAN_MODE,
     DEFAULT_PROTOCOL_VERSION,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
+    DP_MODE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -46,6 +50,9 @@ class S8OmniCoordinator(DataUpdateCoordinator):
             pass
 
         self._command_lock = asyncio.Lock()
+        self._clean_mode_store = Store(hass, 1, f"{DOMAIN}.{entry.entry_id}.clean_mode")
+        self._clean_mode_loaded = False
+        self.last_clean_mode: str | None = None
         super().__init__(
             hass,
             _LOGGER,
@@ -70,8 +77,41 @@ class S8OmniCoordinator(DataUpdateCoordinator):
             data = await self.hass.async_add_executor_job(self._read_sync)
         except Exception as err:
             raise UpdateFailed(f"S8 OMNI local read failed: {err}") from err
+        await self._async_update_clean_mode(data)
         self.last_successful_update = datetime.now(timezone.utc)
         return data
+
+    async def _async_load_clean_mode(self):
+        if self._clean_mode_loaded:
+            return
+        saved = await self._clean_mode_store.async_load()
+        if isinstance(saved, dict) and saved.get("mode") in CLEAN_MODE_OPTIONS:
+            self.last_clean_mode = saved["mode"]
+        self._clean_mode_loaded = True
+
+    async def _async_remember_clean_mode(self, mode):
+        mode = str(mode or "").lower()
+        if mode not in CLEAN_MODE_OPTIONS:
+            return
+        await self._async_load_clean_mode()
+        if self.last_clean_mode == mode:
+            return
+        self.last_clean_mode = mode
+        await self._clean_mode_store.async_save({"mode": mode})
+
+    async def _async_update_clean_mode(self, data):
+        await self._async_load_clean_mode()
+        mode = str(data.get(DP_MODE) or "").lower()
+        if mode in CLEAN_MODE_OPTIONS:
+            await self._async_remember_clean_mode(mode)
+
+    @property
+    def effective_clean_mode(self):
+        return self.last_clean_mode or DEFAULT_CLEAN_MODE
+
+    @property
+    def clean_mode_source(self):
+        return "remembered" if self.last_clean_mode else "default"
 
     def _set_sync(self, dp, value):
         result = self._device.set_value(dp, value)
@@ -81,12 +121,19 @@ class S8OmniCoordinator(DataUpdateCoordinator):
     async def async_set_dp(self, dp, value, refresh=True):
         async with self._command_lock:
             await self.hass.async_add_executor_job(self._set_sync, dp, value)
+        if dp == DP_MODE and str(value) in CLEAN_MODE_OPTIONS:
+            await self._async_remember_clean_mode(value)
         if refresh:
             await self.async_request_refresh()
 
     async def async_set_sequence(self, values):
+        remembered_mode = None
         async with self._command_lock:
             for dp, value in values:
                 await self.hass.async_add_executor_job(self._set_sync, dp, value)
+                if dp == DP_MODE and str(value) in CLEAN_MODE_OPTIONS:
+                    remembered_mode = value
                 await asyncio.sleep(0.15)
+        if remembered_mode is not None:
+            await self._async_remember_clean_mode(remembered_mode)
         await self.async_request_refresh()

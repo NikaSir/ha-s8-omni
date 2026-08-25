@@ -48,7 +48,7 @@ DESCS = [
     Desc("main_brush_life", "Ресурс основной щётки", DP_MAIN_BRUSH_LIFE, UnitOfTime.MINUTES),
     Desc("filter_life", "Ресурс фильтра", DP_FILTER_LIFE, UnitOfTime.MINUTES),
     Desc("fault", "Fault", DP_FAULT, category=EntityCategory.DIAGNOSTIC),
-    Desc("work_mode", "Режим уборки", DP_WORK_MODE),
+    Desc("work_mode", "Тип работы", DP_WORK_MODE, category=EntityCategory.DIAGNOSTIC),
     Desc("raw_status", "Raw status", DP_STATUS, category=EntityCategory.DIAGNOSTIC, enabled=False),
 ]
 

@@ -3,11 +3,11 @@ from dataclasses import dataclass
 from homeassistant.components.select import SelectEntity
 
 from .const import (
+    CLEAN_MODE_OPTIONS,
     DOMAIN,
     DP_MODE,
     DP_SUCTION,
     DP_WATER,
-    MODE_OPTIONS,
     SUCTION_OPTIONS,
     WATER_OPTIONS,
 )
@@ -23,7 +23,7 @@ class Desc:
 
 
 DESCS = [
-    Desc("mode", "Режим", DP_MODE, MODE_OPTIONS),
+    Desc("mode", "Режим уборки", DP_MODE, CLEAN_MODE_OPTIONS),
     Desc("suction", "Мощность всасывания", DP_SUCTION, SUCTION_OPTIONS),
     Desc("water", "Подача воды", DP_WATER, WATER_OPTIONS),
 ]
@@ -48,7 +48,21 @@ class S8Select(S8OmniEntity, SelectEntity):
     @property
     def current_option(self):
         value = self.dp(self.desc.dp)
+        if self.desc.key == "mode":
+            raw = str(value) if value is not None else None
+            if raw in self.desc.options:
+                return raw
+            return self.coordinator.effective_clean_mode
         return str(value) if value is not None else None
+
+    @property
+    def extra_state_attributes(self):
+        if self.desc.key != "mode":
+            return None
+        return {
+            "raw_dp4_mode": self.dp(self.desc.dp),
+            "clean_mode_source": self.coordinator.clean_mode_source,
+        }
 
     async def async_select_option(self, option):
         if option not in self.desc.options:

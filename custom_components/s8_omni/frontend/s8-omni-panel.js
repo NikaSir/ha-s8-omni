@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.11";
+const UI_VERSION = "v0.7.12";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const PRODUCT_CLEAN_IMAGE = `${ASSET_ROOT}/product-clean.jpg?v=${encodeURIComponent(UI_VERSION)}`;
 const PRODUCT_DOCK_IMAGE = `${ASSET_ROOT}/product-dock.jpg?v=${encodeURIComponent(UI_VERSION)}`;
@@ -21,7 +21,6 @@ const COMPOSITE_LABELS = {
   docked_station_active: "На базе · Станция активна", error: "Требуется внимание", unknown: "Нет данных",
 };
 const MODE_LABELS = { smart: "Smart", zone: "Зона", pose: "Точка", part: "Частичная", chargego: "Возврат", wallfollow: "Вдоль стен", selectroom: "Комнаты" };
-const WORK_MODE_LABELS = { both_work: "Комби" };
 const SUCTION_LABELS = { gentle: "Тихий", normal: "Нормальный", strong: "Сильный" };
 const WATER_LABELS = { closed: "Закрыто", low: "Низкий", normal: "Средний", high: "Высокий" };
 const STATION_OPERATION_LABELS = { dust_collection: "Сбор пыли", roller_cleaning: "Промывка", drying: "Сушка" };
@@ -153,20 +152,16 @@ class S8OmniPanel extends HTMLElement {
 
   _modeLabel(snap) {
     if (snap.unreliable) return "Нет данных";
-    const mode = String(snap.mode ?? "").toLowerCase();
-    const work = String(snap.workMode ?? "").toLowerCase();
-    if (mode && mode !== "chargego" && MODE_LABELS[mode]) return MODE_LABELS[mode];
-    if (mode === "chargego" && snap.onDock !== true) return MODE_LABELS.chargego;
-    if (WORK_MODE_LABELS[work]) return WORK_MODE_LABELS[work];
-    return this._label(MODE_LABELS, mode || snap.mode, "Нет данных");
+    return this._label(MODE_LABELS, String(snap.mode ?? "").toLowerCase(), "Нет данных");
   }
 
   _modeMeta(snap, label) {
     if (snap.unreliable) return "Режим недоступен";
     if (label === "Smart") return "Автовыбор";
-    if (label === "Комби") return "Пылесос + мойка";
-    if (label === "Возврат") return "На станцию";
-    return "Профиль уборки";
+    if (label === "Комнаты") return "Select Room";
+    if (label === "Зона") return "Zone Cleaning";
+    if (label === "Точка") return "Where To Sweep";
+    return "Режим уборки";
   }
 
   async _call(domain, service, key, extra = {}) {

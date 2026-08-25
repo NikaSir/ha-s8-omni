@@ -1,6 +1,6 @@
 DOMAIN = "s8_omni"
-VERSION = "v1.00_b044"
-DASHBOARD_VERSION = "v0.7.11"
+VERSION = "v1.00_b045"
+DASHBOARD_VERSION = "v0.7.12"
 
 PANEL_ID = "s8_omni"
 PANEL_PATH = "dashboard-s8-omni"
@@ -44,4 +44,6 @@ SUCTION_OPTIONS = ["gentle", "normal", "strong"]
 # DP10 / Tuya code `cistern` is verified to expose four levels.
 # `closed` was captured from Get Status Reporting Log on 2026-08-21.
 WATER_OPTIONS = ["closed", "low", "normal", "high"]
+CLEAN_MODE_OPTIONS = ["smart", "selectroom", "zone", "pose", "part"]
+DEFAULT_CLEAN_MODE = "smart"
 MODE_OPTIONS = ["smart", "zone", "pose", "part", "chargego", "wallfollow", "selectroom"]
