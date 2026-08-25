@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.13";
+const UI_VERSION = "v0.7.14";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const PRODUCT_CLEAN_IMAGE = `${ASSET_ROOT}/product-clean.jpg?v=${encodeURIComponent(UI_VERSION)}`;
 const PRODUCT_DOCK_IMAGE = `${ASSET_ROOT}/product-dock.jpg?v=${encodeURIComponent(UI_VERSION)}`;
@@ -177,7 +177,7 @@ class S8OmniPanel extends HTMLElement {
   _modeIcon(snap) {
     const mode = String(snap.mode ?? "").toLowerCase();
     const icons = {
-      smart: "mdi:auto-fix",
+      smart: "mdi:tune-variant",
       selectroom: "mdi:floor-plan",
       zone: "mdi:vector-square",
       pose: "mdi:map-marker-radius-outline",
@@ -192,6 +192,14 @@ class S8OmniPanel extends HTMLElement {
     if (age <= 10) return "mdi:clock-check-outline";
     if (age <= 60) return "mdi:clock-outline";
     return "mdi:clock-alert-outline";
+  }
+
+  _telemetryMeta(snap) {
+    const age = Number(snap.age);
+    if (!Number.isFinite(age)) return "Нет данных";
+    if (age <= 10) return "Обновлено сейчас";
+    if (age <= 60) return "Обновлено недавно";
+    return "Данные устаревают";
   }
 
   async _call(domain, service, key, extra = {}) {
@@ -262,6 +270,31 @@ class S8OmniPanel extends HTMLElement {
       .status-card b{font-size:11px;line-height:1.05;margin-top:2px}
       .status-card span.meta{font-size:8.5px;min-height:16px;margin-top:2px;line-height:1.05}
       @media(max-width:430px){.status-card{min-height:94px}.status-thumb{height:37px}}
+      /* v0.7.14 compact Overview density */
+      .hero{padding:13px}
+      .omni-scene{height:232px;margin-top:9px}
+      .omni-legend{width:32%;right:6px;top:8px;bottom:8px;gap:4px;padding:6px}
+      .legend-row{min-height:32px;padding:3px 4px}
+      .legend-copy strong{font-size:9.3px;line-height:1.03}
+      .legend-copy small{font-size:8.5px;margin-top:1px}
+      .hero-metrics{margin-top:8px;gap:7px}
+      .hero-metrics>div{min-height:74px;padding-top:8px;padding-bottom:7px}
+      .hero-metrics .metric-icon{top:15px}
+      .hero-metrics small{white-space:normal;line-height:1.05;min-height:18px}
+      .quick-actions{gap:7px;margin-bottom:8px}
+      .action{min-height:80px;padding:6px 4px;gap:4px}
+      .action-icon{width:45px;height:45px;border-radius:14px}
+      .action-icon ha-icon{--mdc-icon-size:31px}
+      .statuses-card{padding:11px 12px 12px;margin-bottom:8px}
+      .statuses-head{margin-bottom:7px}
+      .statuses-head h2{font-size:22px}
+      .status-grid{gap:6px}
+      .status-card{min-height:96px;padding:6px 5px 7px}
+      .status-thumb{height:43px;margin-bottom:3px}
+      .status-card strong{font-size:9.2px}
+      .status-card b{font-size:11.5px;margin-top:2px}
+      .status-card span.meta{font-size:8.5px;min-height:16px;margin-top:2px;line-height:1.05}
+      @media(max-width:430px){.omni-scene{height:226px}.omni-art{width:73%}.omni-legend{width:33%}.hero-metrics>div{min-height:72px}.action{min-height:78px}.status-card{min-height:94px}.status-thumb{height:42px}}
       @keyframes spin{to{transform:rotate(360deg)}}
       @media(max-width:360px){.hero-top{grid-template-columns:1fr}.connection-badge{justify-self:start}.status-grid{grid-template-columns:repeat(2,1fr)}.segments.four{grid-template-columns:repeat(2,1fr)}.diagnostic-strip{grid-template-columns:1fr}.omni-legend{width:30%}.omni-art{width:69%}}
       @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
@@ -299,15 +332,15 @@ class S8OmniPanel extends HTMLElement {
     const compositeLabel=snap.connection==="disconnected"?"Нет связи":snap.connection==="unknown"?"Связь не подтверждена":this._label(COMPOSITE_LABELS,snap.composite,"Нет данных");
     const wash=!snap.unreliable&&(ops.has("roller_cleaning")||snap.station==="roller_cleaning"), dust=!snap.unreliable&&(ops.has("dust_collection")||snap.station==="dust_collection"), dry=!snap.unreliable&&(ops.has("drying")||snap.station==="drying");
     const charging=!snap.unreliable&&snap.robot==="charging", charged=!snap.unreliable&&snap.robot==="charged", docked=!snap.unreliable&&snap.onDock===true, chargeActive=charging||charged||docked;
-    const artMode=chargeActive||wash||dust||dry?"dock":"clean", battery=snap.battery===null?"—":`${Math.round(snap.battery)}%`, age=snap.age===null?"—":this._formatDuration(snap.age), mode=this._modeLabel(snap), modeMeta=this._modeMeta(snap,mode), batteryIcon=this._batteryIcon(snap,charging,charged), modeIcon=this._modeIcon(snap), telemetryIcon=this._telemetryIcon(snap), batteryTone=snap.battery!==null&&snap.battery<15?" low":"";
-    const unknown=snap.unreliable?"Нет данных":"Не контрол.", dustState=snap.unreliable?"Нет данных":dust?"Сбор пыли":"Не контрол.", dryState=snap.unreliable?"Нет данных":dry?"Вкл.":"Выкл.", chargeState=snap.unreliable?"Нет данных":charging?"Идёт":charged?"Завершён":docked?"На базе":"Нет";
-    return `<section class="card hero" data-more="composite_status"><div class="hero-top"><div><span class="eyebrow">Состояние</span><h1>${escapeHtml(compositeLabel)}</h1><p class="hero-hint">${escapeHtml(this._heroHint(snap))}</p></div><div class="connection-badge ${connection!=="Локально"?"bad":""}"><i class="dot"></i>${escapeHtml(connection)}</div></div><div class="omni-scene"><div class="omni-art ${snap.unreliable?"muted":""}"><img class="product-art" src="${productArtUrl(artMode)}" alt="S8 OMNI robot and station" /></div><div class="omni-legend"><div class="legend-row clean-water"><ha-icon icon="mdi:water"></ha-icon><span class="legend-copy"><strong>Чистая вода</strong><small>${unknown}</small></span></div><div class="legend-row dirty-water"><ha-icon icon="mdi:water-opacity"></ha-icon><span class="legend-copy"><strong>Грязная вода</strong><small>${unknown}</small></span></div><div class="legend-row dust ${dust?"active":""}"><ha-icon icon="mdi:delete-outline"></ha-icon><span class="legend-copy"><strong>Пыль/мешок</strong><small>${dustState}</small></span></div><div class="legend-row dry ${dry?"active":""}"><ha-icon icon="mdi:weather-windy"></ha-icon><span class="legend-copy"><strong>Тёплый воздух</strong><small>${dryState}</small></span></div><div class="legend-row charge ${chargeActive?"active":""}"><ha-icon icon="${charging?"mdi:battery-charging":"mdi:flash"}"></ha-icon><span class="legend-copy"><strong>Зарядка</strong><small>${chargeState}</small></span></div></div></div><div class="hero-metrics"><div data-more="battery"><ha-icon class="metric-icon battery${batteryTone}" icon="${batteryIcon}"></ha-icon><span>АКБ</span><strong>${battery}</strong><small>Текущий заряд</small><div class="battery-bar"><i style="width:${snap.battery??0}%"></i></div></div><div data-more="mode"><ha-icon class="metric-icon mode" icon="${modeIcon}"></ha-icon><span>Режим</span><strong>${escapeHtml(mode)}</strong><small>${escapeHtml(modeMeta)}</small></div><div data-more="telemetry_age"><ha-icon class="metric-icon telemetry" icon="${telemetryIcon}"></ha-icon><span>Телеметрия</span><strong>${escapeHtml(age)}</strong><small>Последнее обновление</small></div></div></section>`;
+    const artMode=chargeActive||wash||dust||dry?"dock":"clean", battery=snap.battery===null?"—":`${Math.round(snap.battery)}%`, age=snap.age===null?"—":this._formatDuration(snap.age), mode=this._modeLabel(snap), modeMeta=this._modeMeta(snap,mode), batteryIcon=this._batteryIcon(snap,charging,charged), modeIcon=this._modeIcon(snap), telemetryIcon=this._telemetryIcon(snap), telemetryMeta=this._telemetryMeta(snap), batteryTone=snap.battery!==null&&snap.battery<15?" low":"";
+    const unknown=snap.unreliable?"Нет данных":"Нет датчика", dustState=snap.unreliable?"Нет данных":dust?"Сбор пыли":"Нет датчика", dryState=snap.unreliable?"Нет данных":dry?"Вкл.":"Выкл.", chargeState=snap.unreliable?"Нет данных":charging?"Идёт":charged?"Завершён":docked?"На базе":"Нет";
+    return `<section class="card hero" data-more="composite_status"><div class="hero-top"><div><span class="eyebrow">Состояние</span><h1>${escapeHtml(compositeLabel)}</h1><p class="hero-hint">${escapeHtml(this._heroHint(snap))}</p></div><div class="connection-badge ${connection!=="Локально"?"bad":""}"><i class="dot"></i>${escapeHtml(connection)}</div></div><div class="omni-scene"><div class="omni-art ${snap.unreliable?"muted":""}"><img class="product-art" src="${productArtUrl(artMode)}" alt="S8 OMNI robot and station" /></div><div class="omni-legend"><div class="legend-row clean-water"><ha-icon icon="mdi:water"></ha-icon><span class="legend-copy"><strong>Чистая вода</strong><small>${unknown}</small></span></div><div class="legend-row dirty-water"><ha-icon icon="mdi:water-opacity"></ha-icon><span class="legend-copy"><strong>Грязная вода</strong><small>${unknown}</small></span></div><div class="legend-row dust ${dust?"active":""}"><ha-icon icon="mdi:delete-outline"></ha-icon><span class="legend-copy"><strong>Пыль/мешок</strong><small>${dustState}</small></span></div><div class="legend-row dry ${dry?"active":""}"><ha-icon icon="mdi:weather-windy"></ha-icon><span class="legend-copy"><strong>Тёплый воздух</strong><small>${dryState}</small></span></div><div class="legend-row charge ${chargeActive?"active":""}"><ha-icon icon="${charging?"mdi:battery-charging":"mdi:flash"}"></ha-icon><span class="legend-copy"><strong>Зарядка</strong><small>${chargeState}</small></span></div></div></div><div class="hero-metrics"><div data-more="battery"><ha-icon class="metric-icon battery${batteryTone}" icon="${batteryIcon}"></ha-icon><span>АКБ</span><strong>${battery}</strong><small>Текущий заряд</small><div class="battery-bar"><i style="width:${snap.battery??0}%"></i></div></div><div data-more="mode"><ha-icon class="metric-icon mode" icon="${modeIcon}"></ha-icon><span>Режим</span><strong>${escapeHtml(mode)}</strong><small>${escapeHtml(modeMeta)}</small></div><div data-more="telemetry_age"><ha-icon class="metric-icon telemetry" icon="${telemetryIcon}"></ha-icon><span>Телеметрия</span><strong>${escapeHtml(age)}</strong><small>${escapeHtml(telemetryMeta)}</small></div></div></section>`;
   }
 
   _quickActions() {
     const snap=this._snapshot(), vacuum=snap.vacuum, available=snap.connected&&this._available(vacuum), cleaning=vacuum?.state==="cleaning", paused=vacuum?.state==="paused", docked=snap.onDock===true||["charging","charged"].includes(snap.robot);
     const startClass=cleaning?"action running":docked?"action ready":"action primary", pauseClass=cleaning?"action primary":"action", homeClass=docked?"action primary running":"action", startTitle=paused?"Продолжить":"Уборка";
-    return `<div class="quick-actions"><button class="${startClass}" data-action="start" ${available&&!cleaning?"":"disabled"}><span class="action-icon"><ha-icon icon="${cleaning?"mdi:robot-vacuum":"mdi:play"}"></ha-icon></span><strong>${startTitle}</strong><span class="action-sub">${cleaning?"Идёт":paused?"Возобновить":"Smart"}</span></button><button class="${pauseClass}" data-action="pause" ${available&&cleaning?"":"disabled"}><span class="action-icon"><ha-icon icon="mdi:pause"></ha-icon></span><strong>Пауза</strong><span class="action-sub">${cleaning?"Приостановить":"Недоступно"}</span></button><button class="${homeClass}" data-action="home" ${available&&!docked?"":"disabled"}><span class="action-icon"><ha-icon icon="mdi:home"></ha-icon></span><strong>Домой</strong><span class="action-sub">${docked?"На базе":"На станцию"}</span></button></div>`;
+    return `<div class="quick-actions"><button class="${startClass}" data-action="start" ${available&&!cleaning?"":"disabled"}><span class="action-icon"><ha-icon icon="${cleaning?"mdi:robot-vacuum":"mdi:play"}"></ha-icon></span><strong>${startTitle}</strong><span class="action-sub">${cleaning?"Идёт":paused?"Возобновить":"Smart"}</span></button><button class="${pauseClass}" data-action="pause" ${available&&cleaning?"":"disabled"}><span class="action-icon"><ha-icon icon="mdi:pause"></ha-icon></span><strong>Пауза</strong><span class="action-sub">${cleaning?"Приостановить":"Недоступно"}</span></button><button class="${homeClass}" data-action="home" ${available&&!docked?"":"disabled"}><span class="action-icon"><ha-icon icon="${docked?"mdi:home-check":"mdi:home"}"></ha-icon></span><strong>Домой</strong><span class="action-sub">${docked?"На базе ✓":"На станцию"}</span></button></div>`;
   }
 
   _overview() {
