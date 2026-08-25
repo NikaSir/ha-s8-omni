@@ -1,0 +1,101 @@
+name: Apply Overview density pass v0.7.14
+
+on:
+  push:
+    branches:
+      - fix/overview-polish-v0714
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/overview-polish-v0714
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Patch Overview density and labels
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          js_path = Path('custom_components/s8_omni/frontend/s8-omni-panel.js')
+          text = js_path.read_text(encoding='utf-8')
+          text = text.replace('const UI_VERSION = "v0.7.13";', 'const UI_VERSION = "v0.7.14";', 1)
+          text = text.replace('smart: "mdi:auto-fix",', 'smart: "mdi:tune-variant",', 1)
+          needle = '''  _telemetryIcon(snap) {\n    const age = Number(snap.age);\n    if (!Number.isFinite(age)) return "mdi:clock-question-outline";\n    if (age <= 10) return "mdi:clock-check-outline";\n    if (age <= 60) return "mdi:clock-outline";\n    return "mdi:clock-alert-outline";\n  }\n'''
+          addition = needle + '''\n  _telemetryMeta(snap) {\n    const age = Number(snap.age);\n    if (!Number.isFinite(age)) return "Нет данных";\n    if (age <= 10) return "Обновлено сейчас";\n    if (age <= 60) return "Обновлено недавно";\n    return "Данные устаревают";\n  }\n'''
+          if needle not in text:
+              raise SystemExit('telemetry icon helper not found')
+          text = text.replace(needle, addition, 1)
+
+          old_decl = 'modeIcon=this._modeIcon(snap), telemetryIcon=this._telemetryIcon(snap), batteryTone=snap.battery!==null&&snap.battery<15?" low":"";'
+          new_decl = 'modeIcon=this._modeIcon(snap), telemetryIcon=this._telemetryIcon(snap), telemetryMeta=this._telemetryMeta(snap), batteryTone=snap.battery!==null&&snap.battery<15?" low":"";'
+          if old_decl not in text:
+              raise SystemExit('hero declaration not found')
+          text = text.replace(old_decl, new_decl, 1)
+          text = text.replace('const unknown=snap.unreliable?"Нет данных":"Не контрол.", dustState=snap.unreliable?"Нет данных":dust?"Сбор пыли":"Не контрол."', 'const unknown=snap.unreliable?"Нет данных":"Нет датчика", dustState=snap.unreliable?"Нет данных":dust?"Сбор пыли":"Нет датчика"', 1)
+          text = text.replace('<small>Последнее обновление</small></div></div></section>', '<small>${escapeHtml(telemetryMeta)}</small></div></div></section>', 1)
+          text = text.replace('<span class="action-icon"><ha-icon icon="mdi:home"></ha-icon></span><strong>Домой</strong><span class="action-sub">${docked?"На базе":"На станцию"}</span>', '<span class="action-icon"><ha-icon icon="${docked?"mdi:home-check":"mdi:home"}"></ha-icon></span><strong>Домой</strong><span class="action-sub">${docked?"На базе ✓":"На станцию"}</span>', 1)
+
+          marker = '      @keyframes spin{to{transform:rotate(360deg)}}'
+          overrides = '''      /* v0.7.14 compact Overview density */\n      .hero{padding:13px}\n      .omni-scene{height:232px;margin-top:9px}\n      .omni-legend{width:32%;right:6px;top:8px;bottom:8px;gap:4px;padding:6px}\n      .legend-row{min-height:32px;padding:3px 4px}\n      .legend-copy strong{font-size:9.3px;line-height:1.03}\n      .legend-copy small{font-size:8.5px;margin-top:1px}\n      .hero-metrics{margin-top:8px;gap:7px}\n      .hero-metrics>div{min-height:74px;padding-top:8px;padding-bottom:7px}\n      .hero-metrics .metric-icon{top:15px}\n      .hero-metrics small{white-space:normal;line-height:1.05;min-height:18px}\n      .quick-actions{gap:7px;margin-bottom:8px}\n      .action{min-height:80px;padding:6px 4px;gap:4px}\n      .action-icon{width:45px;height:45px;border-radius:14px}\n      .action-icon ha-icon{--mdc-icon-size:31px}\n      .statuses-card{padding:11px 12px 12px;margin-bottom:8px}\n      .statuses-head{margin-bottom:7px}\n      .statuses-head h2{font-size:22px}\n      .status-grid{gap:6px}\n      .status-card{min-height:96px;padding:6px 5px 7px}\n      .status-thumb{height:43px;margin-bottom:3px}\n      .status-card strong{font-size:9.2px}\n      .status-card b{font-size:11.5px;margin-top:2px}\n      .status-card span.meta{font-size:8.5px;min-height:16px;margin-top:2px;line-height:1.05}\n      @media(max-width:430px){.omni-scene{height:226px}.omni-art{width:73%}.omni-legend{width:33%}.hero-metrics>div{min-height:72px}.action{min-height:78px}.status-card{min-height:94px}.status-thumb{height:42px}}\n'''
+          if marker not in text:
+              raise SystemExit('CSS insertion marker missing')
+          text = text.replace(marker, overrides + marker, 1)
+          js_path.write_text(text, encoding='utf-8')
+
+          const_path = Path('custom_components/s8_omni/const.py')
+          c = const_path.read_text(encoding='utf-8').replace('VERSION = "v1.00_b046"', 'VERSION = "v1.00_b047"', 1).replace('DASHBOARD_VERSION = "v0.7.13"', 'DASHBOARD_VERSION = "v0.7.14"', 1)
+          const_path.write_text(c, encoding='utf-8')
+
+          manifest_path = Path('custom_components/s8_omni/manifest.json')
+          manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+          manifest['version'] = '1.0.0b47'
+          manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          panel_path = Path('panel.json')
+          panel = json.loads(panel_path.read_text(encoding='utf-8'))
+          panel['panel']['dashboard_version'] = 'v0.7.14'
+          panel_path.write_text(json.dumps(panel, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          readme_path = Path('README.md')
+          r = readme_path.read_text(encoding='utf-8').replace('v1.00_b046` (`1.0.0b46`)', 'v1.00_b047` (`1.0.0b47`)', 1).replace('Dashboard **v0.7.13**', 'Dashboard **v0.7.14**', 1)
+          readme_path.write_text(r, encoding='utf-8')
+
+          checks_path = Path('.github/workflows/repository-checks.yml')
+          checks = checks_path.read_text(encoding='utf-8')
+          checks = checks.replace('const UI_VERSION = "v0.7.13"', 'const UI_VERSION = "v0.7.14"')
+          checks = checks.replace("grep -q 'mdi:auto-fix' \"$production\"", "grep -q 'mdi:tune-variant' \"$production\"")
+          checks = checks.replace("grep -q 'dust?\"Сбор пыли\":\"Не контрол.\"' \"$production\"", "grep -q 'dust?\"Сбор пыли\":\"Нет датчика\"' \"$production\"")
+          checks = checks.replace("grep -q 'v0.7.13 Overview polish' \"$production\"", "grep -q 'v0.7.14 compact Overview density' \"$production\"")
+          checks = checks.replace('S8 OMNI v0.7.13 Overview + Clean Mode contract OK', 'S8 OMNI v0.7.14 Overview + Clean Mode contract OK')
+          checks = checks.replace("panel.get('dashboard_version') != 'v0.7.13'", "panel.get('dashboard_version') != 'v0.7.14'")
+          insert = "          grep -q '_telemetryIcon(snap)' \"$production\"\n"
+          extra = insert + "          grep -q '_telemetryMeta(snap)' \"$production\"\n          grep -q 'Обновлено сейчас' \"$production\"\n          grep -q 'mdi:home-check' \"$production\"\n          grep -q 'На базе ✓' \"$production\"\n          grep -q 'Нет датчика' \"$production\"\n"
+          if insert not in checks:
+              raise SystemExit('CI insertion point missing')
+          checks = checks.replace(insert, extra, 1)
+          checks_path.write_text(checks, encoding='utf-8')
+          PY
+          node --check custom_components/s8_omni/frontend/s8-omni-panel.js
+          python -m compileall -q custom_components
+          grep -q 'const UI_VERSION = "v0.7.14"' custom_components/s8_omni/frontend/s8-omni-panel.js
+          grep -q 'v0.7.14 compact Overview density' custom_components/s8_omni/frontend/s8-omni-panel.js
+          grep -q 'Обновлено сейчас' custom_components/s8_omni/frontend/s8-omni-panel.js
+          grep -q 'Нет датчика' custom_components/s8_omni/frontend/s8-omni-panel.js
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add custom_components/s8_omni/frontend/s8-omni-panel.js custom_components/s8_omni/const.py custom_components/s8_omni/manifest.json panel.json README.md .github/workflows/repository-checks.yml
+          if ! git diff --cached --quiet; then
+            git commit -m "ui: tighten Overview density in v0.7.14"
+            git push origin HEAD:fix/overview-polish-v0714
+          fi
