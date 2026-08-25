@@ -8,19 +8,29 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.7.7",
+    "dashboard_version": "v0.7.8",
     "template": "NikaS Integration Panel Template v1.0",
     "frontend": {
       "module": "s8-omni-panel.js",
       "bundle": "self_contained",
       "runtime_historical_imports": false,
       "cache_busting": "query_string_dashboard_version",
-      "product_art_delivery": "integration_static_jpeg_files",
+      "asset_root": "frontend/assets",
+      "asset_url_root": "/s8_omni/frontend/assets",
+      "assets": [
+        "assets/product-clean.jpg",
+        "assets/product-dock.jpg",
+        "assets/status-robot.jpg",
+        "assets/status-station.jpg",
+        "assets/status-water.jpg",
+        "assets/status-dustbin.jpg"
+      ],
+      "product_art_delivery": "integration_local_static_assets",
       "product_art_states": [
         "clean",
         "dock"
       ],
-      "status_thumbnail_delivery": "integration_static_jpeg_files"
+      "status_thumbnail_delivery": "integration_local_static_assets"
     },
     "availability": {
       "current_truth": [
