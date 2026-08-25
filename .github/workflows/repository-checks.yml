@@ -39,7 +39,7 @@ jobs:
       - name: Validate frontend JavaScript
         run: node --check custom_components/s8_omni/frontend/s8-omni-panel.js
 
-      - name: Enforce S8 OMNI local frontend-assets and Clean Mode contract
+      - name: Enforce S8 OMNI frontend, Clean Mode and gesture contract
         shell: bash
         run: |
           frontend_dir="custom_components/s8_omni/frontend"
@@ -58,7 +58,7 @@ jobs:
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.14"' "$production"
+          grep -q 'const UI_VERSION = "v0.7.15"' "$production"
           grep -q 'const ASSET_ROOT = "/s8_omni/frontend/assets"' "$production"
           grep -q 'PRODUCT_CLEAN_IMAGE' "$production"
           grep -q 'PRODUCT_DOCK_IMAGE' "$production"
@@ -79,6 +79,19 @@ jobs:
           grep -q 'dust?"Сбор пыли":"Нет датчика"' "$production"
           grep -q 'Нет датчика' "$production"
           grep -q 'v0.7.14 compact Overview density' "$production"
+          grep -q 'v0.7.15 stable iOS gesture canvas' "$production"
+          grep -q 'const VIEW_STATE_PREFIX = "s8_omni.view_transform.v2"' "$production"
+          grep -q '_bindWorkspaceGestures()' "$production"
+          grep -q '_transformStorageKey()' "$production"
+          grep -q '_clampAndApplyTransform' "$production"
+          grep -q 'translate3d' "$production"
+          grep -q 'touch-action:none' "$production"
+          grep -q 'this._renderDeferred = false' "$production"
+          grep -q 'this._gesturePointers?.size' "$production"
+          grep -q 'vacuum","stop","vacuum' "$production"
+          grep -q 'data-action="${leftAction}"' "$production"
+          if grep -q 'scrollLeft\|scrollTop' "$production"; then exit 1; fi
+          if grep -nE '(^|[;{])[[:space:]]*zoom[[:space:]]*:' "$production"; then exit 1; fi
           grep -q 'Чистая вода' "$production"
           grep -q 'Грязная вода' "$production"
           grep -q 'Пыль/мешок' "$production"
@@ -99,16 +112,16 @@ jobs:
           grep -q 'raw_dp4_mode' custom_components/s8_omni/select.py
           grep -q 'Desc("mode", "Режим уборки", DP_MODE, CLEAN_MODE_OPTIONS)' custom_components/s8_omni/select.py
           grep -q 'Desc("work_mode", "Тип работы", DP_WORK_MODE' custom_components/s8_omni/sensor.py
-          echo "S8 OMNI v0.7.14 Overview + Clean Mode contract OK"
+          echo "S8 OMNI v0.7.15 gesture + Overview + Clean Mode contract OK"
 
-      - name: Validate panel asset manifest
+      - name: Validate panel asset and workspace manifest
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.14':
+          if panel.get('dashboard_version') != 'v0.7.15':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':
@@ -125,7 +138,23 @@ jobs:
               path = root / rel
               if not path.is_file():
                   raise SystemExit(f'Manifest asset missing: {path}')
-          print('Panel asset manifest OK')
+          transform = panel.get('workspace_transform', {})
+          expected_transform = {
+              'scope': 'working_area_only',
+              'implementation': 'translate3d_scale',
+              'native_scroll': False,
+              'css_zoom': False,
+              'pinch_midpoint': True,
+              'one_pointer_pan': True,
+              'two_finger_double_tap_reset': True,
+              'permanent_zoom_controls': False,
+          }
+          for key, value in expected_transform.items():
+              if transform.get(key) != value:
+                  raise SystemExit(f'workspace_transform {key} mismatch: {transform.get(key)!r}')
+          if set(transform.get('shell_excluded', [])) != {'header', 'bottom_navigation'}:
+              raise SystemExit('workspace shell exclusion mismatch')
+          print('Panel asset + workspace manifest OK')
           PY
 
       - name: Validate static JPEG assets

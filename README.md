@@ -23,7 +23,7 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 
 `ha-s8-omni` owns its full appliance UI instead of exposing a loose collection of Lovelace entities as the primary experience.
 
-Dashboard **v0.7.14** follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2** and **NikaS Integration Panel Template v1.0**, with the primary acceptance viewport **iPhone Pro Max portrait**:
+Dashboard **v0.7.15** follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2** and **NikaS Integration Panel Template v1.0**, with the primary acceptance viewport **iPhone Pro Max portrait**:
 
 - symmetric Header: 52 px Menu/Back slot / centered title / 52 px Refresh, reduced to 48 px side slots on narrow mobile;
 - root views use an icon-only **Menu** button that opens the native Home Assistant sidebar; the **Настройки уборки** drill-down uses an explicit Back arrow to return to its parent Cleaning view;
@@ -32,6 +32,8 @@ Dashboard **v0.7.14** follows **Home Assistant NikaS · Integration Dashboard UI
 - **full-width fixed bottom Tab Bar** is the sole primary navigation between Overview, Cleaning, Station, Maintenance and Diagnostics;
 - the bottom bar spans the useful viewport width, has no floating-card geometry and respects iOS Safe Area;
 - page content reserves enough bottom clearance for the final card to scroll completely above the Tab Bar;
+- the Header and bottom Tab Bar stay outside the transformed workspace; the working area uses one `translate3d(x,y,0) scale(s)` canvas with pinch around the two-finger midpoint and one-pointer pan, with no CSS `zoom`, `scrollLeft`/`scrollTop`, or native overflow scrolling;
+- workspace scale/position are persisted per integration entry and view; 97–103% snaps to 100%, and a stationary two-finger double-tap resets scale and position to 100% / origin;
 - Overview owns composite robot + station state, frequent Start/Pause/Home controls and compact Robot/Station summaries;
 - daily-use cards use compact Russian state labels such as **Зарядка**, **Уборка**, **Пауза**, **Возврат**, **Сбор пыли** and **Промывка**; Diagnostics retains the underlying normalized/raw values;
 - the Overview scene reserves a separate station-text safe zone so station state never overlaps the OMNI illustration;

@@ -1,5 +1,10 @@
-const UI_VERSION = "v0.7.14";
+const UI_VERSION = "v0.7.15";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
+const VIEW_SCALE_MIN = 0.72;
+const VIEW_SCALE_MAX = 2.20;
+const VIEW_SCALE_SNAP_MIN = 0.97;
+const VIEW_SCALE_SNAP_MAX = 1.03;
+const VIEW_STATE_PREFIX = "s8_omni.view_transform.v2";
 const PRODUCT_CLEAN_IMAGE = `${ASSET_ROOT}/product-clean.jpg?v=${encodeURIComponent(UI_VERSION)}`;
 const PRODUCT_DOCK_IMAGE = `${ASSET_ROOT}/product-dock.jpg?v=${encodeURIComponent(UI_VERSION)}`;
 
@@ -53,15 +58,42 @@ class S8OmniPanel extends HTMLElement {
     this._registryLoading = false;
     this._registryError = null;
     this._renderQueued = false;
+    this._renderDeferred = false;
+    this._viewTransform = { scale: 1, x: 0, y: 0 };
+    this._viewTransformKey = null;
+    this._gesturePointers = new Map();
+    this._gestureStart = null;
+    this._gestureMoved = false;
+    this._hadMultiTouch = false;
+    this._twoFingerTapAt = 0;
+    this._suppressClicksUntil = 0;
+    this._scaleToastTimer = null;
+    this._resizeBound = false;
+    this._onRealViewportResize = () => requestAnimationFrame(() => this._clampAndApplyTransform(false));
   }
 
   set hass(value) { this._hass = value; this._ensureRegistry(); this._queueRender(); }
   get hass() { return this._hass; }
-  set panel(value) { this._panel = value; this._ensureRegistry(); this._queueRender(); }
+  set panel(value) { this._panel = value; if (!this._gesturePointers?.size) this._restoreTransform(true); else this._renderDeferred = true; this._ensureRegistry(); this._queueRender(); }
   set narrow(_value) {}
-  connectedCallback() { this._queueRender(); }
+  connectedCallback() {
+    if (!this._resizeBound) {
+      window.addEventListener("resize", this._onRealViewportResize, { passive: true });
+      window.visualViewport?.addEventListener("resize", this._onRealViewportResize, { passive: true });
+      this._resizeBound = true;
+    }
+    this._queueRender();
+  }
+  disconnectedCallback() {
+    if (this._resizeBound) {
+      window.removeEventListener("resize", this._onRealViewportResize);
+      window.visualViewport?.removeEventListener("resize", this._onRealViewportResize);
+      this._resizeBound = false;
+    }
+  }
 
   _queueRender() {
+    if (this._gesturePointers?.size) { this._renderDeferred = true; return; }
     if (this._renderQueued) return;
     this._renderQueued = true;
     requestAnimationFrame(() => { this._renderQueued = false; this._render(); });
@@ -202,6 +234,228 @@ class S8OmniPanel extends HTMLElement {
     return "Данные устаревают";
   }
 
+  _transformStorageKey() {
+    const entryId = this._panel?.config?.entry_id || "default";
+    const workspace = this._detail ? `${this._view}:${this._detail}` : this._view;
+    return `${VIEW_STATE_PREFIX}:${entryId}:${workspace}`;
+  }
+
+  _restoreTransform(force = false) {
+    const key = this._transformStorageKey();
+    if (!force && key === this._viewTransformKey) return;
+    this._viewTransformKey = key;
+    let state = { scale: 1, x: 0, y: 0 };
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const scale = Number(parsed?.scale), x = Number(parsed?.x), y = Number(parsed?.y);
+        if (Number.isFinite(scale) && Number.isFinite(x) && Number.isFinite(y)) {
+          state = { scale: Math.max(VIEW_SCALE_MIN, Math.min(VIEW_SCALE_MAX, scale)), x, y };
+        }
+      }
+    } catch (_err) {}
+    this._viewTransform = state;
+  }
+
+  _saveTransform() {
+    if (!this._viewTransformKey) this._viewTransformKey = this._transformStorageKey();
+    try { localStorage.setItem(this._viewTransformKey, JSON.stringify(this._viewTransform)); } catch (_err) {}
+  }
+
+  _transformCss() {
+    const { scale, x, y } = this._viewTransform;
+    return `translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0) scale(${scale.toFixed(4)})`;
+  }
+
+  _workspace(content) {
+    this._restoreTransform(false);
+    return `<div class="work-viewport" data-work-viewport><div class="work-canvas" data-work-canvas style="transform:${this._transformCss()}"><div class="content">${content}</div></div><div class="scale-toast" data-scale-toast aria-live="polite"></div></div>`;
+  }
+
+  _clampTransform(state = this._viewTransform) {
+    const viewport = this.shadowRoot?.querySelector("[data-work-viewport]");
+    const canvas = this.shadowRoot?.querySelector("[data-work-canvas]");
+    if (!viewport || !canvas) return state;
+    const scale = Math.max(VIEW_SCALE_MIN, Math.min(VIEW_SCALE_MAX, Number(state.scale) || 1));
+    const naturalWidth = Math.max(canvas.offsetWidth, 1);
+    const naturalHeight = Math.max(canvas.scrollHeight, canvas.offsetHeight, 1);
+    const minX = Math.min(0, viewport.clientWidth - naturalWidth * scale);
+    const minY = Math.min(0, viewport.clientHeight - naturalHeight * scale);
+    return {
+      scale,
+      x: Math.min(0, Math.max(minX, Number(state.x) || 0)),
+      y: Math.min(0, Math.max(minY, Number(state.y) || 0)),
+    };
+  }
+
+  _clampAndApplyTransform(persist = true) {
+    const canvas = this.shadowRoot?.querySelector("[data-work-canvas]");
+    if (!canvas) return;
+    this._viewTransform = this._clampTransform(this._viewTransform);
+    canvas.style.transform = this._transformCss();
+    if (persist) this._saveTransform();
+  }
+
+  _showScaleToast(label = null) {
+    const toast = this.shadowRoot?.querySelector("[data-scale-toast]");
+    if (!toast) return;
+    const text = label || `Масштаб ${Math.round(this._viewTransform.scale * 100)}%`;
+    toast.textContent = text;
+    toast.classList.add("show");
+    clearTimeout(this._scaleToastTimer);
+    this._scaleToastTimer = setTimeout(() => toast.classList.remove("show"), 850);
+  }
+
+  _resetTransform(showToast = true) {
+    this._viewTransform = { scale: 1, x: 0, y: 0 };
+    this._clampAndApplyTransform(true);
+    if (showToast) this._showScaleToast("Масштаб 100%");
+  }
+
+  _cancelLongPresses() {
+    this.shadowRoot?.querySelectorAll("[data-more]").forEach((node) => node.dispatchEvent(new Event("pointercancel")));
+  }
+
+  _switchWorkspace(view, detail = null) {
+    this._saveTransform();
+    this._view = view;
+    this._detail = detail;
+    this._viewTransformKey = null;
+    this._restoreTransform(true);
+    this._queueRender();
+  }
+
+  _bindWorkspaceGestures() {
+    const viewport = this.shadowRoot?.querySelector("[data-work-viewport]");
+    if (!viewport) return;
+    const point = (event) => {
+      const rect = viewport.getBoundingClientRect();
+      return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    };
+    const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+    const midpoint = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+
+    const startPinch = () => {
+      const pts = [...this._gesturePointers.values()].slice(0, 2);
+      if (pts.length < 2) return;
+      const mid = midpoint(pts[0], pts[1]);
+      this._gestureStart = {
+        kind: "pinch",
+        distance: Math.max(distance(pts[0], pts[1]), 1),
+        midpoint: mid,
+        scale: this._viewTransform.scale,
+        x: this._viewTransform.x,
+        y: this._viewTransform.y,
+        contentX: (mid.x - this._viewTransform.x) / this._viewTransform.scale,
+        contentY: (mid.y - this._viewTransform.y) / this._viewTransform.scale,
+        startedAt: performance.now(),
+      };
+      this._hadMultiTouch = true;
+      this._gestureMoved = false;
+      this._cancelLongPresses();
+    };
+
+    viewport.addEventListener("pointerdown", (event) => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      if (event.target?.closest?.("input,select")) return;
+      const p = point(event);
+      this._gesturePointers.set(event.pointerId, { ...p, startX: p.x, startY: p.y });
+      try { viewport.setPointerCapture(event.pointerId); } catch (_err) {}
+      if (this._gesturePointers.size === 1) {
+        this._gestureStart = { kind: "pan", id: event.pointerId, pointerX: p.x, pointerY: p.y, x: this._viewTransform.x, y: this._viewTransform.y, startedAt: performance.now() };
+        this._gestureMoved = false;
+        this._hadMultiTouch = false;
+      } else if (this._gesturePointers.size === 2) {
+        startPinch();
+      }
+    });
+
+    viewport.addEventListener("pointermove", (event) => {
+      if (!this._gesturePointers.has(event.pointerId)) return;
+      const p = point(event);
+      const previous = this._gesturePointers.get(event.pointerId);
+      this._gesturePointers.set(event.pointerId, { ...previous, x: p.x, y: p.y });
+      if (this._gesturePointers.size >= 2) {
+        const pts = [...this._gesturePointers.values()].slice(0, 2);
+        if (this._gestureStart?.kind !== "pinch") startPinch();
+        const start = this._gestureStart;
+        const mid = midpoint(pts[0], pts[1]);
+        const nextScale = Math.max(VIEW_SCALE_MIN, Math.min(VIEW_SCALE_MAX, start.scale * distance(pts[0], pts[1]) / start.distance));
+        if (Math.abs(nextScale - start.scale) > 0.008 || Math.hypot(mid.x - start.midpoint.x, mid.y - start.midpoint.y) > 3) this._gestureMoved = true;
+        this._viewTransform = this._clampTransform({ scale: nextScale, x: mid.x - start.contentX * nextScale, y: mid.y - start.contentY * nextScale });
+        this._clampAndApplyTransform(false);
+        this._cancelLongPresses();
+        event.preventDefault();
+        return;
+      }
+      if (this._gestureStart?.kind === "pan" && this._gestureStart.id === event.pointerId) {
+        const dx = p.x - this._gestureStart.pointerX, dy = p.y - this._gestureStart.pointerY;
+        if (Math.hypot(dx, dy) > 4) {
+          this._gestureMoved = true;
+          this._cancelLongPresses();
+        }
+        if (this._gestureMoved) {
+          this._viewTransform = this._clampTransform({ scale: this._viewTransform.scale, x: this._gestureStart.x + dx, y: this._gestureStart.y + dy });
+          this._clampAndApplyTransform(false);
+          event.preventDefault();
+        }
+      }
+    }, { passive: false });
+
+    const finishPointer = (event, cancelled = false) => {
+      if (!this._gesturePointers.has(event.pointerId)) return;
+      this._gesturePointers.delete(event.pointerId);
+      if (this._gesturePointers.size === 1 && this._hadMultiTouch) {
+        const [remaining] = this._gesturePointers.entries();
+        const [id, p] = remaining;
+        this._gestureStart = { kind: "pan", id, pointerX: p.x, pointerY: p.y, x: this._viewTransform.x, y: this._viewTransform.y, startedAt: performance.now() };
+        return;
+      }
+      if (this._gesturePointers.size) return;
+      const now = performance.now();
+      const wasMulti = this._hadMultiTouch;
+      const moved = this._gestureMoved;
+      const duration = this._gestureStart ? now - this._gestureStart.startedAt : 999;
+      if (!cancelled && wasMulti && !moved && duration < 300) {
+        if (now - this._twoFingerTapAt < 460) {
+          this._twoFingerTapAt = 0;
+          this._resetTransform(true);
+          this._suppressClicksUntil = Date.now() + 360;
+        } else {
+          this._twoFingerTapAt = now;
+          this._suppressClicksUntil = Date.now() + 320;
+        }
+      } else {
+        if (this._viewTransform.scale >= VIEW_SCALE_SNAP_MIN && this._viewTransform.scale <= VIEW_SCALE_SNAP_MAX) {
+          this._viewTransform.scale = 1;
+          this._clampAndApplyTransform(false);
+          this._showScaleToast("Масштаб 100%");
+        }
+        this._saveTransform();
+        if (moved || wasMulti) this._suppressClicksUntil = Date.now() + 320;
+      }
+      this._gestureStart = null;
+      this._gestureMoved = false;
+      this._hadMultiTouch = false;
+      if (this._renderDeferred) { this._renderDeferred = false; this._queueRender(); }
+    };
+    viewport.addEventListener("pointerup", (event) => finishPointer(event, false));
+    viewport.addEventListener("pointercancel", (event) => finishPointer(event, true));
+    viewport.addEventListener("click", (event) => {
+      if (Date.now() < this._suppressClicksUntil) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    }, true);
+    viewport.addEventListener("wheel", (event) => {
+      this._viewTransform = this._clampTransform({ scale: this._viewTransform.scale, x: this._viewTransform.x - event.deltaX, y: this._viewTransform.y - event.deltaY });
+      this._clampAndApplyTransform(true);
+      event.preventDefault();
+    }, { passive: false });
+    requestAnimationFrame(() => this._clampAndApplyTransform(false));
+  }
+
   async _call(domain, service, key, extra = {}) {
     const entityId = this._entityId(key);
     if (!entityId || !this._hass) return;
@@ -295,6 +549,18 @@ class S8OmniPanel extends HTMLElement {
       .status-card b{font-size:11.5px;margin-top:2px}
       .status-card span.meta{font-size:8.5px;min-height:16px;margin-top:2px;line-height:1.05}
       @media(max-width:430px){.omni-scene{height:226px}.omni-art{width:73%}.omni-legend{width:33%}.hero-metrics>div{min-height:72px}.action{min-height:78px}.status-card{min-height:94px}.status-thumb{height:42px}}
+      /* v0.7.15 stable iOS gesture canvas */
+      :host{height:100vh;height:100dvh;overflow:hidden}
+      main{height:100vh;height:100dvh;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;padding-bottom:0}
+      .app-header{position:relative;top:auto;z-index:60}
+      nav{position:relative;left:auto;right:auto;bottom:auto;z-index:70}
+      .work-viewport{position:relative;min-height:0;overflow:hidden;overscroll-behavior:none;touch-action:none;background:var(--primary-background-color)}
+      .work-canvas{position:absolute;left:0;top:0;width:100%;min-height:100%;transform-origin:0 0;will-change:transform;touch-action:none;-webkit-user-select:none;user-select:none}
+      .work-canvas .content{padding-bottom:18px}
+      .scale-toast{position:absolute;left:50%;top:12px;z-index:90;transform:translateX(-50%) translateY(-8px);padding:7px 12px;border-radius:999px;background:rgba(24,29,32,.82);color:#fff;font-size:12px;font-weight:750;opacity:0;pointer-events:none;transition:opacity .16s ease,transform .16s ease;backdrop-filter:blur(10px)}
+      .scale-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+      .action.stop{color:var(--error-color,#db4437);border-color:color-mix(in srgb,var(--error-color,#db4437) 28%,var(--divider-color));background:color-mix(in srgb,var(--error-color,#db4437) 6%,var(--card-background-color))}
+      .action.stop .action-icon{background:color-mix(in srgb,var(--error-color,#db4437) 12%,transparent)}
       @keyframes spin{to{transform:rotate(360deg)}}
       @media(max-width:360px){.hero-top{grid-template-columns:1fr}.connection-badge{justify-self:start}.status-grid{grid-template-columns:repeat(2,1fr)}.segments.four{grid-template-columns:repeat(2,1fr)}.diagnostic-strip{grid-template-columns:1fr}.omni-legend{width:30%}.omni-art{width:69%}}
       @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
@@ -338,9 +604,11 @@ class S8OmniPanel extends HTMLElement {
   }
 
   _quickActions() {
-    const snap=this._snapshot(), vacuum=snap.vacuum, available=snap.connected&&this._available(vacuum), cleaning=vacuum?.state==="cleaning", paused=vacuum?.state==="paused", docked=snap.onDock===true||["charging","charged"].includes(snap.robot);
-    const startClass=cleaning?"action running":docked?"action ready":"action primary", pauseClass=cleaning?"action primary":"action", homeClass=docked?"action primary running":"action", startTitle=paused?"Продолжить":"Уборка";
-    return `<div class="quick-actions"><button class="${startClass}" data-action="start" ${available&&!cleaning?"":"disabled"}><span class="action-icon"><ha-icon icon="${cleaning?"mdi:robot-vacuum":"mdi:play"}"></ha-icon></span><strong>${startTitle}</strong><span class="action-sub">${cleaning?"Идёт":paused?"Возобновить":"Smart"}</span></button><button class="${pauseClass}" data-action="pause" ${available&&cleaning?"":"disabled"}><span class="action-icon"><ha-icon icon="mdi:pause"></ha-icon></span><strong>Пауза</strong><span class="action-sub">${cleaning?"Приостановить":"Недоступно"}</span></button><button class="${homeClass}" data-action="home" ${available&&!docked?"":"disabled"}><span class="action-icon"><ha-icon icon="${docked?"mdi:home-check":"mdi:home"}"></ha-icon></span><strong>Домой</strong><span class="action-sub">${docked?"На базе ✓":"На станцию"}</span></button></div>`;
+    const snap=this._snapshot(), vacuum=snap.vacuum, available=snap.connected&&this._available(vacuum), cleaning=vacuum?.state==="cleaning", paused=vacuum?.state==="paused", active=cleaning||paused, docked=snap.onDock===true||["charging","charged"].includes(snap.robot);
+    const leftAction=active?"stop":"start", leftClass=active?"action stop":docked?"action ready":"action primary", leftTitle=active?"Стоп":"Уборка", leftIcon=active?"mdi:stop":"mdi:play", leftSub=active?"Завершить":"Smart";
+    const middleAction=paused?"start":"pause", middleClass=cleaning||paused?"action primary":"action", middleTitle=paused?"Продолжить":"Пауза", middleIcon=paused?"mdi:play":"mdi:pause", middleSub=paused?"Возобновить":cleaning?"Приостановить":"Недоступно";
+    const homeClass=docked?"action primary running":"action";
+    return `<div class="quick-actions"><button class="${leftClass}" data-action="${leftAction}" ${available?"":"disabled"}><span class="action-icon"><ha-icon icon="${leftIcon}"></ha-icon></span><strong>${leftTitle}</strong><span class="action-sub">${leftSub}</span></button><button class="${middleClass}" data-action="${middleAction}" ${available&&(cleaning||paused)?"":"disabled"}><span class="action-icon"><ha-icon icon="${middleIcon}"></ha-icon></span><strong>${middleTitle}</strong><span class="action-sub">${middleSub}</span></button><button class="${homeClass}" data-action="home" ${available&&!docked?"":"disabled"}><span class="action-icon"><ha-icon icon="${docked?"mdi:home-check":"mdi:home"}"></ha-icon></span><strong>Домой</strong><span class="action-sub">${docked?"На базе ✓":"На станцию"}</span></button></div>`;
   }
 
   _overview() {
@@ -423,26 +691,28 @@ class S8OmniPanel extends HTMLElement {
   }
 
   _bind() {
-    this.shadowRoot.querySelector("[data-header-primary]")?.addEventListener("click", () => { if (this._detail) { this._detail = null; this._view = "cleaning"; this._queueRender(); } else this._toggleMenu(); });
+    this.shadowRoot.querySelector("[data-header-primary]")?.addEventListener("click", () => { if (this._detail) this._switchWorkspace("cleaning", null); else this._toggleMenu(); });
     this.shadowRoot.querySelector("[data-refresh]")?.addEventListener("click", async (event) => { const b = event.currentTarget; if (!this._entityId("refresh") || b.disabled) return; b.disabled = true; b.classList.add("loading"); try { await this._call("button","press","refresh"); } finally { setTimeout(() => { b.disabled = false; b.classList.remove("loading"); }, 700); } });
-    this.shadowRoot.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => { this._detail = null; this._view = b.dataset.view; this._queueRender(); }));
-    this.shadowRoot.querySelectorAll("[data-detail]").forEach((b) => b.addEventListener("click", () => { this._detail = b.dataset.detail; this._view = "cleaning"; this._queueRender(); }));
-    this.shadowRoot.querySelectorAll("[data-action]").forEach((b) => b.addEventListener("click", async () => { if (b.disabled || !this._snapshot().connected) return; b.disabled = true; try { if (b.dataset.action === "start") await this._call("vacuum","start","vacuum"); if (b.dataset.action === "pause") await this._call("vacuum","pause","vacuum"); if (b.dataset.action === "home") await this._call("vacuum","return_to_base","vacuum"); } finally { setTimeout(() => { b.disabled = false; }, 650); } }));
+    this.shadowRoot.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => this._switchWorkspace(b.dataset.view, null)));
+    this.shadowRoot.querySelectorAll("[data-detail]").forEach((b) => b.addEventListener("click", () => this._switchWorkspace("cleaning", b.dataset.detail)));
+    this.shadowRoot.querySelectorAll("[data-action]").forEach((b) => b.addEventListener("click", async () => { if (b.disabled || !this._snapshot().connected) return; b.disabled = true; try { if (b.dataset.action === "start") await this._call("vacuum","start","vacuum"); if (b.dataset.action === "pause") await this._call("vacuum","pause","vacuum"); if (b.dataset.action === "stop") await this._call("vacuum","stop","vacuum"); if (b.dataset.action === "home") await this._call("vacuum","return_to_base","vacuum"); } finally { setTimeout(() => { b.disabled = false; }, 650); } }));
     this.shadowRoot.querySelectorAll("[data-select-key]").forEach((b) => b.addEventListener("click", async () => { if (b.disabled || !this._snapshot().connected) return; await this._call("select","select_option",b.dataset.selectKey,{ option: b.dataset.selectValue }); }));
     const volume = this.shadowRoot.querySelector("[data-volume]"); volume?.addEventListener("input", () => { const label = this.shadowRoot.querySelector("[data-volume-label]"); if (label) label.textContent = `${volume.value}%`; }); volume?.addEventListener("change", () => { if (this._snapshot().connected) this._call("number","set_value","volume",{ value: Number(volume.value) }); });
     this.shadowRoot.querySelectorAll("[data-toggle]").forEach((b) => b.addEventListener("click", () => { if (b.disabled || !this._snapshot().connected) return; const key = b.dataset.toggle; this._call("switch",this._state(key)?.state === "on" ? "turn_off" : "turn_on",key); }));
-    this.shadowRoot.querySelectorAll("[data-more]").forEach((node) => { let timer = null; const cancel = () => { if (timer) clearTimeout(timer); timer = null; }; node.addEventListener("pointerdown", () => { cancel(); timer = setTimeout(() => { timer = null; this._showMoreInfo(node.dataset.more); }, 520); }); node.addEventListener("pointerup",cancel); node.addEventListener("pointercancel",cancel); node.addEventListener("pointerleave",cancel); });
+    this.shadowRoot.querySelectorAll("[data-more]").forEach((node) => { let timer = null; const cancel = () => { if (timer) clearTimeout(timer); timer = null; }; node.addEventListener("pointerdown", () => { cancel(); if (this._gesturePointers.size > 1) return; timer = setTimeout(() => { timer = null; if (!this._gestureMoved && this._gesturePointers.size < 2) this._showMoreInfo(node.dataset.more); }, 520); }); node.addEventListener("pointerup",cancel); node.addEventListener("pointercancel",cancel); node.addEventListener("pointerleave",cancel); });
+    this._bindWorkspaceGestures();
   }
 
   _render() {
     if (!this.shadowRoot) return;
+    this._restoreTransform(false);
     if (!this._hass || !this._panel || this._registryLoading || !this._registryLoaded) {
-      this.shadowRoot.innerHTML = `<style>${this._styles()}</style><main>${this._header()}<div class="content"><div class="loading"><div><ha-icon icon="mdi:robot-vacuum"></ha-icon><p>Подключаем интерфейс…</p></div></div></div>${this._nav()}</main>`; this._bind(); return;
+      this.shadowRoot.innerHTML = `<style>${this._styles()}</style><main>${this._header()}${this._workspace(`<div class="loading"><div><ha-icon icon="mdi:robot-vacuum"></ha-icon><p>Подключаем интерфейс…</p></div></div>`)}${this._nav()}</main>`; this._bind(); return;
     }
     if (this._registryError) {
-      this.shadowRoot.innerHTML = `<style>${this._styles()}</style><main>${this._header()}<div class="content"><div class="trust-banner"><ha-icon icon="mdi:alert-circle-outline"></ha-icon><div><strong>Не удалось загрузить реестр сущностей</strong><span>${escapeHtml(this._registryError)}</span></div></div></div>${this._nav()}</main>`; this._bind(); return;
+      this.shadowRoot.innerHTML = `<style>${this._styles()}</style><main>${this._header()}${this._workspace(`<div class="trust-banner"><ha-icon icon="mdi:alert-circle-outline"></ha-icon><div><strong>Не удалось загрузить реестр сущностей</strong><span>${escapeHtml(this._registryError)}</span></div></div>`)}${this._nav()}</main>`; this._bind(); return;
     }
-    this.shadowRoot.innerHTML = `<style>${this._styles()}</style><main>${this._header()}<div class="content">${this._body()}</div>${this._nav()}</main>`;
+    this.shadowRoot.innerHTML = `<style>${this._styles()}</style><main>${this._header()}${this._workspace(this._body())}${this._nav()}</main>`;
     this._bind();
   }
 }

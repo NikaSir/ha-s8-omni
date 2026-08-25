@@ -8,7 +8,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.7.14",
+    "dashboard_version": "v0.7.15",
     "template": "NikaS Integration Panel Template v1.0",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -118,6 +118,25 @@
       "safe_area": true,
       "overview_scene_visual_depth": "approved_photographic_product_art",
       "overview_scene_verified_only": true
+    },
+    "workspace_transform": {
+      "scope": "working_area_only",
+      "shell_excluded": [
+        "header",
+        "bottom_navigation"
+      ],
+      "implementation": "translate3d_scale",
+      "native_scroll": false,
+      "css_zoom": false,
+      "pinch_midpoint": true,
+      "one_pointer_pan": true,
+      "two_finger_double_tap_reset": true,
+      "snap_to_100_percent": [
+        0.97,
+        1.03
+      ],
+      "persistent_per_entry_and_view": true,
+      "permanent_zoom_controls": false
     }
   },
   "generated_ui": {
