@@ -1,0 +1,127 @@
+name: Apply clean mode fix v0.7.12
+
+on:
+  push:
+    branches:
+      - fix/clean-mode-v0712
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/clean-mode-v0712
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Patch clean mode semantics
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          # const.py
+          path = Path('custom_components/s8_omni/const.py')
+          text = path.read_text(encoding='utf-8')
+          text = text.replace('VERSION = "v1.00_b044"', 'VERSION = "v1.00_b045"', 1)
+          text = text.replace('DASHBOARD_VERSION = "v0.7.11"', 'DASHBOARD_VERSION = "v0.7.12"', 1)
+          needle = 'MODE_OPTIONS = ["smart", "zone", "pose", "part", "chargego", "wallfollow", "selectroom"]'
+          repl = 'CLEAN_MODE_OPTIONS = ["smart", "selectroom", "zone", "pose", "part"]\nDEFAULT_CLEAN_MODE = "smart"\nMODE_OPTIONS = ["smart", "zone", "pose", "part", "chargego", "wallfollow", "selectroom"]'
+          if needle not in text:
+              raise SystemExit('MODE_OPTIONS anchor not found')
+          text = text.replace(needle, repl, 1)
+          path.write_text(text, encoding='utf-8')
+
+          # coordinator.py: persist last meaningful DP4 Clean Mode and never overwrite with chargego.
+          path = Path('custom_components/s8_omni/coordinator.py')
+          text = path.read_text(encoding='utf-8')
+          text = text.replace('from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed', 'from homeassistant.helpers.storage import Store\nfrom homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed', 1)
+          text = text.replace('    DEFAULT_PROTOCOL_VERSION,\n    DEFAULT_SCAN_INTERVAL,\n    DOMAIN,', '    CLEAN_MODE_OPTIONS,\n    DEFAULT_CLEAN_MODE,\n    DEFAULT_PROTOCOL_VERSION,\n    DEFAULT_SCAN_INTERVAL,\n    DOMAIN,\n    DP_MODE,', 1)
+          anchor = '        self._command_lock = asyncio.Lock()\n'
+          repl = '''        self._command_lock = asyncio.Lock()\n        self._clean_mode_store = Store(hass, 1, f"{DOMAIN}.{entry.entry_id}.clean_mode")\n        self._clean_mode_loaded = False\n        self.last_clean_mode: str | None = None\n'''
+          if anchor not in text:
+              raise SystemExit('coordinator init anchor not found')
+          text = text.replace(anchor, repl, 1)
+          old = '''    async def _async_update_data(self):\n        try:\n            data = await self.hass.async_add_executor_job(self._read_sync)\n        except Exception as err:\n            raise UpdateFailed(f"S8 OMNI local read failed: {err}") from err\n        self.last_successful_update = datetime.now(timezone.utc)\n        return data\n'''
+          new = '''    async def _async_update_data(self):\n        try:\n            data = await self.hass.async_add_executor_job(self._read_sync)\n        except Exception as err:\n            raise UpdateFailed(f"S8 OMNI local read failed: {err}") from err\n        await self._async_update_clean_mode(data)\n        self.last_successful_update = datetime.now(timezone.utc)\n        return data\n\n    async def _async_load_clean_mode(self):\n        if self._clean_mode_loaded:\n            return\n        saved = await self._clean_mode_store.async_load()\n        if isinstance(saved, dict) and saved.get("mode") in CLEAN_MODE_OPTIONS:\n            self.last_clean_mode = saved["mode"]\n        self._clean_mode_loaded = True\n\n    async def _async_remember_clean_mode(self, mode):\n        mode = str(mode or "").lower()\n        if mode not in CLEAN_MODE_OPTIONS:\n            return\n        await self._async_load_clean_mode()\n        if self.last_clean_mode == mode:\n            return\n        self.last_clean_mode = mode\n        await self._clean_mode_store.async_save({"mode": mode})\n\n    async def _async_update_clean_mode(self, data):\n        await self._async_load_clean_mode()\n        mode = str(data.get(DP_MODE) or "").lower()\n        if mode in CLEAN_MODE_OPTIONS:\n            await self._async_remember_clean_mode(mode)\n\n    @property\n    def effective_clean_mode(self):\n        return self.last_clean_mode or DEFAULT_CLEAN_MODE\n\n    @property\n    def clean_mode_source(self):\n        return "remembered" if self.last_clean_mode else "default"\n'''
+          if old not in text:
+              raise SystemExit('coordinator update block not found')
+          text = text.replace(old, new, 1)
+          old = '''    async def async_set_dp(self, dp, value, refresh=True):\n        async with self._command_lock:\n            await self.hass.async_add_executor_job(self._set_sync, dp, value)\n        if refresh:\n            await self.async_request_refresh()\n'''
+          new = '''    async def async_set_dp(self, dp, value, refresh=True):\n        async with self._command_lock:\n            await self.hass.async_add_executor_job(self._set_sync, dp, value)\n        if dp == DP_MODE and str(value) in CLEAN_MODE_OPTIONS:\n            await self._async_remember_clean_mode(value)\n        if refresh:\n            await self.async_request_refresh()\n'''
+          if old not in text:
+              raise SystemExit('async_set_dp block not found')
+          text = text.replace(old, new, 1)
+          old = '''    async def async_set_sequence(self, values):\n        async with self._command_lock:\n            for dp, value in values:\n                await self.hass.async_add_executor_job(self._set_sync, dp, value)\n                await asyncio.sleep(0.15)\n        await self.async_request_refresh()\n'''
+          new = '''    async def async_set_sequence(self, values):\n        remembered_mode = None\n        async with self._command_lock:\n            for dp, value in values:\n                await self.hass.async_add_executor_job(self._set_sync, dp, value)\n                if dp == DP_MODE and str(value) in CLEAN_MODE_OPTIONS:\n                    remembered_mode = value\n                await asyncio.sleep(0.15)\n        if remembered_mode is not None:\n            await self._async_remember_clean_mode(remembered_mode)\n        await self.async_request_refresh()\n'''
+          if old not in text:
+              raise SystemExit('async_set_sequence block not found')
+          text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8')
+
+          # select.py: user-facing mode reports remembered Clean Mode when raw DP4 is service state chargego.
+          path = Path('custom_components/s8_omni/select.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''    @property\n    def current_option(self):\n        value = self.dp(self.desc.dp)\n        return str(value) if value is not None else None\n'''
+          new = '''    @property\n    def current_option(self):\n        value = self.dp(self.desc.dp)\n        if self.desc.key == "mode":\n            raw = str(value) if value is not None else None\n            if raw in self.desc.options and raw not in ("chargego", "wallfollow"):\n                return raw\n            return self.coordinator.effective_clean_mode\n        return str(value) if value is not None else None\n\n    @property\n    def extra_state_attributes(self):\n        if self.desc.key != "mode":\n            return None\n        return {\n            "raw_dp4_mode": self.dp(self.desc.dp),\n            "clean_mode_source": self.coordinator.clean_mode_source,\n        }\n'''
+          if old not in text:
+              raise SystemExit('select current_option block not found')
+          text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8')
+
+          # sensor.py: DP41 is not the Clean Mode selector.
+          path = Path('custom_components/s8_omni/sensor.py')
+          text = path.read_text(encoding='utf-8')
+          text = text.replace('Desc("work_mode", "Режим уборки", DP_WORK_MODE),', 'Desc("work_mode", "Тип работы", DP_WORK_MODE, category=EntityCategory.DIAGNOSTIC),', 1)
+          path.write_text(text, encoding='utf-8')
+
+          # frontend: mode card uses select.mode only; DP41 remains diagnostics only.
+          path = Path('custom_components/s8_omni/frontend/s8-omni-panel.js')
+          text = path.read_text(encoding='utf-8')
+          text = text.replace('const UI_VERSION = "v0.7.11";', 'const UI_VERSION = "v0.7.12";', 1)
+          text = text.replace('const WORK_MODE_LABELS = { both_work: "Комби" };\n', '', 1)
+          old = '''  _modeLabel(snap) {\n    if (snap.unreliable) return "Нет данных";\n    const mode = String(snap.mode ?? "").toLowerCase();\n    const work = String(snap.workMode ?? "").toLowerCase();\n    if (mode && mode !== "chargego" && MODE_LABELS[mode]) return MODE_LABELS[mode];\n    if (mode === "chargego" && snap.onDock !== true) return MODE_LABELS.chargego;\n    if (WORK_MODE_LABELS[work]) return WORK_MODE_LABELS[work];\n    return this._label(MODE_LABELS, mode || snap.mode, "Нет данных");\n  }\n\n  _modeMeta(snap, label) {\n    if (snap.unreliable) return "Режим недоступен";\n    if (label === "Smart") return "Автовыбор";\n    if (label === "Комби") return "Пылесос + мойка";\n    if (label === "Возврат") return "На станцию";\n    return "Профиль уборки";\n  }'''
+          new = '''  _modeLabel(snap) {\n    if (snap.unreliable) return "Нет данных";\n    return this._label(MODE_LABELS, String(snap.mode ?? "").toLowerCase(), "Нет данных");\n  }\n\n  _modeMeta(snap, label) {\n    if (snap.unreliable) return "Режим недоступен";\n    if (label === "Smart") return "Автовыбор";\n    if (label === "Комнаты") return "Select Room";\n    if (label === "Зона") return "Zone Cleaning";\n    if (label === "Точка") return "Where To Sweep";\n    return "Режим уборки";\n  }'''
+          if old not in text:
+              raise SystemExit('frontend mode block not found')
+          text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8')
+
+          # versions and docs
+          path = Path('custom_components/s8_omni/manifest.json')
+          data = json.loads(path.read_text(encoding='utf-8')); data['version'] = '1.0.0b45'; path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          path = Path('panel.json')
+          data = json.loads(path.read_text(encoding='utf-8')); data['panel']['dashboard_version'] = 'v0.7.12'; path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          path = Path('README.md')
+          text = path.read_text(encoding='utf-8').replace('v1.00_b044` (`1.0.0b44`)', 'v1.00_b045` (`1.0.0b45`)', 1).replace('Dashboard **v0.7.11**', 'Dashboard **v0.7.12**', 1)
+          path.write_text(text, encoding='utf-8')
+          path = Path('docs/PROTOCOL.md')
+          text = path.read_text(encoding='utf-8')
+          marker = '- **Return home:** `mode=chargego` → `pause=false` → `power_go=true`.\n'
+          addition = marker + '\nDP4 also carries the user-selected Clean Mode. Because `chargego` is a temporary service value used by return-to-base, the integration remembers the last non-service Clean Mode (`smart`, `selectroom`, `zone`, `pose`, or observed `part`) and exposes that remembered value through the Home Assistant `mode` select while docked. DP41 `work_mode` is a separate device work-type signal and is not used as the Clean Mode selector.\n'
+          if marker not in text:
+              raise SystemExit('protocol insertion anchor not found')
+          text = text.replace(marker, addition, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+          node --check custom_components/s8_omni/frontend/s8-omni-panel.js
+          python -m compileall -q custom_components
+          grep -q 'const UI_VERSION = "v0.7.12"' custom_components/s8_omni/frontend/s8-omni-panel.js
+          grep -q 'effective_clean_mode' custom_components/s8_omni/coordinator.py
+          grep -q 'raw_dp4_mode' custom_components/s8_omni/select.py
+          grep -q 'Тип работы' custom_components/s8_omni/sensor.py
+          if grep -q 'WORK_MODE_LABELS' custom_components/s8_omni/frontend/s8-omni-panel.js; then exit 1; fi
+      - name: Commit production patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add custom_components/s8_omni/const.py custom_components/s8_omni/coordinator.py custom_components/s8_omni/select.py custom_components/s8_omni/sensor.py custom_components/s8_omni/frontend/s8-omni-panel.js custom_components/s8_omni/manifest.json panel.json README.md docs/PROTOCOL.md
+          if ! git diff --cached --quiet; then
+            git commit -m "fix: preserve selected Clean Mode across chargego in v0.7.12"
+            git push origin HEAD:fix/clean-mode-v0712
+          fi
