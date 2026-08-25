@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - fix/overview-v077-static-jpeg
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
