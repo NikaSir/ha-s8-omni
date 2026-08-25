@@ -1,7 +1,10 @@
-const UI_VERSION = "v0.7.7";
+const UI_VERSION = "v0.7.8";
+const ASSET_ROOT = "/s8_omni/frontend/assets";
+const PRODUCT_CLEAN_IMAGE = `${ASSET_ROOT}/product-clean.jpg?v=${encodeURIComponent(UI_VERSION)}`;
+const PRODUCT_DOCK_IMAGE = `${ASSET_ROOT}/product-dock.jpg?v=${encodeURIComponent(UI_VERSION)}`;
+
 function productArtUrl(mode) {
-  const safeMode = mode === "dock" ? "dock" : "clean";
-  return `/s8_omni/frontend/product-${safeMode}.jpg?v=${encodeURIComponent(UI_VERSION)}`;
+  return mode === "dock" ? PRODUCT_DOCK_IMAGE : PRODUCT_CLEAN_IMAGE;
 }
 
 const ROBOT_LABELS = {
@@ -251,7 +254,7 @@ class S8OmniPanel extends HTMLElement {
     const station = snap.station === "idle" && !snap.unreliable ? "Готова" : stationRaw;
     const robotContext = snap.unreliable ? "Нет данных" : snap.onDock === true ? "На базе" : snap.onDock === false ? "В работе" : "Позиция неизвестна";
     const operation = snap.unreliable ? "Нет данных" : snap.stationOperations.length ? snap.stationOperations.map((x) => STATION_OPERATION_LABELS[x] || x).join(" · ") : snap.missingStationDps.length ? "Часть данных" : "В ожидании";
-    const asset = (name) => `/s8_omni/frontend/status-${name}.jpg?v=${encodeURIComponent(UI_VERSION)}`;
+    const asset = (name) => `${ASSET_ROOT}/status-${name}.jpg?v=${encodeURIComponent(UI_VERSION)}`;
     return `<div>${this._hero()}${this._trustBanner(snap)}${this._quickActions()}<section class="card statuses-card"><div class="statuses-head"><h2>Статусы</h2><button type="button" data-view="station">Все <ha-icon icon="mdi:chevron-right"></ha-icon></button></div><div class="status-grid">
       <button class="status-card good" data-more="robot_status" type="button"><img class="status-thumb" src="${asset("robot")}" alt="Робот" /><strong>Робот</strong><b>${escapeHtml(robot)}</b><span class="meta">${escapeHtml(robotContext)}</span></button>
       <button class="status-card good" data-more="station_status" type="button"><img class="status-thumb" src="${asset("station")}" alt="Станция" /><strong>Станция</strong><b>${escapeHtml(station)}</b><span class="meta">${escapeHtml(operation)}</span></button>
