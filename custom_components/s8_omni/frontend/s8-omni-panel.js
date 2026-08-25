@@ -58,6 +58,7 @@ class S8OmniPanel extends HTMLElement {
     this._registryLoading = false;
     this._registryError = null;
     this._renderQueued = false;
+    this._renderDeferred = false;
     this._viewTransform = { scale: 1, x: 0, y: 0 };
     this._viewTransformKey = null;
     this._gesturePointers = new Map();
@@ -92,6 +93,7 @@ class S8OmniPanel extends HTMLElement {
   }
 
   _queueRender() {
+    if (this._gesturePointers?.size) { this._renderDeferred = true; return; }
     if (this._renderQueued) return;
     this._renderQueued = true;
     requestAnimationFrame(() => { this._renderQueued = false; this._render(); });
@@ -435,6 +437,7 @@ class S8OmniPanel extends HTMLElement {
       this._gestureStart = null;
       this._gestureMoved = false;
       this._hadMultiTouch = false;
+      if (this._renderDeferred) { this._renderDeferred = false; this._queueRender(); }
     };
     viewport.addEventListener("pointerup", (event) => finishPointer(event, false));
     viewport.addEventListener("pointercancel", (event) => finishPointer(event, true));
