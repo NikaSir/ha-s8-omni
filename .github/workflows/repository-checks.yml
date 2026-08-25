@@ -82,7 +82,7 @@ jobs:
           from pathlib import Path
           root=Path('custom_components/s8_omni/frontend')
           files=[
-              ('product-clean.jpg',9000),('product-dock.jpg',9000),
+              ('product-clean.jpg',9000),('product-dock.jpg',6000),
               ('status-robot.jpg',800),('status-station.jpg',800),
               ('status-water.jpg',800),('status-dustbin.jpg',800),
           ]
