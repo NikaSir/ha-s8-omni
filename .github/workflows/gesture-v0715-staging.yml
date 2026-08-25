@@ -19,22 +19,19 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - name: Patch stable gesture canvas and Stop action
+      - name: Add deferred-render gesture guard
         run: |
-          python .github/scripts/patch_gesture_v0715.py
+          python .github/scripts/patch_gesture_deferred_render.py
           node --check custom_components/s8_omni/frontend/s8-omni-panel.js
           python -m compileall -q custom_components
-          grep -q 'const UI_VERSION = "v0.7.15"' custom_components/s8_omni/frontend/s8-omni-panel.js
-          grep -q 'translate3d' custom_components/s8_omni/frontend/s8-omni-panel.js
-          grep -q '_bindWorkspaceGestures' custom_components/s8_omni/frontend/s8-omni-panel.js
-          grep -q 'vacuum","stop' custom_components/s8_omni/frontend/s8-omni-panel.js
-          if grep -q 'scrollLeft\|scrollTop' custom_components/s8_omni/frontend/s8-omni-panel.js; then exit 1; fi
-      - name: Commit production patch
+          grep -q 'this._renderDeferred = false' custom_components/s8_omni/frontend/s8-omni-panel.js
+          grep -q 'this._gesturePointers?.size' custom_components/s8_omni/frontend/s8-omni-panel.js
+      - name: Commit production guard
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add custom_components/s8_omni/frontend/s8-omni-panel.js custom_components/s8_omni/const.py custom_components/s8_omni/manifest.json panel.json README.md
+          git add custom_components/s8_omni/frontend/s8-omni-panel.js
           if ! git diff --cached --quiet; then
-            git commit -m "ui: add stable gesture canvas and restore Stop in v0.7.15"
+            git commit -m "fix: defer panel rerender until gesture completes"
             git push origin HEAD:feat/gesture-canvas-v0715
           fi
