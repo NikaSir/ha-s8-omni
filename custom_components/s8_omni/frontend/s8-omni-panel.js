@@ -74,7 +74,7 @@ class S8OmniPanel extends HTMLElement {
 
   set hass(value) { this._hass = value; this._ensureRegistry(); this._queueRender(); }
   get hass() { return this._hass; }
-  set panel(value) { this._panel = value; this._restoreTransform(true); this._ensureRegistry(); this._queueRender(); }
+  set panel(value) { this._panel = value; if (!this._gesturePointers?.size) this._restoreTransform(true); else this._renderDeferred = true; this._ensureRegistry(); this._queueRender(); }
   set narrow(_value) {}
   connectedCallback() {
     if (!this._resizeBound) {
@@ -424,6 +424,7 @@ class S8OmniPanel extends HTMLElement {
           this._suppressClicksUntil = Date.now() + 360;
         } else {
           this._twoFingerTapAt = now;
+          this._suppressClicksUntil = Date.now() + 320;
         }
       } else {
         if (this._viewTransform.scale >= VIEW_SCALE_SNAP_MIN && this._viewTransform.scale <= VIEW_SCALE_SNAP_MAX) {
