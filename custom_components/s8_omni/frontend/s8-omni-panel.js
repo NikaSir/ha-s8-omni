@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.12";
+const UI_VERSION = "v0.7.13";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const PRODUCT_CLEAN_IMAGE = `${ASSET_ROOT}/product-clean.jpg?v=${encodeURIComponent(UI_VERSION)}`;
 const PRODUCT_DOCK_IMAGE = `${ASSET_ROOT}/product-dock.jpg?v=${encodeURIComponent(UI_VERSION)}`;
@@ -164,6 +164,36 @@ class S8OmniPanel extends HTMLElement {
     return "Режим уборки";
   }
 
+  _batteryIcon(snap, charging, charged) {
+    if (snap.unreliable || snap.battery === null) return "mdi:battery-unknown";
+    if (charging) return "mdi:battery-charging";
+    if (charged || snap.battery >= 95) return "mdi:battery-check";
+    if (snap.battery >= 70) return "mdi:battery-high";
+    if (snap.battery >= 35) return "mdi:battery-medium";
+    if (snap.battery >= 15) return "mdi:battery-low";
+    return "mdi:battery-alert";
+  }
+
+  _modeIcon(snap) {
+    const mode = String(snap.mode ?? "").toLowerCase();
+    const icons = {
+      smart: "mdi:auto-fix",
+      selectroom: "mdi:floor-plan",
+      zone: "mdi:vector-square",
+      pose: "mdi:map-marker-radius-outline",
+      part: "mdi:shape-outline",
+    };
+    return icons[mode] || "mdi:tune-variant";
+  }
+
+  _telemetryIcon(snap) {
+    const age = Number(snap.age);
+    if (!Number.isFinite(age)) return "mdi:clock-question-outline";
+    if (age <= 10) return "mdi:clock-check-outline";
+    if (age <= 60) return "mdi:clock-outline";
+    return "mdi:clock-alert-outline";
+  }
+
   async _call(domain, service, key, extra = {}) {
     const entityId = this._entityId(key);
     if (!entityId || !this._hass) return;
@@ -220,6 +250,18 @@ class S8OmniPanel extends HTMLElement {
       .status-card b{font-size:12px;line-height:1.08}
       .status-card span.meta{font-size:9px;min-height:18px}
       @media(max-width:430px){.omni-scene{height:246px}.omni-art{width:74%}.omni-legend{width:31%;right:5px}.status-thumb{height:49px}.status-card{min-height:116px}}
+      /* v0.7.13 Overview polish */
+      .hero-metrics small{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.12;min-height:20px}
+      .metric-icon.battery.low{color:var(--error-color,#db4437)}
+      .statuses-card{padding:11px 12px 10px}
+      .statuses-head{margin-bottom:7px}
+      .status-grid{gap:6px}
+      .status-card{min-height:98px;padding:5px 5px 6px}
+      .status-thumb{height:40px;margin-bottom:2px}
+      .status-card strong{font-size:9px;line-height:1.05}
+      .status-card b{font-size:11px;line-height:1.05;margin-top:2px}
+      .status-card span.meta{font-size:8.5px;min-height:16px;margin-top:2px;line-height:1.05}
+      @media(max-width:430px){.status-card{min-height:94px}.status-thumb{height:37px}}
       @keyframes spin{to{transform:rotate(360deg)}}
       @media(max-width:360px){.hero-top{grid-template-columns:1fr}.connection-badge{justify-self:start}.status-grid{grid-template-columns:repeat(2,1fr)}.segments.four{grid-template-columns:repeat(2,1fr)}.diagnostic-strip{grid-template-columns:1fr}.omni-legend{width:30%}.omni-art{width:69%}}
       @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
@@ -257,9 +299,9 @@ class S8OmniPanel extends HTMLElement {
     const compositeLabel=snap.connection==="disconnected"?"Нет связи":snap.connection==="unknown"?"Связь не подтверждена":this._label(COMPOSITE_LABELS,snap.composite,"Нет данных");
     const wash=!snap.unreliable&&(ops.has("roller_cleaning")||snap.station==="roller_cleaning"), dust=!snap.unreliable&&(ops.has("dust_collection")||snap.station==="dust_collection"), dry=!snap.unreliable&&(ops.has("drying")||snap.station==="drying");
     const charging=!snap.unreliable&&snap.robot==="charging", charged=!snap.unreliable&&snap.robot==="charged", docked=!snap.unreliable&&snap.onDock===true, chargeActive=charging||charged||docked;
-    const artMode=chargeActive||wash||dust||dry?"dock":"clean", battery=snap.battery===null?"—":`${Math.round(snap.battery)}%`, age=snap.age===null?"—":this._formatDuration(snap.age), mode=this._modeLabel(snap), modeMeta=this._modeMeta(snap,mode);
-    const unknown=snap.unreliable?"Нет данных":"Не контрол.", dustState=snap.unreliable?"Нет данных":dust?"Работает":"Ожидание", dryState=snap.unreliable?"Нет данных":dry?"Вкл.":"Выкл.", chargeState=snap.unreliable?"Нет данных":charging?"Идёт":charged?"Завершён":docked?"На базе":"Нет";
-    return `<section class="card hero" data-more="composite_status"><div class="hero-top"><div><span class="eyebrow">Состояние</span><h1>${escapeHtml(compositeLabel)}</h1><p class="hero-hint">${escapeHtml(this._heroHint(snap))}</p></div><div class="connection-badge ${connection!=="Локально"?"bad":""}"><i class="dot"></i>${escapeHtml(connection)}</div></div><div class="omni-scene"><div class="omni-art ${snap.unreliable?"muted":""}"><img class="product-art" src="${productArtUrl(artMode)}" alt="S8 OMNI robot and station" /></div><div class="omni-legend"><div class="legend-row clean-water"><ha-icon icon="mdi:water"></ha-icon><span class="legend-copy"><strong>Чистая вода</strong><small>${unknown}</small></span></div><div class="legend-row dirty-water"><ha-icon icon="mdi:water-opacity"></ha-icon><span class="legend-copy"><strong>Грязная вода</strong><small>${unknown}</small></span></div><div class="legend-row dust ${dust?"active":""}"><ha-icon icon="mdi:delete-outline"></ha-icon><span class="legend-copy"><strong>Пыль/мешок</strong><small>${dustState}</small></span></div><div class="legend-row dry ${dry?"active":""}"><ha-icon icon="mdi:weather-windy"></ha-icon><span class="legend-copy"><strong>Тёплый воздух</strong><small>${dryState}</small></span></div><div class="legend-row charge ${chargeActive?"active":""}"><ha-icon icon="${charging?"mdi:battery-charging":"mdi:flash"}"></ha-icon><span class="legend-copy"><strong>Зарядка</strong><small>${chargeState}</small></span></div></div></div><div class="hero-metrics"><div data-more="battery"><ha-icon class="metric-icon battery" icon="mdi:battery-medium"></ha-icon><span>АКБ</span><strong>${battery}</strong><small>Текущий заряд</small><div class="battery-bar"><i style="width:${snap.battery??0}%"></i></div></div><div data-more="mode"><ha-icon class="metric-icon mode" icon="mdi:fan"></ha-icon><span>Режим</span><strong>${escapeHtml(mode)}</strong><small>${escapeHtml(modeMeta)}</small></div><div data-more="telemetry_age"><ha-icon class="metric-icon telemetry" icon="mdi:signal-cellular-3"></ha-icon><span>Телеметрия</span><strong>${escapeHtml(age)}</strong><small>Последнее обновление</small></div></div></section>`;
+    const artMode=chargeActive||wash||dust||dry?"dock":"clean", battery=snap.battery===null?"—":`${Math.round(snap.battery)}%`, age=snap.age===null?"—":this._formatDuration(snap.age), mode=this._modeLabel(snap), modeMeta=this._modeMeta(snap,mode), batteryIcon=this._batteryIcon(snap,charging,charged), modeIcon=this._modeIcon(snap), telemetryIcon=this._telemetryIcon(snap), batteryTone=snap.battery!==null&&snap.battery<15?" low":"";
+    const unknown=snap.unreliable?"Нет данных":"Не контрол.", dustState=snap.unreliable?"Нет данных":dust?"Сбор пыли":"Не контрол.", dryState=snap.unreliable?"Нет данных":dry?"Вкл.":"Выкл.", chargeState=snap.unreliable?"Нет данных":charging?"Идёт":charged?"Завершён":docked?"На базе":"Нет";
+    return `<section class="card hero" data-more="composite_status"><div class="hero-top"><div><span class="eyebrow">Состояние</span><h1>${escapeHtml(compositeLabel)}</h1><p class="hero-hint">${escapeHtml(this._heroHint(snap))}</p></div><div class="connection-badge ${connection!=="Локально"?"bad":""}"><i class="dot"></i>${escapeHtml(connection)}</div></div><div class="omni-scene"><div class="omni-art ${snap.unreliable?"muted":""}"><img class="product-art" src="${productArtUrl(artMode)}" alt="S8 OMNI robot and station" /></div><div class="omni-legend"><div class="legend-row clean-water"><ha-icon icon="mdi:water"></ha-icon><span class="legend-copy"><strong>Чистая вода</strong><small>${unknown}</small></span></div><div class="legend-row dirty-water"><ha-icon icon="mdi:water-opacity"></ha-icon><span class="legend-copy"><strong>Грязная вода</strong><small>${unknown}</small></span></div><div class="legend-row dust ${dust?"active":""}"><ha-icon icon="mdi:delete-outline"></ha-icon><span class="legend-copy"><strong>Пыль/мешок</strong><small>${dustState}</small></span></div><div class="legend-row dry ${dry?"active":""}"><ha-icon icon="mdi:weather-windy"></ha-icon><span class="legend-copy"><strong>Тёплый воздух</strong><small>${dryState}</small></span></div><div class="legend-row charge ${chargeActive?"active":""}"><ha-icon icon="${charging?"mdi:battery-charging":"mdi:flash"}"></ha-icon><span class="legend-copy"><strong>Зарядка</strong><small>${chargeState}</small></span></div></div></div><div class="hero-metrics"><div data-more="battery"><ha-icon class="metric-icon battery${batteryTone}" icon="${batteryIcon}"></ha-icon><span>АКБ</span><strong>${battery}</strong><small>Текущий заряд</small><div class="battery-bar"><i style="width:${snap.battery??0}%"></i></div></div><div data-more="mode"><ha-icon class="metric-icon mode" icon="${modeIcon}"></ha-icon><span>Режим</span><strong>${escapeHtml(mode)}</strong><small>${escapeHtml(modeMeta)}</small></div><div data-more="telemetry_age"><ha-icon class="metric-icon telemetry" icon="${telemetryIcon}"></ha-icon><span>Телеметрия</span><strong>${escapeHtml(age)}</strong><small>Последнее обновление</small></div></div></section>`;
   }
 
   _quickActions() {
