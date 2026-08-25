@@ -1,0 +1,36 @@
+name: Finalize gesture canvas v0.7.15
+
+on:
+  push:
+    branches:
+      - feat/gesture-canvas-v0715
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/gesture-canvas-v0715
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Apply final gesture hardening
+        run: |
+          python .github/scripts/harden_gesture_v0715.py
+          node --check custom_components/s8_omni/frontend/s8-omni-panel.js
+          grep -q 'if (!this._gesturePointers?.size) this._restoreTransform(true)' custom_components/s8_omni/frontend/s8-omni-panel.js
+          grep -q 'this._suppressClicksUntil = Date.now() + 320' custom_components/s8_omni/frontend/s8-omni-panel.js
+      - name: Commit production hardening
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add custom_components/s8_omni/frontend/s8-omni-panel.js
+          if ! git diff --cached --quiet; then
+            git commit -m "fix: harden panel state during multi-touch gestures"
+            git push origin HEAD:feat/gesture-canvas-v0715
+          fi
