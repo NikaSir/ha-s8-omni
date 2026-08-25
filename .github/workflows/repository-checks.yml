@@ -58,7 +58,7 @@ jobs:
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.13"' "$production"
+          grep -q 'const UI_VERSION = "v0.7.14"' "$production"
           grep -q 'const ASSET_ROOT = "/s8_omni/frontend/assets"' "$production"
           grep -q 'PRODUCT_CLEAN_IMAGE' "$production"
           grep -q 'PRODUCT_DOCK_IMAGE' "$production"
@@ -69,11 +69,16 @@ jobs:
           grep -q '_batteryIcon(snap, charging, charged)' "$production"
           grep -q '_modeIcon(snap)' "$production"
           grep -q '_telemetryIcon(snap)' "$production"
+          grep -q '_telemetryMeta(snap)' "$production"
           grep -q 'mdi:battery-check' "$production"
-          grep -q 'mdi:auto-fix' "$production"
+          grep -q 'mdi:tune-variant' "$production"
           grep -q 'mdi:clock-check-outline' "$production"
-          grep -q 'dust?"Сбор пыли":"Не контрол."' "$production"
-          grep -q 'v0.7.13 Overview polish' "$production"
+          grep -q 'Обновлено сейчас' "$production"
+          grep -q 'mdi:home-check' "$production"
+          grep -q 'На базе ✓' "$production"
+          grep -q 'dust?"Сбор пыли":"Нет датчика"' "$production"
+          grep -q 'Нет датчика' "$production"
+          grep -q 'v0.7.14 compact Overview density' "$production"
           grep -q 'Чистая вода' "$production"
           grep -q 'Грязная вода' "$production"
           grep -q 'Пыль/мешок' "$production"
@@ -94,7 +99,7 @@ jobs:
           grep -q 'raw_dp4_mode' custom_components/s8_omni/select.py
           grep -q 'Desc("mode", "Режим уборки", DP_MODE, CLEAN_MODE_OPTIONS)' custom_components/s8_omni/select.py
           grep -q 'Desc("work_mode", "Тип работы", DP_WORK_MODE' custom_components/s8_omni/sensor.py
-          echo "S8 OMNI v0.7.13 Overview + Clean Mode contract OK"
+          echo "S8 OMNI v0.7.14 Overview + Clean Mode contract OK"
 
       - name: Validate panel asset manifest
         run: |
@@ -103,7 +108,7 @@ jobs:
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.13':
+          if panel.get('dashboard_version') != 'v0.7.14':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':
