@@ -1,0 +1,100 @@
+name: Apply Overview polish v0.7.13
+
+on:
+  push:
+    branches:
+      - fix/overview-polish-v0713
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/overview-polish-v0713
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Patch Overview polish
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          js_path = Path('custom_components/s8_omni/frontend/s8-omni-panel.js')
+          text = js_path.read_text(encoding='utf-8')
+          text = text.replace('const UI_VERSION = "v0.7.12";', 'const UI_VERSION = "v0.7.13";', 1)
+
+          marker = '''  _modeMeta(snap, label) {\n    if (snap.unreliable) return "Режим недоступен";\n    if (label === "Smart") return "Автовыбор";\n    if (label === "Комнаты") return "Select Room";\n    if (label === "Зона") return "Zone Cleaning";\n    if (label === "Точка") return "Where To Sweep";\n    return "Режим уборки";\n  }'''
+          addition = marker + '''\n\n  _batteryIcon(snap, charging, charged) {\n    if (snap.unreliable || snap.battery === null) return "mdi:battery-unknown";\n    if (charging) return "mdi:battery-charging";\n    if (charged || snap.battery >= 95) return "mdi:battery-check";\n    if (snap.battery >= 70) return "mdi:battery-high";\n    if (snap.battery >= 35) return "mdi:battery-medium";\n    if (snap.battery >= 15) return "mdi:battery-low";\n    return "mdi:battery-alert";\n  }\n\n  _modeIcon(snap) {\n    const mode = String(snap.mode ?? "").toLowerCase();\n    const icons = {\n      smart: "mdi:auto-fix",\n      selectroom: "mdi:floor-plan",\n      zone: "mdi:vector-square",\n      pose: "mdi:map-marker-radius-outline",\n      part: "mdi:shape-outline",\n    };\n    return icons[mode] || "mdi:tune-variant";\n  }\n\n  _telemetryIcon(snap) {\n    const age = Number(snap.age);\n    if (!Number.isFinite(age)) return "mdi:clock-question-outline";\n    if (age <= 10) return "mdi:clock-check-outline";\n    if (age <= 60) return "mdi:clock-outline";\n    return "mdi:clock-alert-outline";\n  }'''
+          if marker not in text:
+              raise SystemExit('mode meta marker not found')
+          text = text.replace(marker, addition, 1)
+
+          old = 'const artMode=chargeActive||wash||dust||dry?"dock":"clean", battery=snap.battery===null?"—":`${Math.round(snap.battery)}%`, age=snap.age===null?"—":this._formatDuration(snap.age), mode=this._modeLabel(snap), modeMeta=this._modeMeta(snap,mode);'
+          new = 'const artMode=chargeActive||wash||dust||dry?"dock":"clean", battery=snap.battery===null?"—":`${Math.round(snap.battery)}%`, age=snap.age===null?"—":this._formatDuration(snap.age), mode=this._modeLabel(snap), modeMeta=this._modeMeta(snap,mode), batteryIcon=this._batteryIcon(snap,charging,charged), modeIcon=this._modeIcon(snap), telemetryIcon=this._telemetryIcon(snap), batteryTone=snap.battery!==null&&snap.battery<15?" low":"";'
+          if old not in text:
+              raise SystemExit('hero declaration not found')
+          text = text.replace(old, new, 1)
+
+          old = 'const unknown=snap.unreliable?"Нет данных":"Не контрол.", dustState=snap.unreliable?"Нет данных":dust?"Работает":"Ожидание", dryState=snap.unreliable?"Нет данных":dry?"Вкл.":"Выкл.", chargeState=snap.unreliable?"Нет данных":charging?"Идёт":charged?"Завершён":docked?"На базе":"Нет";'
+          new = 'const unknown=snap.unreliable?"Нет данных":"Не контрол.", dustState=snap.unreliable?"Нет данных":dust?"Сбор пыли":"Не контрол.", dryState=snap.unreliable?"Нет данных":dry?"Вкл.":"Выкл.", chargeState=snap.unreliable?"Нет данных":charging?"Идёт":charged?"Завершён":docked?"На базе":"Нет";'
+          if old not in text:
+              raise SystemExit('legend states declaration not found')
+          text = text.replace(old, new, 1)
+
+          old = '<div data-more="battery"><ha-icon class="metric-icon battery" icon="mdi:battery-medium"></ha-icon><span>АКБ</span><strong>${battery}</strong><small>Текущий заряд</small><div class="battery-bar"><i style="width:${snap.battery??0}%"></i></div></div><div data-more="mode"><ha-icon class="metric-icon mode" icon="mdi:fan"></ha-icon><span>Режим</span><strong>${escapeHtml(mode)}</strong><small>${escapeHtml(modeMeta)}</small></div><div data-more="telemetry_age"><ha-icon class="metric-icon telemetry" icon="mdi:signal-cellular-3"></ha-icon><span>Телеметрия</span><strong>${escapeHtml(age)}</strong><small>Последнее обновление</small></div>'
+          new = '<div data-more="battery"><ha-icon class="metric-icon battery${batteryTone}" icon="${batteryIcon}"></ha-icon><span>АКБ</span><strong>${battery}</strong><small>Текущий заряд</small><div class="battery-bar"><i style="width:${snap.battery??0}%"></i></div></div><div data-more="mode"><ha-icon class="metric-icon mode" icon="${modeIcon}"></ha-icon><span>Режим</span><strong>${escapeHtml(mode)}</strong><small>${escapeHtml(modeMeta)}</small></div><div data-more="telemetry_age"><ha-icon class="metric-icon telemetry" icon="${telemetryIcon}"></ha-icon><span>Телеметрия</span><strong>${escapeHtml(age)}</strong><small>Последнее обновление</small></div>'
+          if old not in text:
+              raise SystemExit('hero metrics markup not found')
+          text = text.replace(old, new, 1)
+
+          css_marker = '      @keyframes spin{to{transform:rotate(360deg)}}'
+          css = '''      /* v0.7.13 Overview polish */\n      .hero-metrics small{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.12;min-height:20px}\n      .metric-icon.battery.low{color:var(--error-color,#db4437)}\n      .statuses-card{padding:11px 12px 10px}\n      .statuses-head{margin-bottom:7px}\n      .status-grid{gap:6px}\n      .status-card{min-height:98px;padding:5px 5px 6px}\n      .status-thumb{height:40px;margin-bottom:2px}\n      .status-card strong{font-size:9px;line-height:1.05}\n      .status-card b{font-size:11px;line-height:1.05;margin-top:2px}\n      .status-card span.meta{font-size:8.5px;min-height:16px;margin-top:2px;line-height:1.05}\n      @media(max-width:430px){.status-card{min-height:94px}.status-thumb{height:37px}}\n'''
+          if css_marker not in text:
+              raise SystemExit('CSS insertion marker not found')
+          text = text.replace(css_marker, css + css_marker, 1)
+          js_path.write_text(text, encoding='utf-8')
+
+          const_path = Path('custom_components/s8_omni/const.py')
+          const = const_path.read_text(encoding='utf-8')
+          const = const.replace('VERSION = "v1.00_b045"', 'VERSION = "v1.00_b046"', 1)
+          const = const.replace('DASHBOARD_VERSION = "v0.7.12"', 'DASHBOARD_VERSION = "v0.7.13"', 1)
+          const_path.write_text(const, encoding='utf-8')
+
+          manifest_path = Path('custom_components/s8_omni/manifest.json')
+          manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+          manifest['version'] = '1.0.0b46'
+          manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          panel_path = Path('panel.json')
+          panel = json.loads(panel_path.read_text(encoding='utf-8'))
+          panel['panel']['dashboard_version'] = 'v0.7.13'
+          panel_path.write_text(json.dumps(panel, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+          readme_path = Path('README.md')
+          readme = readme_path.read_text(encoding='utf-8')
+          readme = readme.replace('v1.00_b045` (`1.0.0b45`)', 'v1.00_b046` (`1.0.0b46`)', 1)
+          readme = readme.replace('Dashboard **v0.7.12**', 'Dashboard **v0.7.13**', 1)
+          readme_path.write_text(readme, encoding='utf-8')
+          PY
+          node --check custom_components/s8_omni/frontend/s8-omni-panel.js
+          python -m compileall -q custom_components
+          grep -q 'const UI_VERSION = "v0.7.13"' custom_components/s8_omni/frontend/s8-omni-panel.js
+          grep -q '_batteryIcon(snap, charging, charged)' custom_components/s8_omni/frontend/s8-omni-panel.js
+          grep -q '_modeIcon(snap)' custom_components/s8_omni/frontend/s8-omni-panel.js
+          grep -q '_telemetryIcon(snap)' custom_components/s8_omni/frontend/s8-omni-panel.js
+          grep -q 'dust?"Сбор пыли":"Не контрол."' custom_components/s8_omni/frontend/s8-omni-panel.js
+      - name: Commit production patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add custom_components/s8_omni/frontend/s8-omni-panel.js custom_components/s8_omni/const.py custom_components/s8_omni/manifest.json panel.json README.md
+          if ! git diff --cached --quiet; then
+            git commit -m "ui: polish Overview status cues in v0.7.13"
+            git push origin HEAD:fix/overview-polish-v0713
+          fi
