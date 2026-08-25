@@ -58,6 +58,8 @@ jobs:
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
+          grep -q 'const UI_VERSION = "v0.7.9"' "$production"
+          grep -q 'v0.7.9 approved-render geometry' "$production"
           grep -q 'const ASSET_ROOT = "/s8_omni/frontend/assets"' "$production"
           grep -q 'PRODUCT_CLEAN_IMAGE' "$production"
           grep -q 'PRODUCT_DOCK_IMAGE' "$production"
@@ -77,7 +79,7 @@ jobs:
           if grep -q 'createImageBitmap' "$production"; then exit 1; fi
           if grep -q 'S8ProductArtView' "$registration"; then exit 1; fi
           if grep -q '_product_art_bytes' "$registration"; then exit 1; fi
-          echo "S8 OMNI local frontend-assets contract OK"
+          echo "S8 OMNI v0.7.9 local frontend-assets contract OK"
 
       - name: Validate panel asset manifest
         run: |
@@ -86,6 +88,8 @@ jobs:
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
+          if panel.get('dashboard_version') != 'v0.7.9':
+              raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':
               raise SystemExit('panel.json asset_root mismatch')
@@ -98,7 +102,7 @@ jobs:
           if set(assets) != expected:
               raise SystemExit(f'panel.json assets mismatch: {assets}')
           for rel in assets:
-              path = root / rel.removeprefix('assets/') if False else Path('custom_components/s8_omni/frontend') / rel
+              path = root / rel
               if not path.is_file():
                   raise SystemExit(f'Manifest asset missing: {path}')
           print('Panel asset manifest OK')
@@ -107,20 +111,25 @@ jobs:
       - name: Validate static JPEG assets
         run: |
           python - <<'PY'
+          import hashlib
           from pathlib import Path
           root=Path('custom_components/s8_omni/frontend/assets')
           files=[
-              ('product-clean.jpg',9000),('product-dock.jpg',6000),
-              ('status-robot.jpg',800),('status-station.jpg',800),
-              ('status-water.jpg',800),('status-dustbin.jpg',800),
+              ('product-clean.jpg',12000,'17def2bb3f83352e9697d22eb4e0b15545902cd1a0fc703e325df92def9e380f'),
+              ('product-dock.jpg',12000,'0530f58afe28af40c3fe99ab9c2d309a59a30f864cdafd224a4c469e3f2ed723'),
+              ('status-robot.jpg',800,None),('status-station.jpg',800,None),
+              ('status-water.jpg',800,None),('status-dustbin.jpg',800,None),
           ]
-          for name,min_size in files:
+          for name,min_size,expected_sha in files:
               data=(root/name).read_bytes()
               if not (data.startswith(b'\xff\xd8') and data.endswith(b'\xff\xd9')):
                   raise SystemExit(f'Invalid JPEG: {name}')
               if len(data) < min_size:
                   raise SystemExit(f'Suspiciously small JPEG: {name}: {len(data)}')
-              print(f'OK {name}: {len(data)} bytes')
+              digest=hashlib.sha256(data).hexdigest()
+              if expected_sha and digest != expected_sha:
+                  raise SystemExit(f'Unexpected hero asset SHA: {name}: {digest}')
+              print(f'OK {name}: {len(data)} bytes {digest}')
           PY
 
       - name: Enforce offline-safe panel lifecycle

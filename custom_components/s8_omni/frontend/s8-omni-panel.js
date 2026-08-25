@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.8";
+const UI_VERSION = "v0.7.9";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const PRODUCT_CLEAN_IMAGE = `${ASSET_ROOT}/product-clean.jpg?v=${encodeURIComponent(UI_VERSION)}`;
 const PRODUCT_DOCK_IMAGE = `${ASSET_ROOT}/product-dock.jpg?v=${encodeURIComponent(UI_VERSION)}`;
@@ -199,6 +199,21 @@ class S8OmniPanel extends HTMLElement {
       .content{padding-bottom:calc(156px + env(safe-area-inset-bottom))}
       .omni-scene{height:248px}.omni-art{left:0;top:0;bottom:0;width:71%;overflow:hidden;border-radius:21px}.product-art{width:100%;height:100%;object-fit:cover;object-position:center;border-radius:21px;filter:none}.omni-legend{right:6px;top:9px;bottom:9px;width:35%;gap:5px;padding:8px}.legend-copy strong{white-space:normal;line-height:1.05}.legend-copy small{white-space:nowrap}.action.primary.running{background:linear-gradient(145deg,color-mix(in srgb,var(--primary-color) 92%,white),var(--primary-color));color:var(--text-primary-color,white);border-color:transparent;box-shadow:0 9px 20px color-mix(in srgb,var(--primary-color) 22%,transparent)}.status-card{min-height:142px;justify-content:flex-start;padding:8px 6px 9px}.status-thumb{display:block;width:100%;height:68px;object-fit:contain;border-radius:12px;background:#fff;margin-bottom:5px}.status-card strong{font-size:10px}.status-card b{font-size:13px;white-space:normal}.status-card span.meta{white-space:normal;min-height:22px}.status-card.neutral b{color:var(--secondary-text-color)}
       @media(max-width:430px){.omni-scene{height:242px}.omni-art{width:70%}.omni-legend{width:36%;right:5px}.legend-copy strong{font-size:9.5px}.status-thumb{height:62px}.status-card{min-height:136px}}
+      /* v0.7.9 approved-render geometry */
+      .content{padding-bottom:calc(126px + env(safe-area-inset-bottom))}
+      .omni-scene{height:252px}
+      .omni-art{left:0;top:0;bottom:0;width:75%;overflow:hidden;border-radius:21px;background:#f7f5f1}
+      .product-art{width:100%;height:100%;object-fit:cover;object-position:52% center;border-radius:21px;filter:none}
+      .omni-legend{right:7px;top:10px;bottom:10px;width:30%;gap:5px;padding:7px}
+      .legend-row{min-height:34px;padding:4px 5px}
+      .legend-copy strong{font-size:9.7px;line-height:1.05}
+      .legend-copy small{font-size:8.8px}
+      .status-card{min-height:119px;padding:7px 6px 8px}
+      .status-thumb{height:52px;margin-bottom:4px}
+      .status-card strong{font-size:9.5px}
+      .status-card b{font-size:12px;line-height:1.08}
+      .status-card span.meta{font-size:9px;min-height:18px}
+      @media(max-width:430px){.omni-scene{height:246px}.omni-art{width:74%}.omni-legend{width:31%;right:5px}.status-thumb{height:49px}.status-card{min-height:116px}}
       @keyframes spin{to{transform:rotate(360deg)}}
       @media(max-width:360px){.hero-top{grid-template-columns:1fr}.connection-badge{justify-self:start}.status-grid{grid-template-columns:repeat(2,1fr)}.segments.four{grid-template-columns:repeat(2,1fr)}.diagnostic-strip{grid-template-columns:1fr}.omni-legend{width:30%}.omni-art{width:69%}}
       @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
