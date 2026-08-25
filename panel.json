@@ -8,18 +8,19 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.7.6",
+    "dashboard_version": "v0.7.7",
     "template": "NikaS Integration Panel Template v1.0",
     "frontend": {
       "module": "s8-omni-panel.js",
       "bundle": "self_contained",
       "runtime_historical_imports": false,
       "cache_busting": "query_string_dashboard_version",
-      "product_art_delivery": "same_origin_http_from_verified_embedded_jpeg",
+      "product_art_delivery": "integration_static_jpeg_files",
       "product_art_states": [
         "clean",
         "dock"
-      ]
+      ],
+      "status_thumbnail_delivery": "integration_static_jpeg_files"
     },
     "availability": {
       "current_truth": [
@@ -69,7 +70,7 @@
       "card_proportions": "target_reference_compact",
       "typography_scale": "compact_balanced_mobile",
       "overview_target": "approved_target_mockup_composition",
-      "overview_scene": "large_product_scale_live_omni_illustration",
+      "overview_scene": "large_static_product_art_plus_live_omni_status_overlay",
       "overview_scene_sources": [
         "robot_on_dock",
         "robot_status",
@@ -80,12 +81,12 @@
       ],
       "overview_scene_synthetic_levels": false,
       "overview_scene_duplicate_operation_tiles": false,
-      "status_layout": "four_compact_verified_cards",
+      "status_layout": "four_compact_operational_cards_with_product_thumbnails",
       "status_sources": [
         "robot_status",
         "station_status",
-        "local_connection",
-        "fault"
+        "water_level_not_exposed",
+        "dustbin_level_not_exposed"
       ],
       "station_target": "typical_state_without_required_vertical_scroll",
       "station_summary_layout": "three_equal_compact_columns",
@@ -105,7 +106,7 @@
       "status_heading": "Статусы",
       "touch_target_min_px": 44,
       "safe_area": true,
-      "overview_scene_visual_depth": "soft_3d_station_robot_shadows_and_tinted_modules",
+      "overview_scene_visual_depth": "approved_photographic_product_art",
       "overview_scene_verified_only": true
     }
   },

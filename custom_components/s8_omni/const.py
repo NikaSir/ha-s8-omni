@@ -1,6 +1,6 @@
 DOMAIN = "s8_omni"
-VERSION = "v1.00_b039"
-DASHBOARD_VERSION = "v0.7.6"
+VERSION = "v1.00_b040"
+DASHBOARD_VERSION = "v0.7.7"
 
 PANEL_ID = "s8_omni"
 PANEL_PATH = "dashboard-s8-omni"

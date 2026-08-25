@@ -46,39 +46,52 @@ jobs:
           production="$frontend_dir/s8-omni-panel.js"
           registration="custom_components/s8_omni/__init__.py"
           test -f "$production"
+          test -f "$frontend_dir/product-clean.jpg"
+          test -f "$frontend_dir/product-dock.jpg"
+          test -f "$frontend_dir/status-robot.jpg"
+          test -f "$frontend_dir/status-station.jpg"
+          test -f "$frontend_dir/status-water.jpg"
+          test -f "$frontend_dir/status-dustbin.jpg"
           js_count="$(find "$frontend_dir" -maxdepth 1 -type f -name '*.js' | wc -l | tr -d ' ')"
           test "$js_count" = "1"
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const PRODUCT_ART_CLEAN_BASE64 = "' "$production"
-          grep -q 'const PRODUCT_ART_DOCK_BASE64 = "' "$production"
-          grep -q 'productArtUrl(artMode)' "$production"
-          grep -q '/s8_omni/product-art/' "$production"
-          grep -q 'class S8ProductArtView' "$registration"
-          grep -q 'requires_auth = False' "$registration"
+          grep -q '/s8_omni/frontend/product-' "$production"
+          grep -q 'status-${name}.jpg' "$production"
+          grep -q 'status-thumb' "$production"
+          grep -q 'work_mode' "$production"
           grep -q 'Чистая вода' "$production"
           grep -q 'Грязная вода' "$production"
           grep -q 'Пыль/мешок' "$production"
           grep -q 'Тёплый воздух' "$production"
           grep -q 'Зарядка' "$production"
           grep -q '<strong>Пылесборник</strong>' "$production"
-          if grep -q 'src="${productArtData' "$production"; then exit 1; fi
+          if grep -q 'PRODUCT_ART_CLEAN_BASE64' "$production"; then exit 1; fi
+          if grep -q 'PRODUCT_ART_DOCK_BASE64' "$production"; then exit 1; fi
+          if grep -q '/s8_omni/product-art/' "$production"; then exit 1; fi
+          if grep -q 'data:image' "$production"; then exit 1; fi
           if grep -q 'createImageBitmap' "$production"; then exit 1; fi
-          echo "Standalone frontend, same-origin product art and Overview contract OK"
+          if grep -q 'S8ProductArtView' "$registration"; then exit 1; fi
+          if grep -q '_product_art_bytes' "$registration"; then exit 1; fi
+          echo "Standalone frontend and physical static product-art contract OK"
 
-      - name: Validate embedded JPEG product art
+      - name: Validate static JPEG product art
         run: |
           python - <<'PY'
-          import base64,re
           from pathlib import Path
-          text=Path('custom_components/s8_omni/frontend/s8-omni-panel.js').read_text(encoding='utf-8')
-          for name in ('PRODUCT_ART_CLEAN_BASE64','PRODUCT_ART_DOCK_BASE64'):
-              m=re.search(rf'const {name} = "([^"]+)";',text)
-              if not m: raise SystemExit(f'Missing {name}')
-              data=base64.b64decode(m.group(1),validate=True)
-              if not (data.startswith(b'\xff\xd8') and data.endswith(b'\xff\xd9') and len(data)>10000):
-                  raise SystemExit(f'Invalid JPEG {name}')
+          root=Path('custom_components/s8_omni/frontend')
+          files=[
+              ('product-clean.jpg',9000),('product-dock.jpg',6000),
+              ('status-robot.jpg',800),('status-station.jpg',800),
+              ('status-water.jpg',800),('status-dustbin.jpg',800),
+          ]
+          for name,min_size in files:
+              data=(root/name).read_bytes()
+              if not (data.startswith(b'\xff\xd8') and data.endswith(b'\xff\xd9')):
+                  raise SystemExit(f'Invalid JPEG: {name}')
+              if len(data) < min_size:
+                  raise SystemExit(f'Suspiciously small JPEG: {name}: {len(data)}')
               print(f'OK {name}: {len(data)} bytes')
           PY
 
