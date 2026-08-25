@@ -1,3 +1,8 @@
+## v1.00_b043 / UI v0.7.10
+
+- Removed the duplicate blue **Локально** badge from the product scene; the standard connection badge in the Hero header remains the single connectivity indicator.
+- Finalized the approved Overview composition without changing live Home Assistant state semantics, controls, local assets or navigation.
+
 ## v1.00_b038 / UI v0.7.5
 
 - Installed the two approved product scenes from the accepted UI renders: cleaning and docked.

@@ -58,8 +58,8 @@ jobs:
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.9"' "$production"
-          grep -q 'v0.7.9 approved-render geometry' "$production"
+          grep -q 'const UI_VERSION = "v0.7.10"' "$production"
+          grep -q 'v0.7.10 approved-render geometry' "$production"
           grep -q 'const ASSET_ROOT = "/s8_omni/frontend/assets"' "$production"
           grep -q 'PRODUCT_CLEAN_IMAGE' "$production"
           grep -q 'PRODUCT_DOCK_IMAGE' "$production"
@@ -79,7 +79,7 @@ jobs:
           if grep -q 'createImageBitmap' "$production"; then exit 1; fi
           if grep -q 'S8ProductArtView' "$registration"; then exit 1; fi
           if grep -q '_product_art_bytes' "$registration"; then exit 1; fi
-          echo "S8 OMNI v0.7.9 local frontend-assets contract OK"
+          echo "S8 OMNI v0.7.10 local frontend-assets contract OK"
 
       - name: Validate panel asset manifest
         run: |
@@ -88,7 +88,7 @@ jobs:
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.9':
+          if panel.get('dashboard_version') != 'v0.7.10':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':
