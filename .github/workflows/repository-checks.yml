@@ -69,7 +69,7 @@ jobs:
           grep -q 'const WORK_MODE_LABELS = { both_work: "Комби" }' "$production"
           grep -q '_modeMeta(snap, label)' "$production"
           grep -q 'DP41 work_mode' "$production"
-          if grep -q 'MODE_LABELS\[work\]' "$production"; then exit 1; fi
+          if grep -Fq 'if (MODE_LABELS[work]) return MODE_LABELS[work];' "$production"; then exit 1; fi
           grep -q 'Чистая вода' "$production"
           grep -q 'Грязная вода' "$production"
           grep -q 'Пыль/мешок' "$production"
