@@ -39,26 +39,29 @@ jobs:
       - name: Validate frontend JavaScript
         run: node --check custom_components/s8_omni/frontend/s8-omni-panel.js
 
-      - name: Enforce S8 OMNI production frontend
+      - name: Enforce S8 OMNI local frontend-assets contract
         shell: bash
         run: |
           frontend_dir="custom_components/s8_omni/frontend"
+          assets_dir="$frontend_dir/assets"
           production="$frontend_dir/s8-omni-panel.js"
           registration="custom_components/s8_omni/__init__.py"
           test -f "$production"
-          test -f "$frontend_dir/product-clean.jpg"
-          test -f "$frontend_dir/product-dock.jpg"
-          test -f "$frontend_dir/status-robot.jpg"
-          test -f "$frontend_dir/status-station.jpg"
-          test -f "$frontend_dir/status-water.jpg"
-          test -f "$frontend_dir/status-dustbin.jpg"
+          test -d "$assets_dir"
+          for file in product-clean.jpg product-dock.jpg status-robot.jpg status-station.jpg status-water.jpg status-dustbin.jpg; do
+            test -f "$assets_dir/$file" || { echo "Missing asset: $file"; exit 1; }
+          done
+          test ! -f "$frontend_dir/product-clean.jpg"
+          test ! -f "$frontend_dir/product-dock.jpg"
           js_count="$(find "$frontend_dir" -maxdepth 1 -type f -name '*.js' | wc -l | tr -d ' ')"
           test "$js_count" = "1"
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q '/s8_omni/frontend/product-' "$production"
-          grep -q 'status-${name}.jpg' "$production"
+          grep -q 'const ASSET_ROOT = "/s8_omni/frontend/assets"' "$production"
+          grep -q 'PRODUCT_CLEAN_IMAGE' "$production"
+          grep -q 'PRODUCT_DOCK_IMAGE' "$production"
+          grep -q '${ASSET_ROOT}/status-${name}.jpg' "$production"
           grep -q 'status-thumb' "$production"
           grep -q 'work_mode' "$production"
           grep -q 'Чистая вода' "$production"
@@ -74,13 +77,38 @@ jobs:
           if grep -q 'createImageBitmap' "$production"; then exit 1; fi
           if grep -q 'S8ProductArtView' "$registration"; then exit 1; fi
           if grep -q '_product_art_bytes' "$registration"; then exit 1; fi
-          echo "Standalone frontend and physical static product-art contract OK"
+          echo "S8 OMNI local frontend-assets contract OK"
 
-      - name: Validate static JPEG product art
+      - name: Validate panel asset manifest
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('custom_components/s8_omni/frontend')
+          panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
+          frontend = panel['frontend']
+          if frontend.get('asset_root') != 'frontend/assets':
+              raise SystemExit('panel.json asset_root mismatch')
+          assets = frontend.get('assets', [])
+          expected = {
+              'assets/product-clean.jpg','assets/product-dock.jpg',
+              'assets/status-robot.jpg','assets/status-station.jpg',
+              'assets/status-water.jpg','assets/status-dustbin.jpg',
+          }
+          if set(assets) != expected:
+              raise SystemExit(f'panel.json assets mismatch: {assets}')
+          for rel in assets:
+              path = root / rel.removeprefix('assets/') if False else Path('custom_components/s8_omni/frontend') / rel
+              if not path.is_file():
+                  raise SystemExit(f'Manifest asset missing: {path}')
+          print('Panel asset manifest OK')
+          PY
+
+      - name: Validate static JPEG assets
         run: |
           python - <<'PY'
           from pathlib import Path
-          root=Path('custom_components/s8_omni/frontend')
+          root=Path('custom_components/s8_omni/frontend/assets')
           files=[
               ('product-clean.jpg',9000),('product-dock.jpg',6000),
               ('status-robot.jpg',800),('status-station.jpg',800),
