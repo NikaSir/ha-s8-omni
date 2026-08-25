@@ -58,10 +58,8 @@ jobs:
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
           grep -q '/s8_omni/frontend/product-' "$production"
-          grep -q 'status-robot.jpg' "$production"
-          grep -q 'status-station.jpg' "$production"
-          grep -q 'status-water.jpg' "$production"
-          grep -q 'status-dustbin.jpg' "$production"
+          grep -q 'status-${name}.jpg' "$production"
+          grep -q 'status-thumb' "$production"
           grep -q 'work_mode' "$production"
           grep -q 'Чистая вода' "$production"
           grep -q 'Грязная вода' "$production"
@@ -84,7 +82,7 @@ jobs:
           from pathlib import Path
           root=Path('custom_components/s8_omni/frontend')
           files=[
-              ('product-clean.jpg',10000),('product-dock.jpg',10000),
+              ('product-clean.jpg',9000),('product-dock.jpg',9000),
               ('status-robot.jpg',800),('status-station.jpg',800),
               ('status-water.jpg',800),('status-dustbin.jpg',800),
           ]
