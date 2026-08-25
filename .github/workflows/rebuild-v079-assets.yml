@@ -35,9 +35,13 @@ jobs:
               parts = sorted(chunk_root.glob(f'{mode}_*.b64'))
               if not parts:
                   raise SystemExit(f'No chunks for {mode}')
+              for p in parts:
+                  raw = p.read_bytes()
+                  print(f'PART {p.name}: {len(raw)} {hashlib.sha256(raw).hexdigest()}')
               encoded = ''.join(p.read_text(encoding='utf-8') for p in parts)
               data = base64.b64decode(encoded, validate=True)
               digest = hashlib.sha256(data).hexdigest()
+              print(f'REBUILT {mode}: {len(data)} {digest}')
               if digest != expected[mode]:
                   raise SystemExit(f'SHA mismatch for {mode}: {digest}')
               if not (data.startswith(b'\xff\xd8') and data.endswith(b'\xff\xd9')):
