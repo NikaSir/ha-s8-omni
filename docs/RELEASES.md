@@ -1,25 +1,24 @@
-# Release policy
+# Update and publication policy
 
 ## Source of truth
 
 - `main` is the canonical source branch.
-- A public release must be traceable to an immutable Git commit/tag.
-- Release artifacts must be produced from committed source, never from an uncommitted local working tree.
+- Every accepted update is traceable to a reviewed pull request and its immutable merged commit.
+- Generated assets must be produced from committed source, never from an uncommitted local working tree.
+- GitHub Releases and automatic release tags are not used; HACS follows the accepted `main` state.
 
 ## Version lineage
 
-Existing project version history, once standalone integration code is introduced, must be preserved during GitHub migration. Repository bootstrap is not a functional release.
+Existing project version history must be preserved during GitHub migration. Repository bootstrap is not a functional update.
 
-Before HACS publication, the final release/tag format and the integration manifest version format must be validated against current Home Assistant/HACS requirements. Until that validation is complete, no synthetic version number is introduced by this repository scaffold.
+The integration manifest and panel UI versions support diagnostics, compatibility and cache invalidation. They do not require a Git tag or GitHub Release.
 
-## Release gate
+## Publication gate
 
-Before a release:
+Before an accepted update is merged into `main`:
 
 1. Repository checks are green.
 2. Functional tests for robot and station behavior are complete.
 3. `CHANGELOG.md` is updated.
-4. No Tuya local keys, cloud credentials, tokens, private identifiers, or private diagnostics are present in tracked files or release artifacts.
-5. The release tag points to the exact reviewed commit.
-
-Published tags are treated as immutable.
+4. No Tuya local keys, cloud credentials, tokens, private identifiers or private diagnostics are present in tracked files or generated assets.
+5. The panel passes the required real-phone acceptance checks.
