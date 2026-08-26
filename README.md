@@ -6,7 +6,7 @@
 
 Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum and OMNI station, built from verified Tuya LAN datapoints.
 
-> Current development line: **v1.00_b046** (`1.0.0b46`). This is an early test build.
+> Current development line: **v1.00_b058** (`1.0.0b58`). This is an early test build.
 
 ## Scope
 
@@ -27,7 +27,7 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 
 `ha-s8-omni` owns its full appliance UI instead of exposing a loose collection of Lovelace entities as the primary experience.
 
-Dashboard **v0.7.17** follows **NIKAS Specialized Panel UI Standard v1.6** and **NikaS Integration Panel Template v1.0**, with the primary acceptance viewport **iPhone Pro Max portrait**:
+Dashboard **v0.7.22** follows **NIKAS Specialized Panel UI Standard v1.6** and **NikaS Integration Panel Template v1.0**, with the primary acceptance viewport **iPhone Pro Max portrait**:
 
 - symmetric Header: 52 px side rails / centred title / matching 44 px Menu and Refresh plaques, reduced to 48 px rails on narrow mobile;
 - every view keeps the icon-only Home Assistant **Menu** in the Header; the **Настройки уборки** drill-down places its explicit Back control inside the work area;
@@ -38,6 +38,8 @@ Dashboard **v0.7.17** follows **NIKAS Specialized Panel UI Standard v1.6** and *
 - page content reserves enough bottom clearance for the final card to scroll completely above the Tab Bar;
 - the Header and bottom Tab Bar stay outside the workspace; at 100% it uses native vertical scrolling with x/y fixed to zero, while one-pointer axis-clamped transform pan is enabled only above 100%;
 - workspace scale/position are persisted per integration entry and view; 97–103% snaps to 100%, and a stationary two-finger double-tap resets scale and position to 100% / origin;
+- the supported pinch range is 75–200%, with a touch-event fallback for reliable two-finger reset delivery in the iOS Companion App;
+- the requested two-level connection/freshness indicator uses the primary status color for its lamp, title and lightly tinted LIDER-style surface while the secondary freshness line remains independent;
 - Overview owns composite robot + station state, frequent Start/Pause/Home controls and compact Robot/Station summaries;
 - daily-use cards use compact Russian state labels such as **Зарядка**, **Уборка**, **Пауза**, **Возврат**, **Сбор пыли** and **Промывка**; Diagnostics retains the underlying normalized/raw values;
 - the Overview scene reserves a separate station-text safe zone so station state never overlaps the OMNI illustration;

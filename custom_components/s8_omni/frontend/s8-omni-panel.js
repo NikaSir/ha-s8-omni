@@ -1,7 +1,7 @@
-const UI_VERSION = "v0.7.20";
+const UI_VERSION = "v0.7.22";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
-const VIEW_SCALE_MIN = 0.72;
-const VIEW_SCALE_MAX = 2.20;
+const VIEW_SCALE_MIN = 0.75;
+const VIEW_SCALE_MAX = 2.00;
 const VIEW_SCALE_SNAP_MIN = 0.97;
 const VIEW_SCALE_SNAP_MAX = 1.03;
 const VIEW_STATE_PREFIX = "s8_omni.view_transform.v2";
@@ -127,6 +127,9 @@ class S8OmniPanel extends HTMLElement {
     this._gestureMoved = false;
     this._hadMultiTouch = false;
     this._twoFingerTapAt = 0;
+    this._pendingPointerTwoTapTimer = null;
+    this._touchTapCandidate = null;
+    this._touchTapHandledAt = 0;
     this._suppressClicksUntil = 0;
     this._scaleToastTimer = null;
     this._resizeBound = false;
@@ -159,7 +162,10 @@ class S8OmniPanel extends HTMLElement {
       this._resizeBound = false;
     }
     clearTimeout(this._nativeScrollIdleTimer);
+    clearTimeout(this._pendingPointerTwoTapTimer);
     this._nativeScrollIdleTimer = null;
+    this._pendingPointerTwoTapTimer = null;
+    this._touchTapCandidate = null;
     this._nativeScrollActive = false;
   }
 
@@ -443,6 +449,27 @@ class S8OmniPanel extends HTMLElement {
     this.shadowRoot?.querySelectorAll("[data-more]").forEach((node) => node.dispatchEvent(new Event("pointercancel")));
   }
 
+  _registerTwoFingerTap(now = performance.now()) {
+    if (now - this._twoFingerTapAt < 500) {
+      this._twoFingerTapAt = 0;
+      this._resetTransform(true);
+      this._suppressClicksUntil = Date.now() + 400;
+      return true;
+    }
+    this._twoFingerTapAt = now;
+    this._suppressClicksUntil = Date.now() + 340;
+    return false;
+  }
+
+  _queuePointerTwoFingerTap(now) {
+    if (Math.abs(now - this._touchTapHandledAt) < 120) return;
+    clearTimeout(this._pendingPointerTwoTapTimer);
+    this._pendingPointerTwoTapTimer = setTimeout(() => {
+      this._pendingPointerTwoTapTimer = null;
+      this._registerTwoFingerTap(now);
+    }, 80);
+  }
+
   _switchWorkspace(view, detail = null) {
     this._saveTransform();
     this._view = view;
@@ -588,15 +615,9 @@ class S8OmniPanel extends HTMLElement {
       const moved = this._gestureMoved;
       const duration = this._gestureStart ? now - this._gestureStart.startedAt : 999;
       if (!cancelled && wasMulti && !moved && duration < 300) {
-        if (now - this._twoFingerTapAt < 460) {
-          this._twoFingerTapAt = 0;
-          this._resetTransform(true);
-          this._suppressClicksUntil = Date.now() + 360;
-        } else {
-          this._twoFingerTapAt = now;
-          this._suppressClicksUntil = Date.now() + 320;
-        }
+        this._queuePointerTwoFingerTap(now);
       } else {
+        if (wasMulti && (moved || cancelled)) this._twoFingerTapAt = 0;
         if (wasMulti && this._viewTransform.scale >= VIEW_SCALE_SNAP_MIN && this._viewTransform.scale <= VIEW_SCALE_SNAP_MAX) {
           this._viewTransform.scale = 1;
           this._clampAndApplyTransform(false);
@@ -612,6 +633,44 @@ class S8OmniPanel extends HTMLElement {
     };
     viewport.addEventListener("pointerup", (event) => finishPointer(event, false));
     viewport.addEventListener("pointercancel", (event) => finishPointer(event, true));
+    viewport.addEventListener("touchstart", (event) => {
+      if (event.touches.length !== 2) {
+        if (event.touches.length > 2) this._touchTapCandidate = null;
+        return;
+      }
+      this._touchTapCandidate = {
+        startedAt: performance.now(),
+        moved: false,
+        points: Array.from(event.touches, (touch) => ({ x: touch.clientX, y: touch.clientY })),
+      };
+      this._cancelLongPresses();
+    }, { passive: true });
+    viewport.addEventListener("touchmove", (event) => {
+      const candidate = this._touchTapCandidate;
+      if (!candidate || event.touches.length < 2) return;
+      const points = Array.from(event.touches, (touch) => ({ x: touch.clientX, y: touch.clientY }));
+      candidate.moved = candidate.moved || points.some((current, index) => {
+        const start = candidate.points[index];
+        return !start || Math.hypot(current.x - start.x, current.y - start.y) > 8;
+      });
+    }, { passive: true });
+    viewport.addEventListener("touchend", (event) => {
+      const candidate = this._touchTapCandidate;
+      if (!candidate || event.touches.length) return;
+      this._touchTapCandidate = null;
+      const now = performance.now();
+      if (candidate.moved || now - candidate.startedAt >= 320) {
+        this._twoFingerTapAt = 0;
+        return;
+      }
+      clearTimeout(this._pendingPointerTwoTapTimer);
+      this._pendingPointerTwoTapTimer = null;
+      this._touchTapHandledAt = now;
+      this._registerTwoFingerTap(now);
+    }, { passive: true });
+    viewport.addEventListener("touchcancel", () => {
+      this._touchTapCandidate = null;
+    }, { passive: true });
     viewport.addEventListener("click", (event) => {
       if (Date.now() < this._suppressClicksUntil) {
         event.preventDefault();
@@ -742,7 +801,7 @@ class S8OmniPanel extends HTMLElement {
       .state-hero.operation h1{color:var(--primary-color)}.state-hero.warm h1{color:#c56b22}.state-hero.error h1{color:var(--error-color,#db4437)}
       .action.primary .action-icon ha-icon,.action.primary.running .action-icon ha-icon{color:currentColor!important;opacity:1!important}
       .action.primary.running:disabled{opacity:1}.action.primary.running:disabled .action-icon{opacity:1}
-      @media(max-width:430px){.state-scene{height:352px}.resource-strip{left:7px;right:7px;bottom:7px}.resource-chip{grid-template-columns:30px minmax(0,1fr);gap:4px;padding:7px 4px}.resource-chip ha-icon{--mdc-icon-size:23px}.resource-chip strong{font-size:11.7px;line-height:1.04}.resource-chip small{font-size:10.6px;line-height:1.04}.state-hero h1{font-size:30px}}
+      @media(max-width:430px){.state-scene{height:320px}.resource-strip{left:7px;right:7px;bottom:7px}.resource-chip{grid-template-columns:30px minmax(0,1fr);gap:4px;padding:7px 4px}.resource-chip ha-icon{--mdc-icon-size:23px}.resource-chip strong{font-size:11.7px;line-height:1.04}.resource-chip small{font-size:10.6px;line-height:1.04}.state-hero h1{font-size:30px}}
       /* v0.7.15 stable iOS gesture canvas */
       :host{height:100vh;height:100dvh;min-height:0;max-height:100dvh;overflow:hidden;overscroll-behavior:none}
       main{height:100%;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;overscroll-behavior:none;padding-bottom:0}
@@ -777,11 +836,25 @@ class S8OmniPanel extends HTMLElement {
       .inline-back{display:inline-flex;align-items:center;gap:7px;min-height:44px;margin:0 0 10px;padding:0 13px;border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:14px;background:var(--card-background-color);color:var(--primary-color);font-weight:700}
       .inline-back ha-icon{--mdc-icon-size:22px}
       @media(max-width:520px){
+        :host{position:fixed;inset:0;width:auto;height:auto;min-height:0;max-height:none}
+        main{position:absolute;inset:0;width:auto;height:auto}
         .app-header{grid-template-columns:48px minmax(0,1fr) 48px;min-height:calc(60px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top)}
         .header-action{width:44px;height:44px;border-radius:16px}.header-action ha-icon{--mdc-icon-size:25px}
         .header-title strong{font-size:21px}.header-title span{font-size:12px}
+        .state-scene{height:320px}
         nav button{min-height:52px;border-radius:14px}nav button ha-icon{--mdc-icon-size:28px}
       }
+      /* v0.7.22: v1.6 LIDER indicator surface and common 12–25 px type scale. */
+      .connection-indicator.local{color:var(--success-color,#43a047);background:color-mix(in srgb,var(--success-color,#43a047) 11%,var(--card-background-color));border-color:color-mix(in srgb,var(--success-color,#43a047) 30%,transparent)}
+      .connection-indicator.offline{color:var(--error-color,#db4437);background:color-mix(in srgb,var(--error-color,#db4437) 10%,var(--card-background-color));border-color:color-mix(in srgb,var(--error-color,#db4437) 30%,transparent)}
+      .connection-indicator.unknown{color:var(--disabled-text-color,#9aa0a6);background:color-mix(in srgb,var(--disabled-text-color,#9aa0a6) 8%,var(--card-background-color));border-color:color-mix(in srgb,var(--disabled-text-color,#9aa0a6) 28%,transparent)}
+      .connection-indicator .connection-lamp{box-shadow:0 0 0 3px color-mix(in srgb,currentColor 18%,transparent),0 0 8px color-mix(in srgb,currentColor 58%,transparent)}
+      .connection-copy strong{font-size:16px;font-weight:700}.connection-copy small{font-size:13px;font-weight:600}
+      .header-title strong{font-size:23px}.header-title span{font-size:14px}
+      .hero h1,.state-hero h1,.station-hero h2,.view-heading h2{font-size:25px}
+      .eyebrow,.hero-metrics span,.hero-metrics small,.action .action-sub,.legend-row,.legend-copy strong,.legend-copy small,.resource-chip strong,.resource-chip small,.station-summary-item span,.diagnostic-strip span,.segment{font-size:12px}
+      .status-card strong,.status-card span.meta{font-size:12px}.status-card b{font-size:13px}
+      @media(max-width:520px){.header-title strong{font-size:21px}.header-title span{font-size:13px}.hero h1,.state-hero h1,.station-hero h2,.view-heading h2{font-size:25px}.resource-chip strong,.resource-chip small{font-size:12px;white-space:normal}}
       @keyframes spin{to{transform:rotate(360deg)}}
       @media(max-width:360px){.hero-top{grid-template-columns:1fr}.connection-indicator{justify-self:start}.status-grid{grid-template-columns:repeat(2,1fr)}.segments.four{grid-template-columns:repeat(2,1fr)}.diagnostic-strip{grid-template-columns:1fr}.omni-legend{width:30%}.omni-art{width:69%}}
       @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}

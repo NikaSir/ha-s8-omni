@@ -8,7 +8,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.7.20",
+    "dashboard_version": "v0.7.22",
     "template": "NikaS Integration Panel Template v1.0",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -165,6 +165,10 @@
         "bottom_navigation"
       ],
       "implementation": "translate3d_scale",
+      "scale_range": [
+        0.75,
+        2.0
+      ],
       "native_scroll_at_100": true,
       "horizontal_scroll_at_100": false,
       "origin_at_100": [
@@ -187,12 +191,20 @@
       "identity_transform_at_100": "none",
       "defer_rerender_during_native_scroll": true,
       "viewport_height_owner": "host",
-      "mobile_overview_scene_height_px": 352,
+      "mobile_overview_scene_height_px": 320,
       "stable_dom_shell": true,
       "hass_update_strategy": "in_place_text_class_and_attribute_sync",
       "telemetry_age_in_structure_key": false,
       "connection_indicator_update": "category_change_only",
-      "structural_updates_during_native_scroll": false
+      "structural_updates_during_native_scroll": false,
+      "mobile_shell_position": "fixed_inset_zero",
+      "outer_home_assistant_scroll": false,
+      "two_finger_touch_fallback": true,
+      "indicator_surface": "primary_status_tint_lider",
+      "meaningful_typography_range_px": [
+        12,
+        25
+      ]
     }
   },
   "generated_ui": {

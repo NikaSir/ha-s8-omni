@@ -1,3 +1,16 @@
+## v1.00_b058 / UI v0.7.22
+
+- Aligned the saved pinch range with UI Standard v1.6 at 75–200% while retaining the 97–103% snap to 100%.
+- Added an iOS touch fallback for the stationary two-finger double-tap reset; pointer and touch delivery are deduplicated, pending long presses are cancelled and the confirmation remains `Масштаб 100%`.
+- Matched the connection/freshness plaque to LIDER: the primary state colors the lamp, title, 8–12% surface tint and approximately 30% border; freshness remains an independent secondary line.
+- Applied the common 12–25 px meaningful-text scale to the runtime panel, including the Header, scene resources, action captions and diagnostics.
+
+## v1.00_b057 / UI v0.7.21
+
+- Fixed the mobile panel shell to the visual viewport with `position: fixed; inset: 0`, preventing short views and outer Home Assistant scrolling from moving the Bottom Tab Bar.
+- Kept Header, work viewport and Bottom Tab Bar as three isolated grid rows; only the work viewport owns vertical scrolling.
+- Reduced the mobile Overview product scene from 352 px to 320 px so the full quick-action row remains above the Bottom Tab Bar without shrinking buttons or typography.
+
 ## v1.00_b056 / UI v0.7.20
 
 - Mounted the panel shell once: Header, zoom viewport and Bottom Tab Bar now remain permanent DOM nodes across Home Assistant polling updates.
