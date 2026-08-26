@@ -1,8 +1,8 @@
 # Specialized Panel Compliance Audit
 
 **Audit target:** NIKAS Specialized Panel UI Standard v1.6
-**Runtime:** `custom_components/s8_omni/frontend/s8-omni-panel.js` v0.7.23
-**Manifest:** integration `1.0.0b59`
+**Runtime:** `custom_components/s8_omni/frontend/s8-omni-panel.js` v0.7.24
+**Manifest:** integration `1.0.0b60`
 
 ## Compliance
 

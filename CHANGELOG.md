@@ -1,3 +1,9 @@
+## v1.00_b060 / UI v0.7.24
+
+- Moved the clean-water, dirty-water and dust-bag resource strip out of the product photo into its own stable Hero row.
+- Used the recovered row height to close the empty space above the fixed Bottom Tab Bar without stretching the shell or moving navigation into the scroll viewport.
+- Kept the image, status, resource strip, telemetry cards and actions in explicit independent rows across live state changes.
+
 ## v1.00_b059 / UI v0.7.23
 
 - Delegated work-view controls to the permanent stable-view root, so Start, Pause, Stop, Home and station-stop actions remain bound when live state changes their button roles in place.

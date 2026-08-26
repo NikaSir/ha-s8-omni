@@ -60,7 +60,7 @@ class PanelUiStandardV16V0722Tests(unittest.TestCase):
 
     def test_overview_state_transition_keeps_explicit_geometry(self) -> None:
         self.assertIn(
-            ".state-hero{display:grid;grid-template-rows:auto auto auto;align-content:start}",
+            ".state-hero{display:grid;grid-template-rows:auto auto auto auto;align-content:start}",
             self.source,
         )
         self.assertIn(
@@ -76,13 +76,28 @@ class PanelUiStandardV16V0722Tests(unittest.TestCase):
             self.source,
         )
         self.assertIn(
-            ".state-hero .hero-metrics{grid-row:3;width:100%;min-width:0}",
+            ".state-hero .resource-strip{grid-row:3}",
+            self.source,
+        )
+        self.assertIn(
+            ".state-hero .hero-metrics{grid-row:4;width:100%;min-width:0}",
             self.source,
         )
         self.assertIn(
             ".state-hero .connection-indicator{min-width:168px;max-width:100%}",
             self.source,
         )
+
+    def test_resource_strip_is_a_separate_hero_row(self) -> None:
+        hero = self.source.split("  _hero() {", 1)[1].split("  _quickActions() {", 1)[0]
+        self.assertIn(
+            '</div>${this._resourceStrip(snap)}<div class="hero-metrics">',
+            hero,
+        )
+        scene = hero.split('<div class="state-scene', 1)[1].split("</div>", 1)[0]
+        self.assertNotIn("_resourceStrip", scene)
+        self.assertIn(".resource-strip{position:relative", self.source)
+        self.assertNotIn(".resource-strip{position:absolute", self.source)
 
 
 if __name__ == "__main__":
