@@ -834,9 +834,15 @@ class S8OmniPanel extends HTMLElement {
       .connection-indicator.local{background:color-mix(in srgb,var(--success-color,#43a047) 11%,var(--card-background-color));border-color:color-mix(in srgb,var(--success-color,#43a047) 30%,var(--divider-color))}
       .connection-indicator.offline{background:color-mix(in srgb,var(--error-color,#db4437) 10%,var(--card-background-color));border-color:color-mix(in srgb,var(--error-color,#db4437) 30%,var(--divider-color))}
       .connection-indicator.unknown{background:color-mix(in srgb,var(--secondary-text-color) 8%,var(--card-background-color));border-color:color-mix(in srgb,var(--secondary-text-color) 28%,var(--divider-color))}
+      .state-hero{display:grid;grid-template-rows:auto auto auto;align-content:start}
+      .state-hero .hero-top{grid-row:1;grid-template-columns:minmax(0,1fr) minmax(168px,max-content);width:100%;isolation:isolate}
+      .state-hero .state-scene{grid-row:2;width:100%;min-width:0;contain:layout paint;isolation:isolate}
+      .state-hero .state-image{position:absolute;inset:0;width:100%;height:100%;max-width:none}
+      .state-hero .hero-metrics{grid-row:3;width:100%;min-width:0}
+      .state-hero .connection-indicator{min-width:168px;max-width:100%}
       .eyebrow,.hero-metrics span,.hero-metrics small,.action .action-sub,.segment,.station-summary-item span,.diagnostic-strip span,.resource-chip strong,.resource-chip small,.service-toggle-row .toggle-copy small,.status-card strong,.status-card span.meta,.legend-row,.legend-copy strong,.legend-copy small{font-size:12px}
       @keyframes spin{to{transform:rotate(360deg)}}
-      @media(max-width:360px){.hero-top{grid-template-columns:1fr}.connection-indicator{justify-self:start}.status-grid{grid-template-columns:repeat(2,1fr)}.segments.four{grid-template-columns:repeat(2,1fr)}.diagnostic-strip{grid-template-columns:1fr}.omni-legend{width:30%}.omni-art{width:69%}}
+      @media(max-width:360px){.hero-top,.state-hero .hero-top{grid-template-columns:1fr}.connection-indicator{justify-self:start}.status-grid{grid-template-columns:repeat(2,1fr)}.segments.four{grid-template-columns:repeat(2,1fr)}.diagnostic-strip{grid-template-columns:1fr}.omni-legend{width:30%}.omni-art{width:69%}}
       @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
     `;
   }

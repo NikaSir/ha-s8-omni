@@ -58,5 +58,32 @@ class PanelUiStandardV16V0722Tests(unittest.TestCase):
         self.assertIn("grid-template-rows:auto minmax(0,1fr) auto", self.source)
 
 
+    def test_overview_state_transition_keeps_explicit_geometry(self) -> None:
+        self.assertIn(
+            ".state-hero{display:grid;grid-template-rows:auto auto auto;align-content:start}",
+            self.source,
+        )
+        self.assertIn(
+            ".state-hero .hero-top{grid-row:1;grid-template-columns:minmax(0,1fr) minmax(168px,max-content)",
+            self.source,
+        )
+        self.assertIn(
+            ".state-hero .state-scene{grid-row:2;width:100%;min-width:0;contain:layout paint",
+            self.source,
+        )
+        self.assertIn(
+            ".state-hero .state-image{position:absolute;inset:0;width:100%;height:100%;max-width:none}",
+            self.source,
+        )
+        self.assertIn(
+            ".state-hero .hero-metrics{grid-row:3;width:100%;min-width:0}",
+            self.source,
+        )
+        self.assertIn(
+            ".state-hero .connection-indicator{min-width:168px;max-width:100%}",
+            self.source,
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

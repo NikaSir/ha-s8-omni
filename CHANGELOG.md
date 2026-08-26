@@ -5,6 +5,7 @@
 - Enforced the 12–25 px meaningful typography range and hardened two-finger double-tap reset so pinch/reset cannot open entity details or history.
 - Kept Header and Bottom Tab Bar as permanent fixed shell nodes while short and long views scroll only inside the Work Viewport.
 - Added an accessible label to the permanent Bottom Tab Bar without changing its geometry.
+- Locked the Overview Hero into explicit status, scene and metric rows so an iOS image-source change during the docked-to-cleaning transition cannot collapse or overlap the indicator, title or telemetry cards.
 
 ## v1.00_b057 / UI v0.7.21
 
