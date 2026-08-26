@@ -82,7 +82,9 @@ jobs:
           grep -q 'translate3d' "$production"
           grep -q 'touch-action:none' "$production"
           grep -q 'this._renderDeferred = false' "$production"
-          if grep -q 'scrollLeft\|scrollTop' "$production"; then exit 1; fi
+          if grep -q 'scrollLeft' "$production"; then exit 1; fi
+          grep -q 'scrollTop' "$production"
+          grep -q 'one_pointer_pan_above_100_only' panel.json
           if grep -nE '(^|[;{])[[:space:]]*zoom[[:space:]]*:' "$production"; then exit 1; fi
           grep -q 'CLEAN_MODE_OPTIONS' custom_components/s8_omni/const.py
           grep -q 'effective_clean_mode' custom_components/s8_omni/coordinator.py
@@ -93,7 +95,7 @@ jobs:
           grep -q 'async_set_dp(self.desc.dp, False)' custom_components/s8_omni/button.py
           if grep -q 'async_set_dp(self.desc.dp, True)' custom_components/s8_omni/button.py; then exit 1; fi
           grep -q 'Stop station dust collection' docs/PROTOCOL.md
-          echo "S8 OMNI v0.7.17 state-aware Hero contract OK"
+          echo "S8 OMNI v0.7.17 state-aware Hero and v1.5 shell contract OK"
 
       - name: Validate panel manifest and state assets
         run: |
@@ -124,10 +126,15 @@ jobs:
           required = {
               'scope': 'working_area_only',
               'implementation': 'translate3d_scale',
-              'native_scroll': False,
+              'native_scroll_at_100': True,
+              'horizontal_scroll_at_100': False,
+              'origin_at_100': [0, 0],
               'css_zoom': False,
               'pinch_midpoint': True,
-              'one_pointer_pan': True,
+              'one_pointer_pan_above_100_only': True,
+              'pan_only_on_overflowing_axes': True,
+              'clamp_after_resize': True,
+              'tab_change_returns_to_top': True,
               'two_finger_double_tap_reset': True,
               'permanent_zoom_controls': False,
           }

@@ -1,3 +1,9 @@
+## v1.00_b052 / UI v0.7.17
+
+- Implemented NIKAS Specialized Panel UI Standard v1.5: native vertical scrolling and fixed transform origin at 100%, scale-gated axis-clamped pan above 100%, UPS Header plaques and 28 px Bottom Tab icons.
+- The permanent Header left action is always the Home Assistant menu; Cleaning Settings Back moved into the work area.
+- Tab and detail transitions return the work area to the top while retaining a valid saved scale.
+
 ## v1.00_b043 / UI v0.7.10
 
 ## v1.00_b049 / UI v0.7.16
