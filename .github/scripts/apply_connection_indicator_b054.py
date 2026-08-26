@@ -1,0 +1,297 @@
+from pathlib import Path
+import json
+
+
+def replace_once(text, old, new, label):
+    if old not in text:
+        raise SystemExit(f"Expected fragment not found: {label}")
+    return text.replace(old, new, 1)
+
+
+coordinator = Path("custom_components/s8_omni/coordinator.py")
+text = coordinator.read_text(encoding="utf-8")
+text = replace_once(
+    text,
+    "        self.last_successful_update: datetime | None = None\n        scan = int(\n",
+    "        self.last_successful_update: datetime | None = None\n        self.last_poll_success: bool | None = None\n        scan = int(\n",
+    "coordinator initial poll state",
+)
+text = replace_once(
+    text,
+    "        )\n\n        self._device = tinytuya.Device(\n",
+    "        )\n        self.scan_interval_seconds = max(3, min(60, scan))\n\n        self._device = tinytuya.Device(\n",
+    "coordinator scan interval",
+)
+text = replace_once(
+    text,
+    "            update_interval=timedelta(seconds=max(3, scan)),\n",
+    "            update_interval=timedelta(seconds=self.scan_interval_seconds),\n",
+    "coordinator update interval",
+)
+old_update = '''    async def _async_update_data(self):
+        try:
+            data = await self.hass.async_add_executor_job(self._read_sync)
+        except Exception as err:
+            raise UpdateFailed(f"S8 OMNI local read failed: {err}") from err
+        await self._async_update_clean_mode(data)
+        self.last_successful_update = datetime.now(timezone.utc)
+        return data
+'''
+new_update = '''    async def _async_update_data(self):
+        try:
+            data = await self.hass.async_add_executor_job(self._read_sync)
+            await self._async_update_clean_mode(data)
+        except Exception as err:
+            self.last_poll_success = False
+            raise UpdateFailed(f"S8 OMNI local read failed: {err}") from err
+        self.last_poll_success = True
+        self.last_successful_update = datetime.now(timezone.utc)
+        return data
+
+    @property
+    def stale_after_seconds(self):
+        return self.scan_interval_seconds * 3
+
+    @property
+    def telemetry_age_seconds(self):
+        last = self.last_successful_update
+        if last is None:
+            return None
+        return max(0, int((datetime.now(timezone.utc) - last).total_seconds()))
+
+    @property
+    def telemetry_status(self):
+        if self.last_successful_update is None:
+            return "no_data"
+        if self.last_poll_success is False:
+            return "stale"
+        age = self.telemetry_age_seconds
+        if age is None:
+            return "no_data"
+        return "current" if age <= self.stale_after_seconds else "stale"
+'''
+text = replace_once(text, old_update, new_update, "coordinator update data")
+coordinator.write_text(text, encoding="utf-8")
+
+binary = Path("custom_components/s8_omni/binary_sensor.py")
+text = binary.read_text(encoding="utf-8")
+old_binary = '''    @property
+    def is_on(self):
+        return bool(self.coordinator.last_update_success)
+'''
+new_binary = '''    @property
+    def is_on(self):
+        state = self.coordinator.last_poll_success
+        return None if state is None else bool(state)
+
+    @property
+    def extra_state_attributes(self):
+        last = self.coordinator.last_successful_update
+        poll = self.coordinator.last_poll_success
+        return {
+            "channel": "tuya_lan",
+            "poll_state": "unknown" if poll is None else "success" if poll else "failed",
+            "telemetry_status": self.coordinator.telemetry_status,
+            "has_successful_snapshot": last is not None,
+            "scan_interval_seconds": self.coordinator.scan_interval_seconds,
+            "stale_after_seconds": self.coordinator.stale_after_seconds,
+            "last_successful_update": last.isoformat() if last is not None else None,
+        }
+'''
+text = replace_once(text, old_binary, new_binary, "local connection binary sensor")
+binary.write_text(text, encoding="utf-8")
+
+sensor = Path("custom_components/s8_omni/sensor.py")
+text = sensor.read_text(encoding="utf-8")
+old_age = '''    @property
+    def native_value(self):
+        last = self.coordinator.last_successful_update
+        if last is None:
+            return None
+        return max(0, int((datetime.now(timezone.utc) - last).total_seconds()))
+'''
+new_age = '''    @property
+    def native_value(self):
+        return self.coordinator.telemetry_age_seconds
+
+    @property
+    def extra_state_attributes(self):
+        return {
+            "scan_interval_seconds": self.coordinator.scan_interval_seconds,
+            "stale_after_seconds": self.coordinator.stale_after_seconds,
+            "telemetry_status": self.coordinator.telemetry_status,
+        }
+'''
+text = replace_once(text, old_age, new_age, "telemetry age sensor")
+sensor.write_text(text, encoding="utf-8")
+
+js = Path("custom_components/s8_omni/frontend/s8-omni-panel.js")
+text = js.read_text(encoding="utf-8")
+text = replace_once(text, 'const UI_VERSION = "v0.7.17";', 'const UI_VERSION = "v0.7.18";', "UI version")
+old_connection = '''  _connectionLabel() {
+    const state = this._connectionState();
+    return state === "connected" ? "Локально" : state === "disconnected" ? "Нет связи" : "Связь неизвестна";
+  }
+
+  _snapshot() {
+'''
+new_connection = '''  _connectionLabel() {
+    const state = this._connectionState();
+    return state === "connected" ? "Локально" : state === "disconnected" ? "Нет связи" : "Нет данных";
+  }
+
+  _telemetryFreshnessState() {
+    const connection = this._connectionState();
+    if (connection === "unknown") return "no_data";
+    const obj = this._state("local_connection");
+    const attrs = obj?.attributes || {};
+    const age = Number(this._stateValue("telemetry_age"));
+    const hasSnapshot = attrs.has_successful_snapshot === true || Number.isFinite(age);
+    if (!hasSnapshot) return "no_data";
+    if (connection === "disconnected") return "stale";
+    const declared = String(attrs.telemetry_status || "").toLowerCase();
+    const configuredThreshold = Number(attrs.stale_after_seconds);
+    const scan = Number(attrs.scan_interval_seconds);
+    const threshold = Number.isFinite(configuredThreshold) && configuredThreshold > 0
+      ? configuredThreshold
+      : Number.isFinite(scan) && scan > 0 ? scan * 3 : 15;
+    if (Number.isFinite(age) && age > threshold) return "stale";
+    if (declared === "stale") return "stale";
+    if (declared === "no_data") return "no_data";
+    return "current";
+  }
+
+  _connectionIndicatorState() {
+    const state = this._connectionState();
+    const freshness = this._telemetryFreshnessState();
+    return {
+      state,
+      label: state === "connected" ? "Локально" : state === "disconnected" ? "Нет связи" : "Нет данных",
+      tone: state === "connected" ? "local" : state === "disconnected" ? "offline" : "unknown",
+      freshness,
+      freshnessLabel: freshness === "current" ? "Данные актуальны" : freshness === "stale" ? "Данные устарели" : "Нет данных",
+      freshnessTone: freshness === "current" ? "current" : freshness === "stale" ? "stale" : "no-data",
+    };
+  }
+
+  _snapshot() {
+'''
+text = replace_once(text, old_connection, new_connection, "frontend connection helpers")
+old_telemetry = '''  _telemetryIcon(snap) {
+    const age = Number(snap.age);
+    if (!Number.isFinite(age)) return "mdi:clock-question-outline";
+    if (age <= 10) return "mdi:clock-check-outline";
+    if (age <= 60) return "mdi:clock-outline";
+    return "mdi:clock-alert-outline";
+  }
+
+  _telemetryMeta(snap) {
+    const age = Number(snap.age);
+    if (!Number.isFinite(age)) return "Нет данных";
+    if (age <= 10) return "Обновлено сейчас";
+    if (age <= 60) return "Обновлено недавно";
+    return "Данные устаревают";
+  }
+'''
+new_telemetry = '''  _telemetryIcon(_snap) {
+    const freshness = this._telemetryFreshnessState();
+    if (freshness === "current") return "mdi:clock-check-outline";
+    if (freshness === "stale") return "mdi:clock-alert-outline";
+    return "mdi:clock-question-outline";
+  }
+
+  _telemetryMeta(_snap) {
+    const freshness = this._telemetryFreshnessState();
+    if (freshness === "current") return "Данные актуальны";
+    if (freshness === "stale") return "Данные устарели";
+    return "Нет данных";
+  }
+'''
+text = replace_once(text, old_telemetry, new_telemetry, "frontend telemetry KPI semantics")
+old_css = '.connection-badge{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:0 11px;border-radius:999px;background:var(--secondary-background-color);color:var(--secondary-text-color);font-size:12px;font-weight:800;white-space:nowrap}.dot{width:8px;height:8px;border-radius:50%;background:var(--success-color,#43a047)}.connection-badge.bad .dot{background:var(--error-color,#db4437)}'
+new_css = '.connection-indicator{justify-self:end;display:grid;grid-template-columns:10px minmax(0,1fr);align-items:center;column-gap:11px;min-height:58px;padding:12px 14px;border-radius:18px;background:var(--card-background-color);border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);box-shadow:0 4px 14px rgba(0,0,0,.055);white-space:nowrap}.connection-lamp{display:block;width:10px;height:10px;border-radius:50%;background:var(--disabled-text-color)}.connection-copy{display:flex;flex-direction:column;gap:3px;min-width:0}.connection-copy strong{font-size:15.5px;line-height:1.05;font-weight:700;color:var(--disabled-text-color)}.connection-copy small{font-size:12.5px;line-height:1.05;font-weight:550;color:var(--secondary-text-color)}.connection-indicator.local .connection-lamp{background:var(--success-color,#43a047)}.connection-indicator.local .connection-copy strong{color:var(--success-color,#43a047)}.connection-indicator.offline .connection-lamp{background:var(--error-color,#db4437)}.connection-indicator.offline .connection-copy strong{color:var(--error-color,#db4437)}.connection-indicator.unknown .connection-lamp{background:var(--disabled-text-color)}.connection-copy small.stale{color:var(--warning-color,#f6a623);font-weight:600}.connection-copy small.no-data{color:var(--secondary-text-color)}'
+text = replace_once(text, old_css, new_css, "two-level connection indicator CSS")
+text = replace_once(text, '.connection-badge{justify-self:start}', '.connection-indicator{justify-self:start}', "narrow connection indicator alignment")
+text = replace_once(
+    text,
+    '    if (snap.connection === "unknown") return { image: "dock", title: "Связь не подтверждена", hint: "Ожидаем текущую локальную телеметрию", tone: "warn" };',
+    '    if (snap.connection === "unknown") return { image: "dock", title: "Нет данных", hint: "Первоначальный локальный опрос ещё не завершён", tone: "warn" };',
+    "unknown hero state",
+)
+text = replace_once(text, '    const connection = this._connectionLabel();', '    const connection = this._connectionIndicatorState();', "hero connection state")
+old_badge = '<div class="connection-badge ${connection !== "Локально" ? "bad" : ""}"><i class="dot"></i>${escapeHtml(connection)}</div>'
+new_badge = '<div class="connection-indicator ${connection.tone}" data-more="local_connection" role="status" aria-label="${escapeHtml(connection.label)} · ${escapeHtml(connection.freshnessLabel)}"><i class="connection-lamp"></i><span class="connection-copy"><strong>${escapeHtml(connection.label)}</strong><small class="${connection.freshnessTone}">${escapeHtml(connection.freshnessLabel)}</small></span></div>'
+text = replace_once(text, old_badge, new_badge, "hero connection indicator markup")
+text = replace_once(
+    text,
+    'node.addEventListener("pointerdown", () => { cancel(); if (this._gesturePointers.size > 1) return;',
+    'node.addEventListener("pointerdown", (event) => { if (event.target?.closest?.("[data-more]") !== node) return; cancel(); if (this._gesturePointers.size > 1) return;',
+    "nested more-info hold target guard",
+)
+js.write_text(text, encoding="utf-8")
+
+const = Path("custom_components/s8_omni/const.py")
+text = const.read_text(encoding="utf-8")
+text = replace_once(text, 'VERSION = "v1.00_b053"', 'VERSION = "v1.00_b054"', "integration build")
+text = replace_once(text, 'DASHBOARD_VERSION = "v0.7.17"', 'DASHBOARD_VERSION = "v0.7.18"', "dashboard build")
+const.write_text(text, encoding="utf-8")
+
+manifest = Path("custom_components/s8_omni/manifest.json")
+text = manifest.read_text(encoding="utf-8")
+text = replace_once(text, '"version": "1.0.0b53"', '"version": "1.0.0b54"', "manifest build")
+manifest.write_text(text, encoding="utf-8")
+
+panel_path = Path("panel.json")
+panel_doc = json.loads(panel_path.read_text(encoding="utf-8"))
+panel = panel_doc["panel"]
+panel["dashboard_version"] = "v0.7.18"
+panel["frontend"]["cache_busting"] = "query_string_dashboard_and_integration_version"
+availability = panel["availability"]
+availability["connection_indicator"] = {
+    "construction": "two_level_shared_indicator",
+    "scope": "robot_and_station_shared_tuya_lan",
+    "channel_states": ["Локально", "Нет связи", "Нет данных"],
+    "telemetry_states": ["Данные актуальны", "Данные устарели", "Нет данных"],
+    "scan_interval_seconds_default": 5,
+    "scan_interval_seconds_range": [3, 60],
+    "stale_after_scan_periods": 3,
+    "failed_poll_immediately_stale": True,
+    "hold_action": "more_info_local_connection",
+}
+panel_path.write_text(json.dumps(panel_doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+checks = Path(".github/workflows/repository-checks.yml")
+text = checks.read_text(encoding="utf-8")
+text = text.replace("v0.7.17", "v0.7.18")
+marker = '          grep -q \'const UI_VERSION = "v0.7.18"\' "$production"\n'
+addition = marker + '''          grep -q '_connectionIndicatorState()' "$production"
+          grep -q 'class=\\"connection-indicator' "$production"
+          grep -q 'Данные актуальны' "$production"
+          grep -q 'Данные устарели' "$production"
+          grep -q 'last_poll_success' custom_components/s8_omni/coordinator.py
+          grep -q 'stale_after_seconds' custom_components/s8_omni/coordinator.py
+          grep -q 'telemetry_status' custom_components/s8_omni/binary_sensor.py
+'''
+text = replace_once(text, marker, addition, "repository connection contract checks")
+checks.write_text(text, encoding="utf-8")
+
+protocol = Path("docs/PROTOCOL.md")
+text = protocol.read_text(encoding="utf-8")
+if "## Local connection and telemetry freshness contract" not in text:
+    text += '''
+
+## Local connection and telemetry freshness contract
+
+S8 OMNI is `local_polling` only. The shared robot/station connectivity entity represents the direct Tuya LAN poll and does not imply any Tuya Cloud fallback.
+
+- `unknown` before the first completed poll is presented as **Нет данных**.
+- successful current poll is presented as **Локально**.
+- failed current poll is presented as **Нет связи**.
+- telemetry is **Данные актуальны** only while a successful snapshot exists, the latest poll is successful, and snapshot age is no greater than three configured polling periods.
+- telemetry becomes **Данные устарели** immediately after a failed current poll, even if the last successful snapshot is younger than the time threshold.
+- if no successful snapshot has ever been received, telemetry is **Нет данных**.
+- default polling interval is 5 seconds; configured range is 3–60 seconds; stale threshold is `scan_interval * 3`.
+
+When disconnected, cached robot/station/battery/mode values are retained only for diagnostics and are not presented by the native panel as current truth. Device actions remain disabled while Header and bottom navigation stay usable. Polling continues so recovery is automatic.
+'''
+protocol.write_text(text, encoding="utf-8")
