@@ -55,7 +55,7 @@ jobs:
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.18"' "$production"
+          grep -q 'const UI_VERSION = "v0.7.19"' "$production"
           grep -q '_connectionIndicatorState()' "$production"
           grep -q 'class="connection-indicator' "$production"
           grep -q 'Данные актуальны' "$production"
@@ -89,6 +89,13 @@ jobs:
           grep -q 'translate3d' "$production"
           grep -q 'touch-action:none' "$production"
           grep -q 'this._renderDeferred = false' "$production"
+          grep -Fq 'this._nativeScrollActive = false' "$production"
+          grep -Fq '_markNativeScrollActive()' "$production"
+          grep -Fq 'if (Math.abs(scale - 1) < 0.0001) return "none";' "$production"
+          grep -Fq ':host{height:100vh;height:100dvh;min-height:0;max-height:100dvh' "$production"
+          grep -Fq 'main{height:100%;min-height:0;display:grid' "$production"
+          grep -Fq '@media(max-width:430px){.state-scene{height:352px}' "$production"
+          if grep -q 'min-height:100vh' "$production"; then exit 1; fi
           if grep -q 'scrollLeft' "$production"; then exit 1; fi
           grep -q 'scrollTop' "$production"
           grep -q 'one_pointer_pan_above_100_only' panel.json
@@ -102,7 +109,7 @@ jobs:
           grep -q 'async_set_dp(self.desc.dp, False)' custom_components/s8_omni/button.py
           if grep -q 'async_set_dp(self.desc.dp, True)' custom_components/s8_omni/button.py; then exit 1; fi
           grep -q 'Stop station dust collection' docs/PROTOCOL.md
-          echo "S8 OMNI v0.7.18 state-aware Hero, two-level connection indicator and v1.5 shell contract OK"
+          echo "S8 OMNI v0.7.19 stable iOS scroll, state-aware Hero, two-level connection indicator and v1.5 shell contract OK"
 
       - name: Validate panel manifest and state assets
         run: |
@@ -111,7 +118,7 @@ jobs:
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.18':
+          if panel.get('dashboard_version') != 'v0.7.19':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':
@@ -149,6 +156,10 @@ jobs:
               'tab_change_returns_to_top': True,
               'two_finger_double_tap_reset': True,
               'permanent_zoom_controls': False,
+              'identity_transform_at_100': 'none',
+              'defer_rerender_during_native_scroll': True,
+              'viewport_height_owner': 'host',
+              'mobile_overview_scene_height_px': 352,
           }
           for key, value in required.items():
               if transform.get(key) != value:

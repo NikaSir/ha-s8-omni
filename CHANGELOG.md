@@ -1,3 +1,9 @@
+## v1.00_b055 / UI v0.7.19
+
+- Fixed iPhone viewport overflow by making the panel host the single dynamic-viewport height owner and clearing the legacy `min-height: 100vh` constraint.
+- At exactly 100%, the work canvas now uses `transform: none`; full panel re-renders are deferred until native iOS scrolling and momentum have stopped.
+- Reduced the mobile Overview scene from 376 px to 352 px so the quick actions remain above the fixed Bottom Tab Bar without reducing Header, indicator or text sizes.
+
 ## v1.00_b052 / UI v0.7.17
 
 - Implemented NIKAS Specialized Panel UI Standard v1.5: native vertical scrolling and fixed transform origin at 100%, scale-gated axis-clamped pan above 100%, UPS Header plaques and 28 px Bottom Tab icons.
