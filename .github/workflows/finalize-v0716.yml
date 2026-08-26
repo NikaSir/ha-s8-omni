@@ -1,0 +1,51 @@
+name: Finalize S8 OMNI v0.7.16
+
+on:
+  push:
+    branches:
+      - ui/state-hero-v0716
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui/state-hero-v0716
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Remove permanent zoom controls
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('custom_components/s8_omni/frontend/s8-omni-panel.js')
+          text = path.read_text(encoding='utf-8')
+          old = '''  _workspace(content) {\n    this._restoreTransform(false);\n    const percent = Math.round(this._viewTransform.scale * 100);\n    return `<div class="work-viewport" data-work-viewport><div class="work-canvas" data-work-canvas style="transform:${this._transformCss()}"><div class="content">${content}</div></div><div class="zoom-controls" aria-label="Масштаб рабочей области"><button type="button" data-zoom-out aria-label="Уменьшить масштаб">−</button><button type="button" data-zoom-reset data-zoom-value aria-label="Вернуть масштаб 100 процентов">${percent}%</button><button type="button" data-zoom-in aria-label="Увеличить масштаб">+</button></div><div class="scale-toast" data-scale-toast aria-live="polite"></div></div>`;\n  }\n\n  _zoomTo(nextScale) {\n    const viewport = this.shadowRoot?.querySelector("[data-work-viewport]");\n    if (!viewport) return;\n    const scale = Math.max(VIEW_SCALE_MIN, Math.min(VIEW_SCALE_MAX, Number(nextScale) || 1));\n    const current = this._viewTransform;\n    const center = { x: viewport.clientWidth / 2, y: viewport.clientHeight / 2 };\n    const contentX = (center.x - current.x) / current.scale;\n    const contentY = (center.y - current.y) / current.scale;\n    this._viewTransform = this._clampTransform({\n      scale,\n      x: center.x - contentX * scale,\n      y: center.y - contentY * scale,\n    });\n    this._clampAndApplyTransform(true);\n    this._showScaleToast();\n  }\n\n  _zoomBy(delta) { this._zoomTo(this._viewTransform.scale + delta); }\n\n'''
+          new = '''  _workspace(content) {\n    this._restoreTransform(false);\n    return `<div class="work-viewport" data-work-viewport><div class="work-canvas" data-work-canvas style="transform:${this._transformCss()}"><div class="content">${content}</div></div><div class="scale-toast" data-scale-toast aria-live="polite"></div></div>`;\n  }\n\n'''
+          if old not in text:
+              raise SystemExit('workspace zoom-control block not found')
+          text = text.replace(old, new, 1)
+          text = text.replace('    const value = this.shadowRoot?.querySelector("[data-zoom-value]");\n    if (value) value.textContent = `${Math.round(this._viewTransform.scale * 100)}%`;\n', '', 1)
+          css = '''      .zoom-controls{position:absolute;right:10px;bottom:10px;z-index:96;display:grid;grid-template-columns:34px 54px 34px;height:36px;background:rgba(255,255,255,.94);border:1px solid color-mix(in srgb,var(--divider-color) 70%,transparent);border-radius:999px;box-shadow:0 5px 16px rgba(0,0,0,.11);backdrop-filter:blur(12px);overflow:hidden}\n      .zoom-controls button{border:0;background:transparent;color:var(--primary-text-color);font-size:17px;font-weight:750;padding:0;min-width:0}.zoom-controls button+button{border-left:1px solid var(--divider-color)}.zoom-controls [data-zoom-value]{font-size:11px;color:var(--secondary-text-color)}\n'''
+          text = text.replace(css, '', 1)
+          text = text.replace('    this.shadowRoot.querySelector("[data-zoom-out]")?.addEventListener("click", () => this._zoomBy(-0.10));\n    this.shadowRoot.querySelector("[data-zoom-in]")?.addEventListener("click", () => this._zoomBy(0.10));\n    this.shadowRoot.querySelector("[data-zoom-reset]")?.addEventListener("click", () => this._resetTransform(true));\n', '', 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+          node --check custom_components/s8_omni/frontend/s8-omni-panel.js
+          if grep -q 'data-zoom-out\|data-zoom-in\|data-zoom-reset\|zoom-controls' custom_components/s8_omni/frontend/s8-omni-panel.js; then exit 1; fi
+          grep -q '_bindWorkspaceGestures()' custom_components/s8_omni/frontend/s8-omni-panel.js
+          grep -q 'twoFingerTapAt' custom_components/s8_omni/frontend/s8-omni-panel.js
+      - name: Commit production patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add custom_components/s8_omni/frontend/s8-omni-panel.js
+          if ! git diff --cached --quiet; then
+            git commit -m "ui: keep v0.7.16 pinch-only workspace scaling"
+            git push origin HEAD:ui/state-hero-v0716
+          fi
