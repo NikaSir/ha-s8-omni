@@ -29,3 +29,16 @@
 ## Required phone check
 
 Test Overview, Cleaning Settings and long Diagnostics at 100% and above 100%. Confirm native scroll without flicker or image disappearance across several 5-second telemetry polls, no horizontal/top displacement, stationary more-info, axis-limited pan, clamping after resize, permanent HA menu and fixed UPS-sized Header/Bottom navigation.
+
+
+<!-- v1.6-adoption -->
+## v1.6 adoption delta — 2026-08-26
+
+This section is normative. Earlier PASS evidence in this file was collected against v1.5 and does not waive the new v1.6 checks.
+
+- **Indicator policy:** **ENABLED by explicit request.** The primary line reports the real S8 channel (`Локально` in the current local path); the secondary line reports freshness. Device mode remains separate.
+- **Indicator surface:** must use the LIDER treatment: primary status color for text/lamp, 8–12% tinted background and approximately 30% border, with 15px/12px typography.
+- **Stable DOM:** live telemetry and freshness changes update only existing nodes; no whole-panel, image, viewport, Header or tab-bar redraw.
+- **Fixed chrome GAP:** final CSS currently overrides Header and navigation to `position:relative`. This allows the outer Home Assistant/iOS scroll layer to move both menus, especially on short views. Runtime must restore a truly stationary Header/Bottom Bar and make Work Viewport the sole scroll owner.
+- **Typography re-audit required:** meaningful text must be at least 12px and the common 9–25px scale must be enforced.
+- **Phone acceptance required:** upward scroll during polling, short tabs, inertia, pinch reset without history/more-info, and all lower controls above Bottom Tab Bar.
