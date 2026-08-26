@@ -1,0 +1,51 @@
+name: Apply resource strip b053
+
+on:
+  push:
+    branches:
+      - fix/resource-strip-type-b053
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/resource-strip-type-b053
+          fetch-depth: 0
+      - name: Increase resource-strip typography
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('custom_components/s8_omni/frontend/s8-omni-panel.js')
+          text = p.read_text(encoding='utf-8')
+          replacements = {
+              '.resource-chip ha-icon{--mdc-icon-size:25px;color:#19a9e4}': '.resource-chip ha-icon{--mdc-icon-size:27px;color:#19a9e4}',
+              '.resource-chip strong{font-size:11px;line-height:1.08;font-weight:760;letter-spacing:-.01em}.resource-chip small{font-size:10px;line-height:1.08;color:var(--secondary-text-color);margin-top:2px}': '.resource-chip strong{font-size:13px;line-height:1.08;font-weight:760;letter-spacing:-.015em}.resource-chip small{font-size:11.5px;line-height:1.1;color:var(--secondary-text-color);margin-top:2px}',
+              '.resource-chip ha-icon{--mdc-icon-size:23px}.resource-chip strong{font-size:10.2px;line-height:1.06}.resource-chip small{font-size:9.3px;line-height:1.06}': '.resource-chip ha-icon{--mdc-icon-size:25px}.resource-chip strong{font-size:12px;line-height:1.05}.resource-chip small{font-size:10.8px;line-height:1.08}',
+          }
+          changed = False
+          for old, new in replacements.items():
+              if old in text:
+                  text = text.replace(old, new)
+                  changed = True
+              elif new not in text:
+                  raise SystemExit(f'Expected CSS fragment not found: {old}')
+          p.write_text(text, encoding='utf-8')
+          print('changed=', changed)
+          PY
+      - name: Commit frontend polish
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add custom_components/s8_omni/frontend/s8-omni-panel.js
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "ui: enlarge overview resource status text"
+            git push origin HEAD:fix/resource-strip-type-b053
+          fi
