@@ -30,7 +30,7 @@ class PanelStableDomUiV0720Tests(unittest.TestCase):
         self.assertNotIn("this._queueRender()", setter)
 
     def test_shell_nodes_are_synchronized_not_recreated(self) -> None:
-        patch = self.source.split("  _patchStableDom() {", 1)[1].split("_render()", 1)[0]
+        patch = self.source.split("  _patchStableDom() {", 1)[1].split("  _render() {", 1)[0]
         self.assertIn('querySelector(".app-header")', patch)
         self.assertIn('querySelector("nav")', patch)
         self.assertIn("s8SyncTree(currentHeader, desiredHeader)", patch)
@@ -38,7 +38,7 @@ class PanelStableDomUiV0720Tests(unittest.TestCase):
         self.assertNotIn("shadowRoot.innerHTML", patch)
 
     def test_telemetry_age_is_not_structural(self) -> None:
-        key = self.source.split("_stableStructureKey()", 1)[1].split(
+        key = self.source.split("  _stableStructureKey() {", 1)[1].split(
             "_bindStableContent", 1
         )[0]
         self.assertNotIn("telemetry_age", key)
@@ -46,11 +46,11 @@ class PanelStableDomUiV0720Tests(unittest.TestCase):
 
     def test_native_scroll_blocks_structural_patch(self) -> None:
         live_queue = self.source.split("  _queueLivePatch() {", 1)[1].split(
-            "_queueRender()", 1
+            "  _queueRender() {", 1
         )[0]
         self.assertIn("this._nativeScrollActive", live_queue)
-        patch = self.source.split("_patchStableDom()", 1)[1].split(
-            "_render()", 1
+        patch = self.source.split("  _patchStableDom() {", 1)[1].split(
+            "  _render() {", 1
         )[0]
         self.assertIn("this._nativeScrollActive", patch)
         self.assertIn("currentContent.replaceChildren", patch)
