@@ -175,7 +175,12 @@ class S8TelemetryAgeSensor(S8OmniEntity, SensorEntity):
 
     @property
     def native_value(self):
-        last = self.coordinator.last_successful_update
-        if last is None:
-            return None
-        return max(0, int((datetime.now(timezone.utc) - last).total_seconds()))
+        return self.coordinator.telemetry_age_seconds
+
+    @property
+    def extra_state_attributes(self):
+        return {
+            "scan_interval_seconds": self.coordinator.scan_interval_seconds,
+            "stale_after_seconds": self.coordinator.stale_after_seconds,
+            "telemetry_status": self.coordinator.telemetry_status,
+        }

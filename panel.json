@@ -8,13 +8,13 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.7.17",
+    "dashboard_version": "v0.7.18",
     "template": "NikaS Integration Panel Template v1.0",
     "frontend": {
       "module": "s8-omni-panel.js",
       "bundle": "self_contained",
       "runtime_historical_imports": false,
-      "cache_busting": "query_string_dashboard_version",
+      "cache_busting": "query_string_dashboard_and_integration_version",
       "asset_root": "frontend/assets",
       "asset_url_root": "/s8_omni/frontend/assets",
       "assets": [
@@ -46,7 +46,29 @@
         "vacuum"
       ],
       "stale_values_are_current": false,
-      "disable_device_actions_when_disconnected": true
+      "disable_device_actions_when_disconnected": true,
+      "connection_indicator": {
+        "construction": "two_level_shared_indicator",
+        "scope": "robot_and_station_shared_tuya_lan",
+        "channel_states": [
+          "Локально",
+          "Нет связи",
+          "Нет данных"
+        ],
+        "telemetry_states": [
+          "Данные актуальны",
+          "Данные устарели",
+          "Нет данных"
+        ],
+        "scan_interval_seconds_default": 5,
+        "scan_interval_seconds_range": [
+          3,
+          60
+        ],
+        "stale_after_scan_periods": 3,
+        "failed_poll_immediately_stale": true,
+        "hold_action": "more_info_local_connection"
+      }
     },
     "navigation": {
       "header_root_primary": "home_assistant_sidebar_menu",
@@ -145,7 +167,10 @@
       "implementation": "translate3d_scale",
       "native_scroll_at_100": true,
       "horizontal_scroll_at_100": false,
-      "origin_at_100": [0, 0],
+      "origin_at_100": [
+        0,
+        0
+      ],
       "css_zoom": false,
       "pinch_midpoint": true,
       "one_pointer_pan_above_100_only": true,

@@ -55,7 +55,14 @@ jobs:
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.17"' "$production"
+          grep -q 'const UI_VERSION = "v0.7.18"' "$production"
+          grep -q '_connectionIndicatorState()' "$production"
+          grep -q 'class="connection-indicator' "$production"
+          grep -q 'Данные актуальны' "$production"
+          grep -q 'Данные устарели' "$production"
+          grep -q 'last_poll_success' custom_components/s8_omni/coordinator.py
+          grep -q 'stale_after_seconds' custom_components/s8_omni/coordinator.py
+          grep -q 'telemetry_status' custom_components/s8_omni/binary_sensor.py
           grep -q 'const HERO_IMAGES = {' "$production"
           grep -q 'hero-dock.webp' "$production"
           grep -q 'hero-away.webp' "$production"
@@ -95,7 +102,7 @@ jobs:
           grep -q 'async_set_dp(self.desc.dp, False)' custom_components/s8_omni/button.py
           if grep -q 'async_set_dp(self.desc.dp, True)' custom_components/s8_omni/button.py; then exit 1; fi
           grep -q 'Stop station dust collection' docs/PROTOCOL.md
-          echo "S8 OMNI v0.7.17 state-aware Hero and v1.5 shell contract OK"
+          echo "S8 OMNI v0.7.18 state-aware Hero, two-level connection indicator and v1.5 shell contract OK"
 
       - name: Validate panel manifest and state assets
         run: |
@@ -104,7 +111,7 @@ jobs:
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.17':
+          if panel.get('dashboard_version') != 'v0.7.18':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':
@@ -122,6 +129,11 @@ jobs:
                   raise SystemExit(f'Manifest asset missing: {rel}')
           if set(frontend.get('product_art_states', [])) != {'dock','away','dust_collection','roller_cleaning','drying'}:
               raise SystemExit('state art mapping mismatch')
+          indicator = panel.get('availability', {}).get('connection_indicator', {})
+          if indicator.get('stale_after_scan_periods') != 3:
+              raise SystemExit('connection indicator stale threshold mismatch')
+          if indicator.get('failed_poll_immediately_stale') is not True:
+              raise SystemExit('connection indicator failed-poll rule mismatch')
           transform = panel.get('workspace_transform', {})
           required = {
               'scope': 'working_area_only',
