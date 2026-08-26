@@ -1,3 +1,10 @@
+## v1.00_b058 / UI v0.7.22
+
+- Adopted NIKAS Specialized Panel UI Standard v1.6: each tab is mounted once and retained as a hidden/inert stable DOM view; polling never replaces the panel tree.
+- Updated the connection/freshness indicator pointwise with LIDER status tint, 15 px primary text and 12 px secondary text; telemetry age cannot trigger structural rendering.
+- Enforced the 12–25 px meaningful typography range and hardened two-finger double-tap reset so pinch/reset cannot open entity details or history.
+- Kept Header and Bottom Tab Bar as permanent fixed shell nodes while short and long views scroll only inside the Work Viewport.
+
 ## v1.00_b057 / UI v0.7.21
 
 - Fixed the mobile panel shell to the visual viewport with `position: fixed; inset: 0`, preventing short views and outer Home Assistant scrolling from moving the Bottom Tab Bar.

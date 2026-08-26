@@ -14,7 +14,7 @@ SOURCE = (
 )
 
 
-class PanelMobileShellUiV0721Tests(unittest.TestCase):
+class PanelMobileShellUiV0722Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.source = SOURCE.read_text(encoding="utf-8")

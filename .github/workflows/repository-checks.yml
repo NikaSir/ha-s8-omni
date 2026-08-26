@@ -55,7 +55,7 @@ jobs:
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.21"' "$production"
+          grep -q 'const UI_VERSION = "v0.7.22"' "$production"
           grep -q '_connectionIndicatorState()' "$production"
           grep -q 'class="connection-indicator' "$production"
           grep -q 'Данные актуальны' "$production"
@@ -91,6 +91,13 @@ jobs:
           grep -q 'this._renderDeferred = false' "$production"
           grep -Fq 'this._nativeScrollActive = false' "$production"
           grep -Fq '_markNativeScrollActive()' "$production"
+          test "$(grep -o 'shadowRoot.innerHTML' "$production" | wc -l | tr -d ' ')" = "1"
+          if grep -q 'replaceChildren' "$production"; then exit 1; fi
+          grep -Fq 'data-stable-view' "$production"
+          grep -Fq 'activeView.inert = false' "$production"
+          grep -Fq 'view.inert = !isActive' "$production"
+          grep -Fq 'this._multiTapStartedAt = performance.now()' "$production"
+          grep -Fq 'this._suppressClicksUntil = Date.now() + 480' "$production"
           grep -Fq 'if (Math.abs(scale - 1) < 0.0001) return "none";' "$production"
           grep -Fq ':host{height:100vh;height:100dvh;min-height:0;max-height:100dvh' "$production"
           grep -Fq 'main{height:100%;min-height:0;display:grid' "$production"
@@ -109,7 +116,7 @@ jobs:
           grep -q 'async_set_dp(self.desc.dp, False)' custom_components/s8_omni/button.py
           if grep -q 'async_set_dp(self.desc.dp, True)' custom_components/s8_omni/button.py; then exit 1; fi
           grep -q 'Stop station dust collection' docs/PROTOCOL.md
-          echo "S8 OMNI v0.7.21 fixed mobile shell, visible Overview actions, stable DOM and v1.5 shell contract OK"
+          echo "S8 OMNI v0.7.22 fixed mobile shell, visible Overview actions, stable DOM and v1.5 shell contract OK"
 
       - name: Validate panel manifest and state assets
         run: |
@@ -118,7 +125,7 @@ jobs:
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.21':
+          if panel.get('dashboard_version') != 'v0.7.22':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':
@@ -160,6 +167,12 @@ jobs:
               'defer_rerender_during_native_scroll': True,
               'viewport_height_owner': 'host',
               'mobile_overview_scene_height_px': 320,
+              'tabs_mounted_once': True,
+              'whole_tree_replace_after_mount': False,
+              'meaningful_text_min_px': 12,
+              'meaningful_text_max_px': 25,
+              'two_finger_reset_guarded': True,
+              'pinch_blocks_more_info': True,
           }
           for key, value in required.items():
               if transform.get(key) != value:

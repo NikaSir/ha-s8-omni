@@ -14,7 +14,7 @@ SOURCE = (
 )
 
 
-class PanelStableDomUiV0720Tests(unittest.TestCase):
+class PanelStableDomUiV0722Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.source = SOURCE.read_text(encoding="utf-8")
@@ -53,7 +53,10 @@ class PanelStableDomUiV0720Tests(unittest.TestCase):
             "  _render() {", 1
         )[0]
         self.assertIn("this._nativeScrollActive", patch)
-        self.assertIn("currentContent.replaceChildren", patch)
+        self.assertNotIn("replaceChildren", self.source)
+        self.assertIn("data-stable-view", patch)
+        self.assertIn("view.hidden = !isActive", patch)
+        self.assertIn("view.inert = !isActive", patch)
 
 
 if __name__ == "__main__":
