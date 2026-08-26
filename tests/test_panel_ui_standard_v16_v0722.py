@@ -99,6 +99,24 @@ class PanelUiStandardV16V0722Tests(unittest.TestCase):
         self.assertIn(".resource-strip{position:relative", self.source)
         self.assertNotIn(".resource-strip{position:absolute", self.source)
 
+    def test_overview_metrics_use_non_overlapping_grid(self) -> None:
+        self.assertIn(
+            ".state-hero .hero-metrics>div{position:relative;display:grid;grid-template-columns:28px minmax(0,1fr)",
+            self.source,
+        )
+        self.assertIn(
+            ".state-hero .hero-metrics .metric-icon{position:static;grid-column:1;grid-row:1/span 2",
+            self.source,
+        )
+        self.assertIn(
+            ".state-hero .hero-metrics span{grid-column:2;grid-row:1;letter-spacing:.025em",
+            self.source,
+        )
+        self.assertIn(
+            ".state-hero .hero-metrics .battery-bar{grid-column:1/-1;grid-row:4;margin:6px 0 0}",
+            self.source,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
