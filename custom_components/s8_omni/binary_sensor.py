@@ -75,4 +75,19 @@ class S8LocalConnectionBinary(S8OmniEntity, BinarySensorEntity):
 
     @property
     def is_on(self):
-        return bool(self.coordinator.last_update_success)
+        state = self.coordinator.last_poll_success
+        return None if state is None else bool(state)
+
+    @property
+    def extra_state_attributes(self):
+        last = self.coordinator.last_successful_update
+        poll = self.coordinator.last_poll_success
+        return {
+            "channel": "tuya_lan",
+            "poll_state": "unknown" if poll is None else "success" if poll else "failed",
+            "telemetry_status": self.coordinator.telemetry_status,
+            "has_successful_snapshot": last is not None,
+            "scan_interval_seconds": self.coordinator.scan_interval_seconds,
+            "stale_after_seconds": self.coordinator.stale_after_seconds,
+            "last_successful_update": last.isoformat() if last is not None else None,
+        }

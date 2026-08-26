@@ -101,3 +101,18 @@ These labels are a presentation/semantics reference only. New write commands are
 ## Raw/String DP policy
 
 Unknown Raw/String datapoints are not decoded from a single sample. Multiple controlled samples are required before interpretation is added.
+
+
+## Local connection and telemetry freshness contract
+
+S8 OMNI is `local_polling` only. The shared robot/station connectivity entity represents the direct Tuya LAN poll and does not imply any Tuya Cloud fallback.
+
+- `unknown` before the first completed poll is presented as **Нет данных**.
+- successful current poll is presented as **Локально**.
+- failed current poll is presented as **Нет связи**.
+- telemetry is **Данные актуальны** only while a successful snapshot exists, the latest poll is successful, and snapshot age is no greater than three configured polling periods.
+- telemetry becomes **Данные устарели** immediately after a failed current poll, even if the last successful snapshot is younger than the time threshold.
+- if no successful snapshot has ever been received, telemetry is **Нет данных**.
+- default polling interval is 5 seconds; configured range is 3–60 seconds; stale threshold is `scan_interval * 3`.
+
+When disconnected, cached robot/station/battery/mode values are retained only for diagnostics and are not presented by the native panel as current truth. Device actions remain disabled while Header and bottom navigation stay usable. Polling continues so recovery is automatic.

@@ -31,12 +31,14 @@ class S8OmniCoordinator(DataUpdateCoordinator):
         self.local_key = entry.data[CONF_LOCAL_KEY]
         self.protocol_version = entry.data.get(CONF_PROTOCOL_VERSION, DEFAULT_PROTOCOL_VERSION)
         self.last_successful_update: datetime | None = None
+        self.last_poll_success: bool | None = None
         scan = int(
             entry.options.get(
                 CONF_SCAN_INTERVAL,
                 entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
             )
         )
+        self.scan_interval_seconds = max(3, min(60, scan))
 
         self._device = tinytuya.Device(
             dev_id=self.device_id,
@@ -57,7 +59,7 @@ class S8OmniCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name=f"{DOMAIN}_{self.device_id}",
-            update_interval=timedelta(seconds=max(3, scan)),
+            update_interval=timedelta(seconds=self.scan_interval_seconds),
         )
 
     def _read_sync(self):
@@ -75,11 +77,35 @@ class S8OmniCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         try:
             data = await self.hass.async_add_executor_job(self._read_sync)
+            await self._async_update_clean_mode(data)
         except Exception as err:
+            self.last_poll_success = False
             raise UpdateFailed(f"S8 OMNI local read failed: {err}") from err
-        await self._async_update_clean_mode(data)
+        self.last_poll_success = True
         self.last_successful_update = datetime.now(timezone.utc)
         return data
+
+    @property
+    def stale_after_seconds(self):
+        return self.scan_interval_seconds * 3
+
+    @property
+    def telemetry_age_seconds(self):
+        last = self.last_successful_update
+        if last is None:
+            return None
+        return max(0, int((datetime.now(timezone.utc) - last).total_seconds()))
+
+    @property
+    def telemetry_status(self):
+        if self.last_successful_update is None:
+            return "no_data"
+        if self.last_poll_success is False:
+            return "stale"
+        age = self.telemetry_age_seconds
+        if age is None:
+            return "no_data"
+        return "current" if age <= self.stale_after_seconds else "stale"
 
     async def _async_load_clean_mode(self):
         if self._clean_mode_loaded:
