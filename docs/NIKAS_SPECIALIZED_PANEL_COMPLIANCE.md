@@ -1,6 +1,6 @@
 # Specialized Panel Compliance Audit
 
-**Audit target:** NikaS Specialized Panel UI Standard v1.4
+**Audit target:** NikaS Specialized Panel UI Standard v1.5
 **Audited main:** `e5e2c8d57efb81d2431421b4d4459a3cc3f214c9`
 **Runtime inspected:** `custom_components/s8_omni/frontend/s8-omni-panel.js`
 **Policy:** audit only; runtime is intentionally unchanged in this PR.
@@ -34,7 +34,7 @@ S8 OMNI already implements one canvas, focal pinch, reset/snap, clamping, safe-a
 
 ## Runtime/manifest contradictions to remove in the implementation PR
 
-1. `workspace_transform.native_scroll: false` directly contradicts v1.4 native scrolling at 100%.
+1. `workspace_transform.native_scroll: false` directly contradicts v1.5 native scrolling at 100%.
 2. `workspace_transform.one_pointer_pan: true` lacks the mandatory `scale > 1` condition.
 3. `navigation.header_detail_back` places Back in the permanent left rail; the rail must always remain the HA menu.
 4. Stored destination-view x/y are restored on tab entry instead of returning to top.
