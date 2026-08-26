@@ -14,7 +14,7 @@ The panel is registered through Home Assistant's custom-panel API. No Lovelace Y
 
 Primary viewport: **iPhone Pro Max, portrait**.
 
-The panel follows **NIKAS Specialized Panel UI Standard v1.5** and **NikaS Integration Panel Template v1.0**:
+The panel follows **NIKAS Specialized Panel UI Standard v1.6** and **NikaS Integration Panel Template v1.0**:
 
 1. **Header** — compact persistent application header with the Home Assistant system Menu on the left, geometrically centered title and one global Refresh action on the right.
 2. **Content** — current system state or selected workflow.
