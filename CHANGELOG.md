@@ -1,3 +1,9 @@
+## v1.00_b061 / UI v0.7.25
+
+- Rebuilt the battery, mode and telemetry cards as an explicit two-column grid so their icons, labels and values align consistently without clipping on iPhone Pro Max widths.
+- Reduced the mobile state photo from 320 px to 292 px after moving the resource strip outside it, restoring a safe visible gap between Overview actions and the fixed Bottom Tab Bar.
+- Preserved the separate resource row, stable DOM shell and pointwise Home Assistant updates.
+
 ## v1.00_b060 / UI v0.7.24
 
 - Moved the clean-water, dirty-water and dust-bag resource strip out of the product photo into its own stable Hero row.
