@@ -1,3 +1,9 @@
+## v1.00_b056 / UI v0.7.20
+
+- Mounted the panel shell once: Header, zoom viewport and Bottom Tab Bar now remain permanent DOM nodes across Home Assistant polling updates.
+- Replaced full `shadowRoot.innerHTML` redraws with in-place synchronization of changed text nodes, classes and attributes; telemetry age is excluded from the structural key.
+- Structural content changes are deferred during native scrolling and momentum, while connection/freshness categories and live values update without recreating the shell or product image.
+
 ## v1.00_b055 / UI v0.7.19
 
 - Fixed iPhone viewport overflow by making the panel host the single dynamic-viewport height owner and clearing the legacy `min-height: 100vh` constraint.

@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.19";
+const UI_VERSION = "v0.7.20";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.72;
 const VIEW_SCALE_MAX = 2.20;
@@ -47,6 +47,65 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function s8SameTreeShape(current, desired) {
+  if (!current || !desired || current.nodeType !== desired.nodeType) return false;
+  if (current.nodeType === Node.ELEMENT_NODE && current.tagName !== desired.tagName) return false;
+  if (current.childNodes.length !== desired.childNodes.length) return false;
+  for (let index = 0; index < current.childNodes.length; index += 1) {
+    if (!s8SameTreeShape(current.childNodes[index], desired.childNodes[index])) return false;
+  }
+  return true;
+}
+
+function s8SameChildrenShape(current, desired) {
+  if (!current || !desired || current.childNodes.length !== desired.childNodes.length) return false;
+  for (let index = 0; index < current.childNodes.length; index += 1) {
+    if (!s8SameTreeShape(current.childNodes[index], desired.childNodes[index])) return false;
+  }
+  return true;
+}
+
+function s8SyncAttributes(current, desired) {
+  for (const attribute of Array.from(current.attributes)) {
+    if (!desired.hasAttribute(attribute.name)) current.removeAttribute(attribute.name);
+  }
+  for (const attribute of Array.from(desired.attributes)) {
+    if (current.getAttribute(attribute.name) !== attribute.value) {
+      current.setAttribute(attribute.name, attribute.value);
+    }
+  }
+  if (
+    desired.hasAttribute("value")
+    && current.value !== undefined
+    && current.getRootNode()?.activeElement !== current
+  ) {
+    current.value = desired.getAttribute("value");
+  }
+}
+
+function s8SyncTree(current, desired) {
+  if (current.nodeType === Node.TEXT_NODE) {
+    if (current.nodeValue !== desired.nodeValue) current.nodeValue = desired.nodeValue;
+    return;
+  }
+  if (current.nodeType === Node.ELEMENT_NODE) s8SyncAttributes(current, desired);
+  for (let index = 0; index < current.childNodes.length; index += 1) {
+    s8SyncTree(current.childNodes[index], desired.childNodes[index]);
+  }
+}
+
+function s8SyncChildren(current, desired) {
+  for (let index = 0; index < current.childNodes.length; index += 1) {
+    s8SyncTree(current.childNodes[index], desired.childNodes[index]);
+  }
+}
+
+function s8ElementFromMarkup(markup) {
+  const template = document.createElement("template");
+  template.innerHTML = markup;
+  return template.content.firstElementChild;
+}
+
 class S8OmniPanel extends HTMLElement {
   constructor() {
     super();
@@ -75,10 +134,13 @@ class S8OmniPanel extends HTMLElement {
     this._pendingScrollTop = null;
     this._nativeScrollActive = false;
     this._nativeScrollIdleTimer = null;
+    this._stableMounted = false;
+    this._stablePatchQueued = false;
+    this._stableStructureCache = null;
     this._onRealViewportResize = () => requestAnimationFrame(() => this._clampAndApplyTransform(false));
   }
 
-  set hass(value) { this._hass = value; this._ensureRegistry(); this._queueRender(); }
+  set hass(value) { this._hass = value; this._ensureRegistry(); this._queueLivePatch(); }
   get hass() { return this._hass; }
   set panel(value) { this._panel = value; if (!this._gesturePointers?.size) this._restoreTransform(true); else this._renderDeferred = true; this._ensureRegistry(); this._queueRender(); }
   set narrow(_value) {}
@@ -101,13 +163,21 @@ class S8OmniPanel extends HTMLElement {
     this._nativeScrollActive = false;
   }
 
+  _queueLivePatch() {
+    if (!this._stableMounted) { this._queueRender(); return; }
+    if (this._gesturePointers?.size || this._nativeScrollActive) { this._renderDeferred = true; return; }
+    if (this._stablePatchQueued) return;
+    this._stablePatchQueued = true;
+    requestAnimationFrame(() => {
+      this._stablePatchQueued = false;
+      this._patchStableDom();
+    });
+  }
+
   _queueRender() {
+    if (this._stableMounted) { this._queueLivePatch(); return; }
     if (this._gesturePointers?.size || this._nativeScrollActive) { this._renderDeferred = true; return; }
     if (this._renderQueued) return;
-    const currentViewport = this.shadowRoot?.querySelector("[data-work-viewport]");
-    if (currentViewport && this._viewTransform.scale <= 1) {
-      this._nativeScrollPositions.set(this._transformStorageKey(), currentViewport.scrollTop);
-    }
     this._renderQueued = true;
     requestAnimationFrame(() => { this._renderQueued = false; this._render(); });
   }
@@ -906,16 +976,129 @@ class S8OmniPanel extends HTMLElement {
     });
   }
 
-  _render() {
-    if (!this.shadowRoot) return;
-    this._restoreTransform(false);
+  _stableBodyMarkup() {
     if (!this._hass || !this._panel || this._registryLoading || !this._registryLoaded) {
-      this.shadowRoot.innerHTML = `<style>${this._styles()}</style><main>${this._header()}${this._workspace(`<div class="loading"><div><ha-icon icon="mdi:robot-vacuum"></ha-icon><p>Подключаем интерфейс…</p></div></div>`)}${this._nav()}</main>`; this._finishRender(); return;
+      return `<div class="loading"><div><ha-icon icon="mdi:robot-vacuum"></ha-icon><p>Подключаем интерфейс…</p></div></div>`;
     }
     if (this._registryError) {
-      this.shadowRoot.innerHTML = `<style>${this._styles()}</style><main>${this._header()}${this._workspace(`<div class="trust-banner"><ha-icon icon="mdi:alert-circle-outline"></ha-icon><div><strong>Не удалось загрузить реестр сущностей</strong><span>${escapeHtml(this._registryError)}</span></div></div>`)}${this._nav()}</main>`; this._finishRender(); return;
+      return `<div class="trust-banner"><ha-icon icon="mdi:alert-circle-outline"></ha-icon><div><strong>Не удалось загрузить реестр сущностей</strong><span>${escapeHtml(this._registryError)}</span></div></div>`;
     }
-    this.shadowRoot.innerHTML = `<style>${this._styles()}</style><main>${this._header()}${this._workspace(this._body())}${this._nav()}</main>`;
+    return this._body();
+  }
+
+  _stableStructureKey() {
+    return JSON.stringify([
+      this._view,
+      this._detail,
+      Boolean(this._hass && this._panel && !this._registryLoading && this._registryLoaded),
+      Boolean(this._registryError),
+      this._panel?.config?.entry_id || null,
+      Object.entries(this._entities || {}).sort(([left], [right]) => left.localeCompare(right)),
+    ]);
+  }
+
+  _bindStableContent(root) {
+    root.querySelector("[data-detail-back]")?.addEventListener("click", () => this._switchWorkspace("cleaning", null));
+    root.querySelectorAll("[data-station-stop]").forEach((button) => button.addEventListener("click", async () => {
+      if (button.disabled || !this._snapshot().connected) return;
+      const keys = String(button.dataset.stationStop || "").split(",").filter(Boolean);
+      if (!keys.length) return;
+      button.disabled = true;
+      try { for (const key of keys) await this._call("button", "press", key); }
+      finally { setTimeout(() => { button.disabled = false; }, 700); }
+    }));
+    root.querySelectorAll("[data-detail]").forEach((button) => button.addEventListener("click", () => this._switchWorkspace("cleaning", button.dataset.detail)));
+    root.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", async () => {
+      if (button.disabled || !this._snapshot().connected) return;
+      button.disabled = true;
+      try {
+        if (button.dataset.action === "start") await this._call("vacuum", "start", "vacuum");
+        if (button.dataset.action === "pause") await this._call("vacuum", "pause", "vacuum");
+        if (button.dataset.action === "stop") await this._call("vacuum", "stop", "vacuum");
+        if (button.dataset.action === "home") await this._call("vacuum", "return_to_base", "vacuum");
+      } finally {
+        setTimeout(() => { button.disabled = false; }, 650);
+      }
+    }));
+    root.querySelectorAll("[data-select-key]").forEach((button) => button.addEventListener("click", async () => {
+      if (button.disabled || !this._snapshot().connected) return;
+      await this._call("select", "select_option", button.dataset.selectKey, { option: button.dataset.selectValue });
+    }));
+    const volume = root.querySelector("[data-volume]");
+    volume?.addEventListener("input", () => {
+      const label = root.querySelector("[data-volume-label]");
+      if (label) label.textContent = `${volume.value}%`;
+    });
+    volume?.addEventListener("change", () => {
+      if (this._snapshot().connected) this._call("number", "set_value", "volume", { value: Number(volume.value) });
+    });
+    root.querySelectorAll("[data-toggle]").forEach((button) => button.addEventListener("click", () => {
+      if (button.disabled || !this._snapshot().connected) return;
+      const key = button.dataset.toggle;
+      this._call("switch", this._state(key)?.state === "on" ? "turn_off" : "turn_on", key);
+    }));
+    root.querySelectorAll("[data-more]").forEach((node) => {
+      let timer = null;
+      const cancel = () => { if (timer) clearTimeout(timer); timer = null; };
+      node.addEventListener("pointerdown", (event) => {
+        if (event.target?.closest?.("[data-more]") !== node) return;
+        cancel();
+        if (this._gesturePointers.size > 1) return;
+        timer = setTimeout(() => {
+          timer = null;
+          if (!this._gestureMoved && this._gesturePointers.size < 2) this._showMoreInfo(node.dataset.more);
+        }, 520);
+      });
+      node.addEventListener("pointerup", cancel);
+      node.addEventListener("pointercancel", cancel);
+      node.addEventListener("pointerleave", cancel);
+    });
+  }
+
+  _patchStableDom() {
+    if (!this.shadowRoot || !this._stableMounted) return;
+    if (this._gesturePointers?.size || this._nativeScrollActive) { this._renderDeferred = true; return; }
+
+    const currentHeader = this.shadowRoot.querySelector(".app-header");
+    const currentNav = this.shadowRoot.querySelector("nav");
+    const currentContent = this.shadowRoot.querySelector("[data-work-canvas] > .content");
+    const desiredHeader = s8ElementFromMarkup(this._header());
+    const desiredNav = s8ElementFromMarkup(this._nav());
+    const desiredContent = s8ElementFromMarkup(`<div class="content">${this._stableBodyMarkup()}</div>`);
+
+    if (s8SameTreeShape(currentHeader, desiredHeader)) s8SyncTree(currentHeader, desiredHeader);
+    if (s8SameTreeShape(currentNav, desiredNav)) s8SyncTree(currentNav, desiredNav);
+    if (!currentContent || !desiredContent) return;
+
+    const structureKey = this._stableStructureKey();
+    const sameShape = s8SameChildrenShape(currentContent, desiredContent);
+    if (this._stableStructureCache === structureKey && sameShape) {
+      s8SyncChildren(currentContent, desiredContent);
+    } else if (sameShape) {
+      s8SyncChildren(currentContent, desiredContent);
+    } else {
+      currentContent.replaceChildren(
+        ...Array.from(desiredContent.childNodes, (node) => node.cloneNode(true)),
+      );
+      this._bindStableContent(currentContent);
+    }
+    this._stableStructureCache = structureKey;
+
+    requestAnimationFrame(() => {
+      this._clampAndApplyTransform(false);
+      this._restoreNativeScroll();
+    });
+  }
+
+  _render() {
+    if (!this.shadowRoot || this._stableMounted) {
+      if (this._stableMounted) this._patchStableDom();
+      return;
+    }
+    this._restoreTransform(false);
+    this.shadowRoot.innerHTML = `<style>${this._styles()}</style><main>${this._header()}${this._workspace(this._stableBodyMarkup())}${this._nav()}</main>`;
+    this._stableMounted = true;
+    this._stableStructureCache = this._stableStructureKey();
     this._finishRender();
   }
 }
