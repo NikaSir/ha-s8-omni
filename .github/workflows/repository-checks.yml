@@ -94,7 +94,7 @@ jobs:
           test "$(grep -o 'shadowRoot.innerHTML' "$production" | wc -l | tr -d ' ')" = "1"
           if grep -q 'replaceChildren' "$production"; then exit 1; fi
           grep -Fq 'data-stable-view' "$production"
-          grep -Fq 'activeView.removeAttribute("inert")' "$production"
+          grep -Fq 'view.removeAttribute("inert")' "$production"
           grep -Fq 'view.setAttribute("inert", "")' "$production"
           grep -Fq 'this._multiTapStartedAt = performance.now()' "$production"
           grep -Fq 'this._suppressClicksUntil = Date.now() + 480' "$production"
