@@ -272,28 +272,8 @@ class S8OmniPanel extends HTMLElement {
 
   _workspace(content) {
     this._restoreTransform(false);
-    const percent = Math.round(this._viewTransform.scale * 100);
-    return `<div class="work-viewport" data-work-viewport><div class="work-canvas" data-work-canvas style="transform:${this._transformCss()}"><div class="content">${content}</div></div><div class="zoom-controls" aria-label="Масштаб рабочей области"><button type="button" data-zoom-out aria-label="Уменьшить масштаб">−</button><button type="button" data-zoom-reset data-zoom-value aria-label="Вернуть масштаб 100 процентов">${percent}%</button><button type="button" data-zoom-in aria-label="Увеличить масштаб">+</button></div><div class="scale-toast" data-scale-toast aria-live="polite"></div></div>`;
+    return `<div class="work-viewport" data-work-viewport><div class="work-canvas" data-work-canvas style="transform:${this._transformCss()}"><div class="content">${content}</div></div><div class="scale-toast" data-scale-toast aria-live="polite"></div></div>`;
   }
-
-  _zoomTo(nextScale) {
-    const viewport = this.shadowRoot?.querySelector("[data-work-viewport]");
-    if (!viewport) return;
-    const scale = Math.max(VIEW_SCALE_MIN, Math.min(VIEW_SCALE_MAX, Number(nextScale) || 1));
-    const current = this._viewTransform;
-    const center = { x: viewport.clientWidth / 2, y: viewport.clientHeight / 2 };
-    const contentX = (center.x - current.x) / current.scale;
-    const contentY = (center.y - current.y) / current.scale;
-    this._viewTransform = this._clampTransform({
-      scale,
-      x: center.x - contentX * scale,
-      y: center.y - contentY * scale,
-    });
-    this._clampAndApplyTransform(true);
-    this._showScaleToast();
-  }
-
-  _zoomBy(delta) { this._zoomTo(this._viewTransform.scale + delta); }
 
   _clampTransform(state = this._viewTransform) {
     const viewport = this.shadowRoot?.querySelector("[data-work-viewport]");
@@ -316,8 +296,6 @@ class S8OmniPanel extends HTMLElement {
     if (!canvas) return;
     this._viewTransform = this._clampTransform(this._viewTransform);
     canvas.style.transform = this._transformCss();
-    const value = this.shadowRoot?.querySelector("[data-zoom-value]");
-    if (value) value.textContent = `${Math.round(this._viewTransform.scale * 100)}%`;
     if (persist) this._saveTransform();
   }
 
@@ -589,8 +567,6 @@ class S8OmniPanel extends HTMLElement {
       .state-hero.operation h1{color:var(--primary-color)}.state-hero.warm h1{color:#c56b22}.state-hero.error h1{color:var(--error-color,#db4437)}
       .action.primary .action-icon ha-icon,.action.primary.running .action-icon ha-icon{color:currentColor!important;opacity:1!important}
       .action.primary.running:disabled{opacity:1}.action.primary.running:disabled .action-icon{opacity:1}
-      .zoom-controls{position:absolute;right:10px;bottom:10px;z-index:96;display:grid;grid-template-columns:34px 54px 34px;height:36px;background:rgba(255,255,255,.94);border:1px solid color-mix(in srgb,var(--divider-color) 70%,transparent);border-radius:999px;box-shadow:0 5px 16px rgba(0,0,0,.11);backdrop-filter:blur(12px);overflow:hidden}
-      .zoom-controls button{border:0;background:transparent;color:var(--primary-text-color);font-size:17px;font-weight:750;padding:0;min-width:0}.zoom-controls button+button{border-left:1px solid var(--divider-color)}.zoom-controls [data-zoom-value]{font-size:11px;color:var(--secondary-text-color)}
       @media(max-width:430px){.state-scene{height:318px}.resource-strip{left:7px;right:7px;bottom:7px}.resource-chip{grid-template-columns:29px minmax(0,1fr);gap:4px;padding:7px 5px}.resource-chip ha-icon{--mdc-icon-size:22px}.resource-chip strong{font-size:8.8px}.resource-chip small{font-size:8.2px}.state-hero h1{font-size:30px}}
       /* v0.7.15 stable iOS gesture canvas */
       :host{height:100vh;height:100dvh;overflow:hidden}
@@ -770,9 +746,6 @@ class S8OmniPanel extends HTMLElement {
     this.shadowRoot.querySelector("[data-header-primary]")?.addEventListener("click", () => { if (this._detail) this._switchWorkspace("cleaning", null); else this._toggleMenu(); });
     this.shadowRoot.querySelector("[data-refresh]")?.addEventListener("click", async (event) => { const b = event.currentTarget; if (!this._entityId("refresh") || b.disabled) return; b.disabled = true; b.classList.add("loading"); try { await this._call("button","press","refresh"); } finally { setTimeout(() => { b.disabled = false; b.classList.remove("loading"); }, 700); } });
     this.shadowRoot.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => this._switchWorkspace(b.dataset.view, null)));
-    this.shadowRoot.querySelector("[data-zoom-out]")?.addEventListener("click", () => this._zoomBy(-0.10));
-    this.shadowRoot.querySelector("[data-zoom-in]")?.addEventListener("click", () => this._zoomBy(0.10));
-    this.shadowRoot.querySelector("[data-zoom-reset]")?.addEventListener("click", () => this._resetTransform(true));
     this.shadowRoot.querySelectorAll("[data-station-stop]").forEach((b) => b.addEventListener("click", async () => {
       if (b.disabled || !this._snapshot().connected) return;
       const keys = String(b.dataset.stationStop || "").split(",").filter(Boolean);
