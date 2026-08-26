@@ -613,12 +613,12 @@ class S8OmniPanel extends HTMLElement {
       .resource-chip{min-height:58px;display:grid;grid-template-columns:36px minmax(0,1fr);align-items:center;gap:7px;padding:8px 9px;position:relative}
       .resource-chip:not(:last-child)::after{content:"";position:absolute;right:0;top:12px;bottom:12px;width:1px;background:var(--divider-color)}
       .resource-chip ha-icon{--mdc-icon-size:25px;color:#19a9e4}.resource-chip.dirty ha-icon{color:#707980}.resource-chip.dustbag ha-icon{color:#6d7479}
-      .resource-chip strong,.resource-chip small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.resource-chip strong{font-size:11px;line-height:1.08;font-weight:760;letter-spacing:-.01em}.resource-chip small{font-size:10px;line-height:1.08;color:var(--secondary-text-color);margin-top:2px}
+      .resource-chip strong,.resource-chip small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.resource-chip strong{font-size:12.4px;line-height:1.06;font-weight:780;letter-spacing:-.012em}.resource-chip small{font-size:11.2px;line-height:1.06;color:var(--secondary-text-color);margin-top:2px}
       .state-hero .hero-metrics{margin-top:9px}
       .state-hero.operation h1{color:var(--primary-color)}.state-hero.warm h1{color:#c56b22}.state-hero.error h1{color:var(--error-color,#db4437)}
       .action.primary .action-icon ha-icon,.action.primary.running .action-icon ha-icon{color:currentColor!important;opacity:1!important}
       .action.primary.running:disabled{opacity:1}.action.primary.running:disabled .action-icon{opacity:1}
-      @media(max-width:430px){.state-scene{height:376px}.resource-strip{left:7px;right:7px;bottom:7px}.resource-chip{grid-template-columns:30px minmax(0,1fr);gap:4px;padding:7px 4px}.resource-chip ha-icon{--mdc-icon-size:23px}.resource-chip strong{font-size:10.2px;line-height:1.06}.resource-chip small{font-size:9.3px;line-height:1.06}.state-hero h1{font-size:30px}}
+      @media(max-width:430px){.state-scene{height:376px}.resource-strip{left:7px;right:7px;bottom:7px}.resource-chip{grid-template-columns:30px minmax(0,1fr);gap:4px;padding:7px 4px}.resource-chip ha-icon{--mdc-icon-size:23px}.resource-chip strong{font-size:11.7px;line-height:1.04}.resource-chip small{font-size:10.6px;line-height:1.04}.state-hero h1{font-size:30px}}
       /* v0.7.15 stable iOS gesture canvas */
       :host{height:100vh;height:100dvh;overflow:hidden}
       main{height:100vh;height:100dvh;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;padding-bottom:0}
