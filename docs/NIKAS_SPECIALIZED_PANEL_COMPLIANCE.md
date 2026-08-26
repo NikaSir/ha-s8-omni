@@ -29,7 +29,7 @@ S8 OMNI already implements one canvas, focal pinch, reset/snap, clamping, safe-a
 | Local production assets/stable entry | PASS | Single `s8-omni-panel.js`, local JPG/WEBP assets and cache-busted registered URL. |
 | HACS/HA integration path | PASS | README directs HACS custom Integration; `hacs.json`, manifest domain `s8_omni` and installation paths agree. |
 | Approved source brand asset exists | GAP | No repository icon/logo source exists. Do not invent one; obtain/approve a square S8 OMNI source asset first. |
-| Integration icon is actually wired | GAP | After approval, provide `icon.png` and `icon@2x.png` through the supported Home Assistant Brands custom-integration path for `s8_omni`; add dark variants if needed. |
+| Integration icon is packaged | GAP | After source approval, add the mandatory HACS asset at `custom_components/s8_omni/brand/icon.png`; add dark/logo variants only if needed. |
 | Repository visual identity | GAP | README has no hero/logo and no repo-owned social-preview asset. After source approval, add it to README and configure GitHub social preview/avatar. |
 
 ## Runtime/manifest contradictions to remove in the implementation PR
