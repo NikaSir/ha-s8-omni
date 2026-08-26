@@ -8,7 +8,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.7.22",
+    "dashboard_version": "v0.7.23",
     "template": "NikaS Integration Panel Template v1.0",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -69,8 +69,8 @@
         "failed_poll_immediately_stale": true,
         "hold_action": "more_info_local_connection",
         "update_strategy": "pointwise_semantic_category_only",
-        "primary_font_px": 15,
-        "secondary_font_px": 12,
+        "primary_font_px": 16,
+        "secondary_font_px": 13,
         "status_tinted_surface": true
       }
     },

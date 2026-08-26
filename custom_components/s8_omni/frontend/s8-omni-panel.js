@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.22";
+const UI_VERSION = "v0.7.23";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.72;
 const VIEW_SCALE_MAX = 2.20;
@@ -830,7 +830,7 @@ class S8OmniPanel extends HTMLElement {
       .stable-view[hidden],.trust-banner.is-hidden{display:none!important}
       .header-title strong{font-size:23px;font-weight:800}.header-title span{font-size:14px;font-weight:560}
       .hero h1,.state-hero h1,.station-hero h2,.view-heading h2{font-size:25px}
-      .connection-copy strong{font-size:15px;font-weight:700}.connection-copy small{font-size:12px;font-weight:600}
+      .connection-copy strong{font-size:16px;font-weight:700}.connection-copy small{font-size:13px;font-weight:600}
       .connection-indicator.local{background:color-mix(in srgb,var(--success-color,#43a047) 11%,var(--card-background-color));border-color:color-mix(in srgb,var(--success-color,#43a047) 30%,var(--divider-color))}
       .connection-indicator.offline{background:color-mix(in srgb,var(--error-color,#db4437) 10%,var(--card-background-color));border-color:color-mix(in srgb,var(--error-color,#db4437) 30%,var(--divider-color))}
       .connection-indicator.unknown{background:color-mix(in srgb,var(--secondary-text-color) 8%,var(--card-background-color));border-color:color-mix(in srgb,var(--secondary-text-color) 28%,var(--divider-color))}
@@ -1007,30 +1007,14 @@ class S8OmniPanel extends HTMLElement {
 
   _bind() {
     this.shadowRoot.querySelector("[data-header-primary]")?.addEventListener("click", () => this._toggleMenu());
-    this.shadowRoot.querySelector("[data-detail-back]")?.addEventListener("click", () => this._switchWorkspace("cleaning", null));
     this.shadowRoot.querySelector("[data-refresh]")?.addEventListener("click", async (event) => { const b = event.currentTarget; if (!this._entityId("refresh") || b.disabled) return; b.disabled = true; b.classList.add("loading"); try { await this._call("button","press","refresh"); } finally { setTimeout(() => { b.disabled = false; b.classList.remove("loading"); }, 700); } });
     this.shadowRoot.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => this._switchWorkspace(b.dataset.view, null)));
-    this.shadowRoot.querySelectorAll("[data-station-stop]").forEach((b) => b.addEventListener("click", async () => {
-      if (b.disabled || !this._snapshot().connected) return;
-      const keys = String(b.dataset.stationStop || "").split(",").filter(Boolean);
-      if (!keys.length) return;
-      b.disabled = true;
-      try { for (const key of keys) await this._call("button", "press", key); }
-      finally { setTimeout(() => { b.disabled = false; }, 700); }
-    }));
-    this.shadowRoot.querySelectorAll("[data-detail]").forEach((b) => b.addEventListener("click", () => this._switchWorkspace("cleaning", b.dataset.detail)));
-    this.shadowRoot.querySelectorAll("[data-action]").forEach((b) => b.addEventListener("click", async () => { if (b.disabled || !this._snapshot().connected) return; b.disabled = true; try { if (b.dataset.action === "start") await this._call("vacuum","start","vacuum"); if (b.dataset.action === "pause") await this._call("vacuum","pause","vacuum"); if (b.dataset.action === "stop") await this._call("vacuum","stop","vacuum"); if (b.dataset.action === "home") await this._call("vacuum","return_to_base","vacuum"); } finally { setTimeout(() => { b.disabled = false; }, 650); } }));
-    this.shadowRoot.querySelectorAll("[data-select-key]").forEach((b) => b.addEventListener("click", async () => { if (b.disabled || !this._snapshot().connected) return; await this._call("select","select_option",b.dataset.selectKey,{ option: b.dataset.selectValue }); }));
-    const volume = this.shadowRoot.querySelector("[data-volume]"); volume?.addEventListener("input", () => { const label = this.shadowRoot.querySelector("[data-volume-label]"); if (label) label.textContent = `${volume.value}%`; }); volume?.addEventListener("change", () => { if (this._snapshot().connected) this._call("number","set_value","volume",{ value: Number(volume.value) }); });
-    this.shadowRoot.querySelectorAll("[data-toggle]").forEach((b) => b.addEventListener("click", () => { if (b.disabled || !this._snapshot().connected) return; const key = b.dataset.toggle; this._call("switch",this._state(key)?.state === "on" ? "turn_off" : "turn_on",key); }));
-    this.shadowRoot.querySelectorAll("[data-more]").forEach((node) => { let timer = null; const cancel = () => { if (timer) clearTimeout(timer); timer = null; }; node.addEventListener("pointerdown", (event) => { if (event.target?.closest?.("[data-more]") !== node) return; cancel(); if (this._gesturePointers.size > 1) return; timer = setTimeout(() => { timer = null; if (!this._gestureMoved && this._gesturePointers.size < 2) this._showMoreInfo(node.dataset.more); }, 520); }); node.addEventListener("pointerup",cancel); node.addEventListener("pointercancel",cancel); node.addEventListener("pointerleave",cancel); });
+    this._bindStableContent(this.shadowRoot.querySelector("[data-stable-view]"));
     this._bindWorkspaceGestures();
   }
 
   _finishRender() {
     this._bind();
-    const initialView = this.shadowRoot?.querySelector("[data-stable-view]");
-    if (initialView) this._boundStableViews.add(initialView);
     requestAnimationFrame(() => {
       this._clampAndApplyTransform(false);
       this._restoreNativeScroll();
@@ -1068,32 +1052,44 @@ class S8OmniPanel extends HTMLElement {
   _bindStableContent(root) {
     if (!root || this._boundStableViews.has(root)) return;
     this._boundStableViews.add(root);
-    root.querySelector("[data-detail-back]")?.addEventListener("click", () => this._switchWorkspace("cleaning", null));
-    root.querySelectorAll("[data-station-stop]").forEach((button) => button.addEventListener("click", async () => {
-      if (button.disabled || !this._snapshot().connected) return;
-      const keys = String(button.dataset.stationStop || "").split(",").filter(Boolean);
-      if (!keys.length) return;
-      button.disabled = true;
-      try { for (const key of keys) await this._call("button", "press", key); }
-      finally { setTimeout(() => { button.disabled = false; }, 700); }
-    }));
-    root.querySelectorAll("[data-detail]").forEach((button) => button.addEventListener("click", () => this._switchWorkspace("cleaning", button.dataset.detail)));
-    root.querySelectorAll("[data-action]").forEach((button) => button.addEventListener("click", async () => {
-      if (button.disabled || !this._snapshot().connected) return;
-      button.disabled = true;
-      try {
-        if (button.dataset.action === "start") await this._call("vacuum", "start", "vacuum");
-        if (button.dataset.action === "pause") await this._call("vacuum", "pause", "vacuum");
-        if (button.dataset.action === "stop") await this._call("vacuum", "stop", "vacuum");
-        if (button.dataset.action === "home") await this._call("vacuum", "return_to_base", "vacuum");
-      } finally {
-        setTimeout(() => { button.disabled = false; }, 650);
+    root.addEventListener("click", async (event) => {
+      const button = event.target?.closest?.("button");
+      if (!button || !root.contains(button) || button.disabled) return;
+      if (button.matches("[data-detail-back]")) {
+        this._switchWorkspace("cleaning", null);
+        return;
       }
-    }));
-    root.querySelectorAll("[data-select-key]").forEach((button) => button.addEventListener("click", async () => {
-      if (button.disabled || !this._snapshot().connected) return;
-      await this._call("select", "select_option", button.dataset.selectKey, { option: button.dataset.selectValue });
-    }));
+      if (button.matches("[data-detail]")) {
+        this._switchWorkspace("cleaning", button.dataset.detail);
+        return;
+      }
+      if (!this._snapshot().connected) return;
+      if (button.matches("[data-station-stop]")) {
+        const keys = String(button.dataset.stationStop || "").split(",").filter(Boolean);
+        if (!keys.length) return;
+        button.disabled = true;
+        try { for (const key of keys) await this._call("button", "press", key); }
+        finally { setTimeout(() => this._queueLivePatch(), 700); }
+        return;
+      }
+      if (button.matches("[data-action]")) {
+        const action = button.dataset.action;
+        const service = action === "start" ? "start" : action === "pause" ? "pause" : action === "stop" ? "stop" : action === "home" ? "return_to_base" : null;
+        if (!service) return;
+        button.disabled = true;
+        try { await this._call("vacuum", service, "vacuum"); }
+        finally { setTimeout(() => this._queueLivePatch(), 650); }
+        return;
+      }
+      if (button.matches("[data-select-key]")) {
+        await this._call("select", "select_option", button.dataset.selectKey, { option: button.dataset.selectValue });
+        return;
+      }
+      if (button.matches("[data-toggle]")) {
+        const key = button.dataset.toggle;
+        await this._call("switch", this._state(key)?.state === "on" ? "turn_off" : "turn_on", key);
+      }
+    });
     const volume = root.querySelector("[data-volume]");
     volume?.addEventListener("input", () => {
       const label = root.querySelector("[data-volume-label]");
@@ -1102,11 +1098,6 @@ class S8OmniPanel extends HTMLElement {
     volume?.addEventListener("change", () => {
       if (this._snapshot().connected) this._call("number", "set_value", "volume", { value: Number(volume.value) });
     });
-    root.querySelectorAll("[data-toggle]").forEach((button) => button.addEventListener("click", () => {
-      if (button.disabled || !this._snapshot().connected) return;
-      const key = button.dataset.toggle;
-      this._call("switch", this._state(key)?.state === "on" ? "turn_off" : "turn_on", key);
-    }));
     root.querySelectorAll("[data-more]").forEach((node) => {
       let timer = null;
       const cancel = () => { if (timer) clearTimeout(timer); timer = null; };

@@ -30,8 +30,8 @@ class PanelUiStandardV16V0722Tests(unittest.TestCase):
         self.assertIn("class=\"connection-indicator", self.source)
         self.assertIn(".connection-indicator.local{background:color-mix(in srgb,var(--success-color,#43a047) 11%,var(--card-background-color))", self.source)
         self.assertIn("border-color:color-mix(in srgb,var(--success-color,#43a047) 30%,var(--divider-color))", self.source)
-        self.assertIn(".connection-copy strong{font-size:15px", self.source)
-        self.assertIn(".connection-copy small{font-size:12px", self.source)
+        self.assertIn(".connection-copy strong{font-size:16px", self.source)
+        self.assertIn(".connection-copy small{font-size:13px", self.source)
         key = self.source.split("  _stableStructureKey() {", 1)[1].split("_bindStableContent", 1)[0]
         self.assertNotIn("telemetry_age", key)
         self.assertNotIn("this._hass.states", key)

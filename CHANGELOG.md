@@ -1,3 +1,9 @@
+## v1.00_b059 / UI v0.7.23
+
+- Delegated work-view controls to the permanent stable-view root, so Start, Pause, Stop, Home and station-stop actions remain bound when live state changes their button roles in place.
+- Aligned the requested connection/freshness indicator with the shared LIDER-derived 16 px primary and 13 px secondary typography.
+- Preserved the one-time Header, Work Viewport and Bottom Tab Bar mount; the fix does not reintroduce whole-tree rendering or alter the accepted mobile geometry.
+
 ## v1.00_b058 / UI v0.7.22
 
 - Adopted NIKAS Specialized Panel UI Standard v1.6: each tab is mounted once and retained as a hidden/inert stable DOM view; polling never replaces the panel tree.
