@@ -4,6 +4,10 @@
 - Added an iOS touch fallback for the stationary two-finger double-tap reset; pointer and touch delivery are deduplicated, pending long presses are cancelled and the confirmation remains `Масштаб 100%`.
 - Matched the connection/freshness plaque to LIDER: the primary state colors the lamp, title, 8–12% surface tint and approximately 30% border; freshness remains an independent secondary line.
 - Applied the common 12–25 px meaningful-text scale to the runtime panel, including the Header, scene resources, action captions and diagnostics.
+- Adopted NIKAS Specialized Panel UI Standard v1.6: each tab is mounted once and retained as a hidden/inert stable DOM view; polling never replaces the panel tree.
+- Kept Header and Bottom Tab Bar as permanent fixed shell nodes while short and long views scroll only inside the Work Viewport.
+- Added an accessible label to the permanent Bottom Tab Bar without changing its geometry.
+- Locked the Overview Hero into explicit status, scene and metric rows so an iOS image-source change during the docked-to-cleaning transition cannot collapse or overlap the indicator, title or telemetry cards.
 
 ## v1.00_b057 / UI v0.7.21
 

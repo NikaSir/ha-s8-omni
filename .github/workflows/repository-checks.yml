@@ -93,6 +93,13 @@ jobs:
           grep -q 'this._renderDeferred = false' "$production"
           grep -Fq 'this._nativeScrollActive = false' "$production"
           grep -Fq '_markNativeScrollActive()' "$production"
+          test "$(grep -o 'shadowRoot.innerHTML' "$production" | wc -l | tr -d ' ')" = "1"
+          if grep -q 'replaceChildren' "$production"; then exit 1; fi
+          grep -Fq 'data-stable-view' "$production"
+          grep -Fq 'view.removeAttribute("inert")' "$production"
+          grep -Fq 'view.setAttribute("inert", "")' "$production"
+          grep -Fq 'this._multiTapStartedAt = performance.now()' "$production"
+          grep -Fq 'this._suppressClicksUntil = Date.now() + 480' "$production"
           grep -Fq 'if (Math.abs(scale - 1) < 0.0001) return "none";' "$production"
           grep -Fq ':host{height:100vh;height:100dvh;min-height:0;max-height:100dvh' "$production"
           grep -Fq 'main{height:100%;min-height:0;display:grid' "$production"
@@ -170,6 +177,12 @@ jobs:
               'two_finger_touch_fallback': True,
               'indicator_surface': 'primary_status_tint_lider',
               'meaningful_typography_range_px': [12, 25],
+              'tabs_mounted_once': True,
+              'whole_tree_replace_after_mount': False,
+              'meaningful_text_min_px': 12,
+              'meaningful_text_max_px': 25,
+              'two_finger_reset_guarded': True,
+              'pinch_blocks_more_info': True,
           }
           for key, value in required.items():
               if transform.get(key) != value:

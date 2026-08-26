@@ -67,7 +67,11 @@
         ],
         "stale_after_scan_periods": 3,
         "failed_poll_immediately_stale": true,
-        "hold_action": "more_info_local_connection"
+        "hold_action": "more_info_local_connection",
+        "update_strategy": "pointwise_semantic_category_only",
+        "primary_font_px": 15,
+        "secondary_font_px": 12,
+        "status_tinted_surface": true
       }
     },
     "navigation": {
@@ -204,8 +208,16 @@
       "meaningful_typography_range_px": [
         12,
         25
-      ]
-    }
+      ],
+      "tabs_mounted_once": true,
+      "inactive_views": "hidden_and_inert",
+      "whole_tree_replace_after_mount": false,
+      "meaningful_text_min_px": 12,
+      "meaningful_text_max_px": 25,
+      "two_finger_reset_guarded": true,
+      "pinch_blocks_more_info": true
+    },
+    "standard": "NIKAS Specialized Panel UI Standard v1.6"
   },
   "generated_ui": {
     "summary_entity_unique_id_suffix": "composite_status",
