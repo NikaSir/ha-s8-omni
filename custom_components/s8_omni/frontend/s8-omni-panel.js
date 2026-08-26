@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.18";
+const UI_VERSION = "v0.7.19";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.72;
 const VIEW_SCALE_MAX = 2.20;
@@ -73,6 +73,8 @@ class S8OmniPanel extends HTMLElement {
     this._resizeBound = false;
     this._nativeScrollPositions = new Map();
     this._pendingScrollTop = null;
+    this._nativeScrollActive = false;
+    this._nativeScrollIdleTimer = null;
     this._onRealViewportResize = () => requestAnimationFrame(() => this._clampAndApplyTransform(false));
   }
 
@@ -94,10 +96,13 @@ class S8OmniPanel extends HTMLElement {
       window.visualViewport?.removeEventListener("resize", this._onRealViewportResize);
       this._resizeBound = false;
     }
+    clearTimeout(this._nativeScrollIdleTimer);
+    this._nativeScrollIdleTimer = null;
+    this._nativeScrollActive = false;
   }
 
   _queueRender() {
-    if (this._gesturePointers?.size) { this._renderDeferred = true; return; }
+    if (this._gesturePointers?.size || this._nativeScrollActive) { this._renderDeferred = true; return; }
     if (this._renderQueued) return;
     const currentViewport = this.shadowRoot?.querySelector("[data-work-viewport]");
     if (currentViewport && this._viewTransform.scale <= 1) {
@@ -305,6 +310,7 @@ class S8OmniPanel extends HTMLElement {
 
   _transformCss() {
     const { scale, x, y } = this._viewTransform;
+    if (Math.abs(scale - 1) < 0.0001) return "none";
     return `translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0) scale(${scale.toFixed(4)})`;
   }
 
@@ -387,6 +393,20 @@ class S8OmniPanel extends HTMLElement {
     viewport.scrollTop = Math.max(0, saved);
   }
 
+  _markNativeScrollActive() {
+    if (this._viewTransform.scale > 1) return;
+    this._nativeScrollActive = true;
+    clearTimeout(this._nativeScrollIdleTimer);
+    this._nativeScrollIdleTimer = setTimeout(() => {
+      this._nativeScrollIdleTimer = null;
+      this._nativeScrollActive = false;
+      if (this._renderDeferred && !this._gesturePointers?.size) {
+        this._renderDeferred = false;
+        this._queueRender();
+      }
+    }, 180);
+  }
+
   _bindWorkspaceGestures() {
     const viewport = this.shadowRoot?.querySelector("[data-work-viewport]");
     if (!viewport) return;
@@ -462,6 +482,7 @@ class S8OmniPanel extends HTMLElement {
       if (this._gestureStart?.kind === "native") {
         if (Math.hypot(p.x - previous.startX, p.y - previous.startY) > 4) {
           this._gestureMoved = true;
+          this._markNativeScrollActive();
           this._cancelLongPresses();
         }
         return;
@@ -530,6 +551,7 @@ class S8OmniPanel extends HTMLElement {
     viewport.addEventListener("scroll", () => {
       if (this._viewTransform.scale <= 1) {
         this._nativeScrollPositions.set(this._transformStorageKey(), viewport.scrollTop);
+        this._markNativeScrollActive();
       }
     }, { passive: true });
     viewport.addEventListener("wheel", (event) => {
@@ -555,9 +577,9 @@ class S8OmniPanel extends HTMLElement {
 
   _styles() {
     return `
-      :host{display:block;min-height:100vh;background:var(--primary-background-color);color:var(--primary-text-color);font-family:var(--ha-font-family-body,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);overflow-x:hidden}
+      :host{display:block;height:100%;min-height:0;background:var(--primary-background-color);color:var(--primary-text-color);font-family:var(--ha-font-family-body,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);overflow-x:hidden}
       *{box-sizing:border-box;min-width:0}button,input,select{font:inherit}button{-webkit-tap-highlight-color:transparent}h1,h2,h3,p{margin:0}
-      main{min-height:100vh;padding-bottom:calc(82px + env(safe-area-inset-bottom))}
+      main{min-height:0;padding-bottom:calc(82px + env(safe-area-inset-bottom))}
       .app-header{position:sticky;top:0;z-index:60;display:grid;grid-template-columns:48px minmax(0,1fr) 48px;align-items:center;gap:8px;min-height:calc(64px + env(safe-area-inset-top));padding:max(8px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) 8px max(12px,env(safe-area-inset-left));background:color-mix(in srgb,var(--primary-background-color) 97%,transparent);border-bottom:1px solid color-mix(in srgb,var(--divider-color) 70%,transparent);backdrop-filter:blur(18px) saturate(130%)}
       .header-action{width:48px;height:48px;border:0;border-radius:15px;display:grid;place-items:center;background:var(--card-background-color);color:var(--primary-text-color);box-shadow:0 3px 12px rgba(0,0,0,.07)}.header-action.refresh{color:var(--primary-color)}.header-action:disabled{opacity:.38}.header-action ha-icon{--mdc-icon-size:28px}.header-action.loading ha-icon{animation:spin .8s linear infinite}
       .header-title{text-align:center;display:flex;flex-direction:column;gap:2px;overflow:hidden}.header-title strong{font-size:22px;line-height:1.05;white-space:nowrap}.header-title span{color:var(--secondary-text-color);font-size:12px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -650,10 +672,10 @@ class S8OmniPanel extends HTMLElement {
       .state-hero.operation h1{color:var(--primary-color)}.state-hero.warm h1{color:#c56b22}.state-hero.error h1{color:var(--error-color,#db4437)}
       .action.primary .action-icon ha-icon,.action.primary.running .action-icon ha-icon{color:currentColor!important;opacity:1!important}
       .action.primary.running:disabled{opacity:1}.action.primary.running:disabled .action-icon{opacity:1}
-      @media(max-width:430px){.state-scene{height:376px}.resource-strip{left:7px;right:7px;bottom:7px}.resource-chip{grid-template-columns:30px minmax(0,1fr);gap:4px;padding:7px 4px}.resource-chip ha-icon{--mdc-icon-size:23px}.resource-chip strong{font-size:11.7px;line-height:1.04}.resource-chip small{font-size:10.6px;line-height:1.04}.state-hero h1{font-size:30px}}
+      @media(max-width:430px){.state-scene{height:352px}.resource-strip{left:7px;right:7px;bottom:7px}.resource-chip{grid-template-columns:30px minmax(0,1fr);gap:4px;padding:7px 4px}.resource-chip ha-icon{--mdc-icon-size:23px}.resource-chip strong{font-size:11.7px;line-height:1.04}.resource-chip small{font-size:10.6px;line-height:1.04}.state-hero h1{font-size:30px}}
       /* v0.7.15 stable iOS gesture canvas */
-      :host{height:100vh;height:100dvh;overflow:hidden}
-      main{height:100vh;height:100dvh;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;padding-bottom:0}
+      :host{height:100vh;height:100dvh;min-height:0;max-height:100dvh;overflow:hidden;overscroll-behavior:none}
+      main{height:100%;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;overscroll-behavior:none;padding-bottom:0}
       .app-header{position:relative;top:auto;z-index:60}
       nav{position:relative;left:auto;right:auto;bottom:auto;z-index:70}
       .work-viewport{position:relative;min-height:0;overflow:hidden;overscroll-behavior:none;touch-action:none;background:var(--primary-background-color)}
