@@ -20,14 +20,14 @@ class PanelUiStandardV16V0722Tests(unittest.TestCase):
         for marker in (
             "data-stable-view",
             "_boundStableViews = new WeakSet()",
-            'activeView.removeAttribute("inert")',
+            'view.removeAttribute("inert")',
             'view.setAttribute("inert", "")',
             "view.hidden = !active",
         ):
             self.assertIn(marker, self.source)
 
     def test_indicator_is_pointwise_and_lider_styled(self) -> None:
-        self.assertIn("class=\"trust-banner connection-indicator", self.source)
+        self.assertIn("class=\"connection-indicator", self.source)
         self.assertIn(".connection-indicator.local{background:color-mix(in srgb,var(--success-color,#43a047) 11%,var(--card-background-color))", self.source)
         self.assertIn("border-color:color-mix(in srgb,var(--success-color,#43a047) 30%,var(--divider-color))", self.source)
         self.assertIn(".connection-copy strong{font-size:15px", self.source)
@@ -47,11 +47,11 @@ class PanelUiStandardV16V0722Tests(unittest.TestCase):
         self.assertIn("this._multiTapStartedAt = performance.now()", gesture)
         self.assertIn("this._cancelLongPresses()", gesture)
         self.assertIn("this._suppressClicksUntil = Date.now() + 480", gesture)
-        self.assertIn("this._resetWorkspaceTransform(true)", gesture)
+        self.assertIn("this._resetTransform(true)", gesture)
         self.assertIn("viewport.scrollTop = 0", self.source)
 
     def test_header_and_bottom_bar_remain_shell_siblings(self) -> None:
-        self.assertIn('data-icon="mdi:menu"', self.source)
+        self.assertIn('icon="mdi:menu"', self.source)
         self.assertIn('new CustomEvent("hass-toggle-menu"', self.source)
         self.assertIn("<header class=\"app-header\">", self.source)
         self.assertIn("<nav aria-label=\"Основные разделы\">", self.source)

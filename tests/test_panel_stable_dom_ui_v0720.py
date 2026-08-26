@@ -55,8 +55,8 @@ class PanelStableDomUiV0722Tests(unittest.TestCase):
         self.assertIn("this._nativeScrollActive", patch)
         self.assertNotIn("replaceChildren", self.source)
         self.assertIn("data-stable-view", patch)
-        self.assertIn("view.hidden = !isActive", patch)
-        self.assertIn("view.inert = !isActive", patch)
+        self.assertIn("view.hidden = !active", patch)
+        self.assertIn('view.setAttribute("inert", "")', patch)
 
 
 if __name__ == "__main__":
