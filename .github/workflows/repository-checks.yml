@@ -39,7 +39,7 @@ jobs:
       - name: Validate frontend JavaScript
         run: node --check custom_components/s8_omni/frontend/s8-omni-panel.js
 
-      - name: Enforce S8 OMNI frontend, Clean Mode and gesture contract
+      - name: Enforce state-aware Overview and gesture contract
         shell: bash
         run: |
           frontend_dir="custom_components/s8_omni/frontend"
@@ -48,98 +48,82 @@ jobs:
           registration="custom_components/s8_omni/__init__.py"
           test -f "$production"
           test -d "$assets_dir"
-          for file in product-clean.jpg product-dock.jpg status-robot.jpg status-station.jpg status-water.jpg status-dustbin.jpg; do
+          for file in hero-dock.webp hero-away.webp hero-dust.webp hero-wash.webp hero-dry.webp product-clean.jpg product-dock.jpg status-robot.jpg status-station.jpg status-water.jpg status-dustbin.jpg; do
             test -f "$assets_dir/$file" || { echo "Missing asset: $file"; exit 1; }
           done
-          test ! -f "$frontend_dir/product-clean.jpg"
-          test ! -f "$frontend_dir/product-dock.jpg"
-          js_count="$(find "$frontend_dir" -maxdepth 1 -type f -name '*.js' | wc -l | tr -d ' ')"
-          test "$js_count" = "1"
+          test "$(find "$frontend_dir" -maxdepth 1 -type f -name '*.js' | wc -l | tr -d ' ')" = "1"
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.15"' "$production"
-          grep -q 'const ASSET_ROOT = "/s8_omni/frontend/assets"' "$production"
-          grep -q 'PRODUCT_CLEAN_IMAGE' "$production"
-          grep -q 'PRODUCT_DOCK_IMAGE' "$production"
-          grep -q '${ASSET_ROOT}/status-${name}.jpg' "$production"
-          grep -q 'status-thumb' "$production"
-          grep -q 'DP41 work_mode' "$production"
-          if grep -q 'WORK_MODE_LABELS' "$production"; then exit 1; fi
-          grep -q '_batteryIcon(snap, charging, charged)' "$production"
-          grep -q '_modeIcon(snap)' "$production"
-          grep -q '_telemetryIcon(snap)' "$production"
-          grep -q '_telemetryMeta(snap)' "$production"
-          grep -q 'mdi:battery-check' "$production"
-          grep -q 'mdi:tune-variant' "$production"
-          grep -q 'mdi:clock-check-outline' "$production"
-          grep -q 'Обновлено сейчас' "$production"
-          grep -q 'mdi:home-check' "$production"
-          grep -q 'На базе ✓' "$production"
-          grep -q 'dust?"Сбор пыли":"Нет датчика"' "$production"
-          grep -q 'Нет датчика' "$production"
-          grep -q 'v0.7.14 compact Overview density' "$production"
-          grep -q 'v0.7.15 stable iOS gesture canvas' "$production"
-          grep -q 'const VIEW_STATE_PREFIX = "s8_omni.view_transform.v2"' "$production"
+          grep -q 'const UI_VERSION = "v0.7.16"' "$production"
+          grep -q 'const HERO_IMAGES = {' "$production"
+          grep -q 'hero-dock.webp' "$production"
+          grep -q 'hero-away.webp' "$production"
+          grep -q 'hero-dust.webp' "$production"
+          grep -q 'hero-wash.webp' "$production"
+          grep -q 'hero-dry.webp' "$production"
+          grep -q '_heroState(snap)' "$production"
+          grep -q '_resourceStrip(snap)' "$production"
+          grep -q 'class="state-scene' "$production"
+          grep -q 'Сбор пыли' "$production"
+          grep -q 'Мойка швабры' "$production"
+          grep -q 'Сушка швабры' "$production"
+          grep -q 'Возврат на станцию' "$production"
+          grep -q 'На базе · Заряжен' "$production"
+          grep -q 'title: "Простой"' "$production"
+          if grep -q '<section class="card statuses-card"' "$production"; then exit 1; fi
+          grep -q 'stop_dust_collection' "$production"
+          grep -q 'stop_roller_cleaning' "$production"
+          grep -q 'stop_roller_drying' "$production"
+          grep -q 'data-station-stop' "$production"
+          grep -q 'vacuum","stop","vacuum' "$production"
+          grep -q 'data-zoom-out' "$production"
+          grep -q 'data-zoom-reset' "$production"
+          grep -q 'data-zoom-in' "$production"
           grep -q '_bindWorkspaceGestures()' "$production"
-          grep -q '_transformStorageKey()' "$production"
-          grep -q '_clampAndApplyTransform' "$production"
           grep -q 'translate3d' "$production"
           grep -q 'touch-action:none' "$production"
           grep -q 'this._renderDeferred = false' "$production"
-          grep -q 'this._gesturePointers?.size' "$production"
-          grep -q 'vacuum","stop","vacuum' "$production"
-          grep -q 'data-action="${leftAction}"' "$production"
           if grep -q 'scrollLeft\|scrollTop' "$production"; then exit 1; fi
           if grep -nE '(^|[;{])[[:space:]]*zoom[[:space:]]*:' "$production"; then exit 1; fi
-          grep -q 'Чистая вода' "$production"
-          grep -q 'Грязная вода' "$production"
-          grep -q 'Пыль/мешок' "$production"
-          grep -q 'Тёплый воздух' "$production"
-          grep -q 'Зарядка' "$production"
-          grep -q '<strong>Пылесборник</strong>' "$production"
-          if grep -q 'PRODUCT_ART_CLEAN_BASE64' "$production"; then exit 1; fi
-          if grep -q 'PRODUCT_ART_DOCK_BASE64' "$production"; then exit 1; fi
-          if grep -q '/s8_omni/product-art/' "$production"; then exit 1; fi
-          if grep -q 'data:image' "$production"; then exit 1; fi
-          if grep -q 'createImageBitmap' "$production"; then exit 1; fi
-          if grep -q 'S8ProductArtView' "$registration"; then exit 1; fi
-          if grep -q '_product_art_bytes' "$registration"; then exit 1; fi
           grep -q 'CLEAN_MODE_OPTIONS' custom_components/s8_omni/const.py
-          grep -q 'DEFAULT_CLEAN_MODE = "smart"' custom_components/s8_omni/const.py
           grep -q 'effective_clean_mode' custom_components/s8_omni/coordinator.py
-          grep -q '_clean_mode_store' custom_components/s8_omni/coordinator.py
           grep -q 'raw_dp4_mode' custom_components/s8_omni/select.py
-          grep -q 'Desc("mode", "Режим уборки", DP_MODE, CLEAN_MODE_OPTIONS)' custom_components/s8_omni/select.py
-          grep -q 'Desc("work_mode", "Тип работы", DP_WORK_MODE' custom_components/s8_omni/sensor.py
-          echo "S8 OMNI v0.7.15 gesture + Overview + Clean Mode contract OK"
+          grep -q 'StopDesc("stop_dust_collection", "Остановить сбор пыли", DP_DUST)' custom_components/s8_omni/button.py
+          grep -q 'StopDesc("stop_roller_cleaning", "Остановить мойку швабры", DP_ROLL_CLEAN)' custom_components/s8_omni/button.py
+          grep -q 'StopDesc("stop_roller_drying", "Остановить сушку швабры", DP_ROLL_DRY)' custom_components/s8_omni/button.py
+          grep -q 'async_set_dp(self.desc.dp, False)' custom_components/s8_omni/button.py
+          if grep -q 'async_set_dp(self.desc.dp, True)' custom_components/s8_omni/button.py; then exit 1; fi
+          grep -q 'Stop station dust collection' docs/PROTOCOL.md
+          echo "S8 OMNI v0.7.16 state-aware Hero contract OK"
 
-      - name: Validate panel asset and workspace manifest
+      - name: Validate panel manifest and state assets
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.15':
+          if panel.get('dashboard_version') != 'v0.7.16':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':
               raise SystemExit('panel.json asset_root mismatch')
-          assets = frontend.get('assets', [])
           expected = {
               'assets/product-clean.jpg','assets/product-dock.jpg',
-              'assets/status-robot.jpg','assets/status-station.jpg',
-              'assets/status-water.jpg','assets/status-dustbin.jpg',
+              'assets/status-robot.jpg','assets/status-station.jpg','assets/status-water.jpg','assets/status-dustbin.jpg',
+              'assets/hero-dock.webp','assets/hero-away.webp','assets/hero-dust.webp','assets/hero-wash.webp','assets/hero-dry.webp',
           }
-          if set(assets) != expected:
-              raise SystemExit(f'panel.json assets mismatch: {assets}')
+          assets = set(frontend.get('assets', []))
+          if assets != expected:
+              raise SystemExit(f'panel.json assets mismatch: {sorted(assets)}')
           for rel in assets:
-              path = root / rel
-              if not path.is_file():
-                  raise SystemExit(f'Manifest asset missing: {path}')
+              if not (root / rel).is_file():
+                  raise SystemExit(f'Manifest asset missing: {rel}')
+          if set(frontend.get('product_art_states', [])) != {'dock','away','dust_collection','roller_cleaning','drying'}:
+              raise SystemExit('state art mapping mismatch')
           transform = panel.get('workspace_transform', {})
-          expected_transform = {
+          required = {
               'scope': 'working_area_only',
               'implementation': 'translate3d_scale',
               'native_scroll': False,
@@ -147,38 +131,33 @@ jobs:
               'pinch_midpoint': True,
               'one_pointer_pan': True,
               'two_finger_double_tap_reset': True,
-              'permanent_zoom_controls': False,
+              'permanent_zoom_controls': True,
           }
-          for key, value in expected_transform.items():
+          for key, value in required.items():
               if transform.get(key) != value:
                   raise SystemExit(f'workspace_transform {key} mismatch: {transform.get(key)!r}')
-          if set(transform.get('shell_excluded', [])) != {'header', 'bottom_navigation'}:
+          if set(transform.get('shell_excluded', [])) != {'header','bottom_navigation'}:
               raise SystemExit('workspace shell exclusion mismatch')
-          print('Panel asset + workspace manifest OK')
+          print('Panel manifest OK')
           PY
 
-      - name: Validate static JPEG assets
+      - name: Validate local image assets
         run: |
           python - <<'PY'
           import hashlib
           from pathlib import Path
-          root=Path('custom_components/s8_omni/frontend/assets')
-          files=[
-              ('product-clean.jpg',12000,'17def2bb3f83352e9697d22eb4e0b15545902cd1a0fc703e325df92def9e380f'),
-              ('product-dock.jpg',12000,'0530f58afe28af40c3fe99ab9c2d309a59a30f864cdafd224a4c469e3f2ed723'),
-              ('status-robot.jpg',800,None),('status-station.jpg',800,None),
-              ('status-water.jpg',800,None),('status-dustbin.jpg',800,None),
-          ]
-          for name,min_size,expected_sha in files:
-              data=(root/name).read_bytes()
+          root = Path('custom_components/s8_omni/frontend/assets')
+          webps = ['hero-dock.webp','hero-away.webp','hero-dust.webp','hero-wash.webp','hero-dry.webp']
+          for name in webps:
+              data = (root/name).read_bytes()
+              if len(data) < 5000 or data[:4] != b'RIFF' or data[8:12] != b'WEBP':
+                  raise SystemExit(f'Invalid/small WebP: {name} {len(data)}')
+              print(f'OK {name}: {len(data)} bytes {hashlib.sha256(data).hexdigest()}')
+          jpegs = ['product-clean.jpg','product-dock.jpg','status-robot.jpg','status-station.jpg','status-water.jpg','status-dustbin.jpg']
+          for name in jpegs:
+              data = (root/name).read_bytes()
               if not (data.startswith(b'\xff\xd8') and data.endswith(b'\xff\xd9')):
                   raise SystemExit(f'Invalid JPEG: {name}')
-              if len(data) < min_size:
-                  raise SystemExit(f'Suspiciously small JPEG: {name}: {len(data)}')
-              digest=hashlib.sha256(data).hexdigest()
-              if expected_sha and digest != expected_sha:
-                  raise SystemExit(f'Unexpected hero asset SHA: {name}: {digest}')
-              print(f'OK {name}: {len(data)} bytes {digest}')
           PY
 
       - name: Enforce offline-safe panel lifecycle

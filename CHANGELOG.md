@@ -1,5 +1,13 @@
 ## v1.00_b043 / UI v0.7.10
 
+## v1.00_b049 / UI v0.7.16
+
+- State-aware photographic Overview Hero for docked, cleaning/return, dust collection, mop washing and mop drying.
+- Overview status grid removed; resources are shown as a compact strip inside the Hero.
+- Added stop-only public buttons for DP134/135/136 station operations.
+- Added permanent `− / % / +` workspace zoom controls while preserving pinch/pan and fixed HA shell.
+
+
 - Removed the duplicate blue **Локально** badge from the product scene; the standard connection badge in the Hero header remains the single connectivity indicator.
 - Finalized the approved Overview composition without changing live Home Assistant state semantics, controls, local assets or navigation.
 

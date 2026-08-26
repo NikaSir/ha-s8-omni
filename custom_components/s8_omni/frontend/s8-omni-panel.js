@@ -1,16 +1,17 @@
-const UI_VERSION = "v0.7.15";
+const UI_VERSION = "v0.7.16";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.72;
 const VIEW_SCALE_MAX = 2.20;
 const VIEW_SCALE_SNAP_MIN = 0.97;
 const VIEW_SCALE_SNAP_MAX = 1.03;
 const VIEW_STATE_PREFIX = "s8_omni.view_transform.v2";
-const PRODUCT_CLEAN_IMAGE = `${ASSET_ROOT}/product-clean.jpg?v=${encodeURIComponent(UI_VERSION)}`;
-const PRODUCT_DOCK_IMAGE = `${ASSET_ROOT}/product-dock.jpg?v=${encodeURIComponent(UI_VERSION)}`;
-
-function productArtUrl(mode) {
-  return mode === "dock" ? PRODUCT_DOCK_IMAGE : PRODUCT_CLEAN_IMAGE;
-}
+const HERO_IMAGES = {
+  dock: `${ASSET_ROOT}/hero-dock.webp?v=${encodeURIComponent(UI_VERSION)}`,
+  away: `${ASSET_ROOT}/hero-away.webp?v=${encodeURIComponent(UI_VERSION)}`,
+  dust: `${ASSET_ROOT}/hero-dust.webp?v=${encodeURIComponent(UI_VERSION)}`,
+  wash: `${ASSET_ROOT}/hero-wash.webp?v=${encodeURIComponent(UI_VERSION)}`,
+  dry: `${ASSET_ROOT}/hero-dry.webp?v=${encodeURIComponent(UI_VERSION)}`,
+};
 
 const ROBOT_LABELS = {
   idle: "Ожидание", cleaning: "Уборка", zone_cleaning: "Зона", room_cleaning: "Комнаты",
@@ -34,6 +35,7 @@ const ENTITY_SUFFIXES = [
   "fault", "work_mode", "raw_status", "robot_status", "station_status", "composite_status", "last_telemetry",
   "telemetry_age", "local_connection", "dust_collection", "roller_cleaning", "roller_drying", "custom_mode",
   "resume_cleaning", "do_not_disturb", "child_lock", "mode", "suction", "water", "volume", "refresh",
+  "stop_dust_collection", "stop_roller_cleaning", "stop_roller_drying",
 ];
 
 function escapeHtml(value) {
@@ -270,8 +272,28 @@ class S8OmniPanel extends HTMLElement {
 
   _workspace(content) {
     this._restoreTransform(false);
-    return `<div class="work-viewport" data-work-viewport><div class="work-canvas" data-work-canvas style="transform:${this._transformCss()}"><div class="content">${content}</div></div><div class="scale-toast" data-scale-toast aria-live="polite"></div></div>`;
+    const percent = Math.round(this._viewTransform.scale * 100);
+    return `<div class="work-viewport" data-work-viewport><div class="work-canvas" data-work-canvas style="transform:${this._transformCss()}"><div class="content">${content}</div></div><div class="zoom-controls" aria-label="Масштаб рабочей области"><button type="button" data-zoom-out aria-label="Уменьшить масштаб">−</button><button type="button" data-zoom-reset data-zoom-value aria-label="Вернуть масштаб 100 процентов">${percent}%</button><button type="button" data-zoom-in aria-label="Увеличить масштаб">+</button></div><div class="scale-toast" data-scale-toast aria-live="polite"></div></div>`;
   }
+
+  _zoomTo(nextScale) {
+    const viewport = this.shadowRoot?.querySelector("[data-work-viewport]");
+    if (!viewport) return;
+    const scale = Math.max(VIEW_SCALE_MIN, Math.min(VIEW_SCALE_MAX, Number(nextScale) || 1));
+    const current = this._viewTransform;
+    const center = { x: viewport.clientWidth / 2, y: viewport.clientHeight / 2 };
+    const contentX = (center.x - current.x) / current.scale;
+    const contentY = (center.y - current.y) / current.scale;
+    this._viewTransform = this._clampTransform({
+      scale,
+      x: center.x - contentX * scale,
+      y: center.y - contentY * scale,
+    });
+    this._clampAndApplyTransform(true);
+    this._showScaleToast();
+  }
+
+  _zoomBy(delta) { this._zoomTo(this._viewTransform.scale + delta); }
 
   _clampTransform(state = this._viewTransform) {
     const viewport = this.shadowRoot?.querySelector("[data-work-viewport]");
@@ -294,6 +316,8 @@ class S8OmniPanel extends HTMLElement {
     if (!canvas) return;
     this._viewTransform = this._clampTransform(this._viewTransform);
     canvas.style.transform = this._transformCss();
+    const value = this.shadowRoot?.querySelector("[data-zoom-value]");
+    if (value) value.textContent = `${Math.round(this._viewTransform.scale * 100)}%`;
     if (persist) this._saveTransform();
   }
 
@@ -549,6 +573,25 @@ class S8OmniPanel extends HTMLElement {
       .status-card b{font-size:11.5px;margin-top:2px}
       .status-card span.meta{font-size:8.5px;min-height:16px;margin-top:2px;line-height:1.05}
       @media(max-width:430px){.omni-scene{height:226px}.omni-art{width:73%}.omni-legend{width:33%}.hero-metrics>div{min-height:72px}.action{min-height:78px}.status-card{min-height:94px}.status-thumb{height:42px}}
+      /* v0.7.16 state-aware photographic Hero */
+      .state-hero{padding:14px;overflow:hidden}
+      .state-hero .hero-top{margin-bottom:10px}
+      .state-hero h1{font-size:32px}
+      .state-scene{position:relative;height:330px;border-radius:22px;overflow:hidden;background:#f4f2ee;border:1px solid color-mix(in srgb,var(--divider-color) 60%,transparent);box-shadow:0 8px 24px rgba(20,42,52,.06)}
+      .state-image{display:block;width:100%;height:100%;object-fit:cover;object-position:center;transition:opacity .18s ease,filter .18s ease}
+      .state-scene.muted .state-image{opacity:.55;filter:grayscale(.28)}
+      .resource-strip{position:absolute;left:10px;right:10px;bottom:10px;z-index:3;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch;background:rgba(255,255,255,.94);border:1px solid rgba(80,96,104,.10);border-radius:17px;box-shadow:0 8px 22px rgba(16,34,44,.08);backdrop-filter:blur(14px) saturate(120%);overflow:hidden}
+      .resource-chip{min-height:58px;display:grid;grid-template-columns:36px minmax(0,1fr);align-items:center;gap:7px;padding:8px 9px;position:relative}
+      .resource-chip:not(:last-child)::after{content:"";position:absolute;right:0;top:12px;bottom:12px;width:1px;background:var(--divider-color)}
+      .resource-chip ha-icon{--mdc-icon-size:25px;color:#19a9e4}.resource-chip.dirty ha-icon{color:#707980}.resource-chip.dustbag ha-icon{color:#6d7479}
+      .resource-chip strong,.resource-chip small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.resource-chip strong{font-size:10px}.resource-chip small{font-size:9px;color:var(--secondary-text-color);margin-top:2px}
+      .state-hero .hero-metrics{margin-top:9px}
+      .state-hero.operation h1{color:var(--primary-color)}.state-hero.warm h1{color:#c56b22}.state-hero.error h1{color:var(--error-color,#db4437)}
+      .action.primary .action-icon ha-icon,.action.primary.running .action-icon ha-icon{color:currentColor!important;opacity:1!important}
+      .action.primary.running:disabled{opacity:1}.action.primary.running:disabled .action-icon{opacity:1}
+      .zoom-controls{position:absolute;right:10px;bottom:10px;z-index:96;display:grid;grid-template-columns:34px 54px 34px;height:36px;background:rgba(255,255,255,.94);border:1px solid color-mix(in srgb,var(--divider-color) 70%,transparent);border-radius:999px;box-shadow:0 5px 16px rgba(0,0,0,.11);backdrop-filter:blur(12px);overflow:hidden}
+      .zoom-controls button{border:0;background:transparent;color:var(--primary-text-color);font-size:17px;font-weight:750;padding:0;min-width:0}.zoom-controls button+button{border-left:1px solid var(--divider-color)}.zoom-controls [data-zoom-value]{font-size:11px;color:var(--secondary-text-color)}
+      @media(max-width:430px){.state-scene{height:318px}.resource-strip{left:7px;right:7px;bottom:7px}.resource-chip{grid-template-columns:29px minmax(0,1fr);gap:4px;padding:7px 5px}.resource-chip ha-icon{--mdc-icon-size:22px}.resource-chip strong{font-size:8.8px}.resource-chip small{font-size:8.2px}.state-hero h1{font-size:30px}}
       /* v0.7.15 stable iOS gesture canvas */
       :host{height:100vh;height:100dvh;overflow:hidden}
       main{height:100vh;height:100dvh;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;padding-bottom:0}
@@ -579,52 +622,85 @@ class S8OmniPanel extends HTMLElement {
     return `<div class="trust-banner"><ha-icon icon="mdi:alert-circle-outline"></ha-icon><div><strong>${title}</strong><span>${text}</span></div></div>`;
   }
 
-  _heroHint(snap) {
-    if (snap.connection === "disconnected") return "Нет актуальной локальной телеметрии";
-    if (snap.connection === "unknown") return "Текущая связь с устройством не подтверждена";
+  _activeStationStopKeys(snap) {
     const ops = new Set(snap.stationOperations || []);
-    if (ops.has("drying") || snap.station === "drying") return "Робот на станции и сушится";
-    if (ops.has("roller_cleaning") || snap.station === "roller_cleaning") return "Станция промывает моющий модуль";
-    if (ops.has("dust_collection") || snap.station === "dust_collection") return "Станция выполняет сбор пыли";
-    if (snap.robot === "charged") return "Робот на станции, заряд завершён";
-    if (snap.robot === "charging") return "Робот на станции и заряжается";
-    if (["cleaning", "zone_cleaning", "room_cleaning"].includes(snap.composite)) return "Выполняется уборка";
-    if (snap.composite === "returning_to_dock") return "Робот возвращается на станцию";
-    return "Робот и станция работают как единая система";
+    const keys = [];
+    if (ops.has("dust_collection") || snap.station === "dust_collection") keys.push("stop_dust_collection");
+    if (ops.has("roller_cleaning") || snap.station === "roller_cleaning") keys.push("stop_roller_cleaning");
+    if (ops.has("drying") || snap.station === "drying") keys.push("stop_roller_drying");
+    return keys;
+  }
+
+  _heroState(snap) {
+    if (snap.connection === "disconnected") return { image: "dock", title: "Нет связи", hint: "Нет актуальной локальной телеметрии", tone: "error" };
+    if (snap.connection === "unknown") return { image: "dock", title: "Связь не подтверждена", hint: "Ожидаем текущую локальную телеметрию", tone: "warn" };
+    const ops = new Set(snap.stationOperations || []);
+    if (ops.size > 1 || snap.station === "multiple_operations") {
+      const labels = [...ops].map((x) => STATION_OPERATION_LABELS[x] || x).join(" · ");
+      return { image: "dock", title: "Станция работает", hint: labels || "Выполняется несколько операций станции", tone: "operation" };
+    }
+    if (ops.has("dust_collection") || snap.station === "dust_collection") return { image: "dust", title: "Сбор пыли", hint: "Станция опустошает пылесборник робота", tone: "operation" };
+    if (ops.has("roller_cleaning") || snap.station === "roller_cleaning") return { image: "wash", title: "Мойка швабры", hint: "Станция промывает швабру", tone: "operation" };
+    if (ops.has("drying") || snap.station === "drying") return { image: "dry", title: "Сушка швабры", hint: "Станция сушит швабру тёплым воздухом", tone: "warm" };
+    if (snap.composite === "returning_to_dock" || snap.robot === "returning_to_dock") return { image: "away", title: "Возврат на станцию", hint: "Робот возвращается на станцию", tone: "operation" };
+    if (["cleaning", "zone_cleaning", "room_cleaning"].includes(snap.composite) || ["cleaning", "zone_cleaning", "room_cleaning"].includes(snap.robot)) return { image: "away", title: "Уборка", hint: "Робот выполняет уборку", tone: "operation" };
+    if (snap.composite === "paused" || snap.robot === "paused") return { image: "away", title: "Пауза", hint: "Уборка приостановлена", tone: "neutral" };
+    if (snap.robot === "charging") return { image: "dock", title: "Зарядка", hint: "Робот на станции и заряжается", tone: "good" };
+    if (snap.robot === "charged") return { image: "dock", title: "На базе · Заряжен", hint: "Робот на станции, заряд завершён", tone: "good" };
+    if (snap.onDock === true) return { image: "dock", title: "Простой", hint: "Робот и станция в ожидании", tone: "neutral" };
+    return { image: "away", title: "Простой", hint: "Робот ожидает команду", tone: "neutral" };
+  }
+
+  _resourceStrip(snap) {
+    const value = snap.unreliable ? "Нет данных" : "Нет датчика";
+    return `<div class="resource-strip"><div class="resource-chip"><ha-icon icon="mdi:water"></ha-icon><span><strong>Чистая вода</strong><small>${value}</small></span></div><div class="resource-chip dirty"><ha-icon icon="mdi:water-opacity"></ha-icon><span><strong>Грязная вода</strong><small>${value}</small></span></div><div class="resource-chip dustbag"><ha-icon icon="mdi:delete-outline"></ha-icon><span><strong>Пыль/мешок</strong><small>${value}</small></span></div></div>`;
   }
 
   _hero() {
-    const snap=this._snapshot(), connection=this._connectionLabel(), ops=new Set(snap.stationOperations||[]);
-    const compositeLabel=snap.connection==="disconnected"?"Нет связи":snap.connection==="unknown"?"Связь не подтверждена":this._label(COMPOSITE_LABELS,snap.composite,"Нет данных");
-    const wash=!snap.unreliable&&(ops.has("roller_cleaning")||snap.station==="roller_cleaning"), dust=!snap.unreliable&&(ops.has("dust_collection")||snap.station==="dust_collection"), dry=!snap.unreliable&&(ops.has("drying")||snap.station==="drying");
-    const charging=!snap.unreliable&&snap.robot==="charging", charged=!snap.unreliable&&snap.robot==="charged", docked=!snap.unreliable&&snap.onDock===true, chargeActive=charging||charged||docked;
-    const artMode=chargeActive||wash||dust||dry?"dock":"clean", battery=snap.battery===null?"—":`${Math.round(snap.battery)}%`, age=snap.age===null?"—":this._formatDuration(snap.age), mode=this._modeLabel(snap), modeMeta=this._modeMeta(snap,mode), batteryIcon=this._batteryIcon(snap,charging,charged), modeIcon=this._modeIcon(snap), telemetryIcon=this._telemetryIcon(snap), telemetryMeta=this._telemetryMeta(snap), batteryTone=snap.battery!==null&&snap.battery<15?" low":"";
-    const unknown=snap.unreliable?"Нет данных":"Нет датчика", dustState=snap.unreliable?"Нет данных":dust?"Сбор пыли":"Нет датчика", dryState=snap.unreliable?"Нет данных":dry?"Вкл.":"Выкл.", chargeState=snap.unreliable?"Нет данных":charging?"Идёт":charged?"Завершён":docked?"На базе":"Нет";
-    return `<section class="card hero" data-more="composite_status"><div class="hero-top"><div><span class="eyebrow">Состояние</span><h1>${escapeHtml(compositeLabel)}</h1><p class="hero-hint">${escapeHtml(this._heroHint(snap))}</p></div><div class="connection-badge ${connection!=="Локально"?"bad":""}"><i class="dot"></i>${escapeHtml(connection)}</div></div><div class="omni-scene"><div class="omni-art ${snap.unreliable?"muted":""}"><img class="product-art" src="${productArtUrl(artMode)}" alt="S8 OMNI robot and station" /></div><div class="omni-legend"><div class="legend-row clean-water"><ha-icon icon="mdi:water"></ha-icon><span class="legend-copy"><strong>Чистая вода</strong><small>${unknown}</small></span></div><div class="legend-row dirty-water"><ha-icon icon="mdi:water-opacity"></ha-icon><span class="legend-copy"><strong>Грязная вода</strong><small>${unknown}</small></span></div><div class="legend-row dust ${dust?"active":""}"><ha-icon icon="mdi:delete-outline"></ha-icon><span class="legend-copy"><strong>Пыль/мешок</strong><small>${dustState}</small></span></div><div class="legend-row dry ${dry?"active":""}"><ha-icon icon="mdi:weather-windy"></ha-icon><span class="legend-copy"><strong>Тёплый воздух</strong><small>${dryState}</small></span></div><div class="legend-row charge ${chargeActive?"active":""}"><ha-icon icon="${charging?"mdi:battery-charging":"mdi:flash"}"></ha-icon><span class="legend-copy"><strong>Зарядка</strong><small>${chargeState}</small></span></div></div></div><div class="hero-metrics"><div data-more="battery"><ha-icon class="metric-icon battery${batteryTone}" icon="${batteryIcon}"></ha-icon><span>АКБ</span><strong>${battery}</strong><small>Текущий заряд</small><div class="battery-bar"><i style="width:${snap.battery??0}%"></i></div></div><div data-more="mode"><ha-icon class="metric-icon mode" icon="${modeIcon}"></ha-icon><span>Режим</span><strong>${escapeHtml(mode)}</strong><small>${escapeHtml(modeMeta)}</small></div><div data-more="telemetry_age"><ha-icon class="metric-icon telemetry" icon="${telemetryIcon}"></ha-icon><span>Телеметрия</span><strong>${escapeHtml(age)}</strong><small>${escapeHtml(telemetryMeta)}</small></div></div></section>`;
+    const snap = this._snapshot();
+    const state = this._heroState(snap);
+    const connection = this._connectionLabel();
+    const charging = !snap.unreliable && snap.robot === "charging";
+    const charged = !snap.unreliable && snap.robot === "charged";
+    const battery = snap.battery === null ? "—" : `${Math.round(snap.battery)}%`;
+    const age = snap.age === null ? "—" : this._formatDuration(snap.age);
+    const mode = this._modeLabel(snap), modeMeta = this._modeMeta(snap, mode);
+    const batteryIcon = this._batteryIcon(snap, charging, charged), modeIcon = this._modeIcon(snap), telemetryIcon = this._telemetryIcon(snap), telemetryMeta = this._telemetryMeta(snap);
+    const batteryTone = snap.battery !== null && snap.battery < 15 ? " low" : "";
+    const image = HERO_IMAGES[state.image] || HERO_IMAGES.dock;
+    return `<section class="card hero state-hero ${state.tone || ""}" data-more="composite_status"><div class="hero-top"><div><span class="eyebrow">Состояние</span><h1>${escapeHtml(state.title)}</h1><p class="hero-hint">${escapeHtml(state.hint)}</p></div><div class="connection-badge ${connection !== "Локально" ? "bad" : ""}"><i class="dot"></i>${escapeHtml(connection)}</div></div><div class="state-scene ${snap.unreliable ? "muted" : ""}"><img class="state-image" src="${image}" alt="S8 OMNI — ${escapeHtml(state.title)}" />${this._resourceStrip(snap)}</div><div class="hero-metrics"><div data-more="battery"><ha-icon class="metric-icon battery${batteryTone}" icon="${batteryIcon}"></ha-icon><span>АКБ</span><strong>${battery}</strong><small>Текущий заряд</small><div class="battery-bar"><i style="width:${snap.battery ?? 0}%"></i></div></div><div data-more="mode"><ha-icon class="metric-icon mode" icon="${modeIcon}"></ha-icon><span>Режим</span><strong>${escapeHtml(mode)}</strong><small>${escapeHtml(modeMeta)}</small></div><div data-more="telemetry_age"><ha-icon class="metric-icon telemetry" icon="${telemetryIcon}"></ha-icon><span>Телеметрия</span><strong>${escapeHtml(age)}</strong><small>${escapeHtml(telemetryMeta)}</small></div></div></section>`;
   }
 
   _quickActions() {
-    const snap=this._snapshot(), vacuum=snap.vacuum, available=snap.connected&&this._available(vacuum), cleaning=vacuum?.state==="cleaning", paused=vacuum?.state==="paused", active=cleaning||paused, docked=snap.onDock===true||["charging","charged"].includes(snap.robot);
-    const leftAction=active?"stop":"start", leftClass=active?"action stop":docked?"action ready":"action primary", leftTitle=active?"Стоп":"Уборка", leftIcon=active?"mdi:stop":"mdi:play", leftSub=active?"Завершить":"Smart";
-    const middleAction=paused?"start":"pause", middleClass=cleaning||paused?"action primary":"action", middleTitle=paused?"Продолжить":"Пауза", middleIcon=paused?"mdi:play":"mdi:pause", middleSub=paused?"Возобновить":cleaning?"Приостановить":"Недоступно";
-    const homeClass=docked?"action primary running":"action";
-    return `<div class="quick-actions"><button class="${leftClass}" data-action="${leftAction}" ${available?"":"disabled"}><span class="action-icon"><ha-icon icon="${leftIcon}"></ha-icon></span><strong>${leftTitle}</strong><span class="action-sub">${leftSub}</span></button><button class="${middleClass}" data-action="${middleAction}" ${available&&(cleaning||paused)?"":"disabled"}><span class="action-icon"><ha-icon icon="${middleIcon}"></ha-icon></span><strong>${middleTitle}</strong><span class="action-sub">${middleSub}</span></button><button class="${homeClass}" data-action="home" ${available&&!docked?"":"disabled"}><span class="action-icon"><ha-icon icon="${docked?"mdi:home-check":"mdi:home"}"></ha-icon></span><strong>Домой</strong><span class="action-sub">${docked?"На базе ✓":"На станцию"}</span></button></div>`;
+    const snap = this._snapshot();
+    const vacuum = snap.vacuum, available = snap.connected && this._available(vacuum);
+    const cleaning = vacuum?.state === "cleaning" || ["cleaning", "zone_cleaning", "room_cleaning"].includes(snap.robot);
+    const paused = vacuum?.state === "paused" || snap.robot === "paused";
+    const returning = snap.robot === "returning_to_dock" || snap.composite === "returning_to_dock";
+    const docked = snap.onDock === true || ["charging", "charged"].includes(snap.robot);
+    const stationStops = this._activeStationStopKeys(snap).filter((key) => Boolean(this._entityId(key)));
+    const stationActive = stationStops.length > 0;
+    const stopKeys = stationStops.join(",");
+
+    if (stationActive) {
+      return `<div class="quick-actions"><button class="action ready" type="button" disabled><span class="action-icon"><ha-icon icon="mdi:play"></ha-icon></span><strong>Уборка</strong><span class="action-sub">Недоступно</span></button><button class="action" type="button" disabled><span class="action-icon"><ha-icon icon="mdi:pause"></ha-icon></span><strong>Пауза</strong><span class="action-sub">Недоступно</span></button><button class="action primary stop" type="button" data-station-stop="${stopKeys}"><span class="action-icon"><ha-icon icon="mdi:stop"></ha-icon></span><strong>Стоп</strong><span class="action-sub">Прервать</span></button></div>`;
+    }
+    if (cleaning) {
+      return `<div class="quick-actions"><button class="action running" type="button" disabled><span class="action-icon"><ha-icon icon="mdi:robot-vacuum"></ha-icon></span><strong>Уборка</strong><span class="action-sub">Идёт</span></button><button class="action primary" type="button" data-action="pause" ${available ? "" : "disabled"}><span class="action-icon"><ha-icon icon="mdi:pause"></ha-icon></span><strong>Пауза</strong><span class="action-sub">Приостановить</span></button><button class="action primary stop" type="button" data-action="stop" ${available ? "" : "disabled"}><span class="action-icon"><ha-icon icon="mdi:stop"></ha-icon></span><strong>Стоп</strong><span class="action-sub">Завершить</span></button></div>`;
+    }
+    if (paused) {
+      return `<div class="quick-actions"><button class="action primary" type="button" data-action="start" ${available ? "" : "disabled"}><span class="action-icon"><ha-icon icon="mdi:play"></ha-icon></span><strong>Продолжить</strong><span class="action-sub">Уборку</span></button><button class="action" type="button" disabled><span class="action-icon"><ha-icon icon="mdi:pause"></ha-icon></span><strong>Пауза</strong><span class="action-sub">Активна</span></button><button class="action primary stop" type="button" data-action="stop" ${available ? "" : "disabled"}><span class="action-icon"><ha-icon icon="mdi:stop"></ha-icon></span><strong>Стоп</strong><span class="action-sub">Завершить</span></button></div>`;
+    }
+    if (returning) {
+      return `<div class="quick-actions"><button class="action ready" type="button" disabled><span class="action-icon"><ha-icon icon="mdi:play"></ha-icon></span><strong>Уборка</strong><span class="action-sub">Недоступно</span></button><button class="action" type="button" disabled><span class="action-icon"><ha-icon icon="mdi:pause"></ha-icon></span><strong>Пауза</strong><span class="action-sub">Недоступно</span></button><button class="action primary stop" type="button" data-action="stop" ${available ? "" : "disabled"}><span class="action-icon"><ha-icon icon="mdi:stop"></ha-icon></span><strong>Стоп</strong><span class="action-sub">Прервать</span></button></div>`;
+    }
+    const homeClass = docked ? "action primary running" : "action";
+    return `<div class="quick-actions"><button class="action ready" type="button" data-action="start" ${available ? "" : "disabled"}><span class="action-icon"><ha-icon icon="mdi:play"></ha-icon></span><strong>Уборка</strong><span class="action-sub">Smart</span></button><button class="action" type="button" disabled><span class="action-icon"><ha-icon icon="mdi:pause"></ha-icon></span><strong>Пауза</strong><span class="action-sub">Недоступно</span></button><button class="${homeClass}" type="button" data-action="home" ${available && !docked ? "" : "disabled"}><span class="action-icon"><ha-icon icon="${docked ? "mdi:home-check" : "mdi:home"}"></ha-icon></span><strong>Домой</strong><span class="action-sub">${docked ? "На базе ✓" : "На станцию"}</span></button></div>`;
   }
 
   _overview() {
     const snap = this._snapshot();
-    const robot = snap.unreliable ? "Нет данных" : this._label(ROBOT_LABELS, snap.robot, "Нет данных");
-    const stationRaw = snap.unreliable ? "Нет данных" : this._label(STATION_LABELS, snap.station, "Нет данных");
-    const station = snap.station === "idle" && !snap.unreliable ? "Готова" : stationRaw;
-    const robotContext = snap.unreliable ? "Нет данных" : snap.onDock === true ? "На базе" : snap.onDock === false ? "В работе" : "Позиция неизвестна";
-    const operation = snap.unreliable ? "Нет данных" : snap.stationOperations.length ? snap.stationOperations.map((x) => STATION_OPERATION_LABELS[x] || x).join(" · ") : snap.missingStationDps.length ? "Часть данных" : "В ожидании";
-    const asset = (name) => `${ASSET_ROOT}/status-${name}.jpg?v=${encodeURIComponent(UI_VERSION)}`;
-    return `<div>${this._hero()}${this._trustBanner(snap)}${this._quickActions()}<section class="card statuses-card"><div class="statuses-head"><h2>Статусы</h2><button type="button" data-view="station">Все <ha-icon icon="mdi:chevron-right"></ha-icon></button></div><div class="status-grid">
-      <button class="status-card good" data-more="robot_status" type="button"><img class="status-thumb" src="${asset("robot")}" alt="Робот" /><strong>Робот</strong><b>${escapeHtml(robot)}</b><span class="meta">${escapeHtml(robotContext)}</span></button>
-      <button class="status-card good" data-more="station_status" type="button"><img class="status-thumb" src="${asset("station")}" alt="Станция" /><strong>Станция</strong><b>${escapeHtml(station)}</b><span class="meta">${escapeHtml(operation)}</span></button>
-      <div class="status-card neutral"><img class="status-thumb" src="${asset("water")}" alt="Чистая вода" /><strong>Чистая вода</strong><b>Не контрол.</b><span class="meta">Датчика уровня нет</span></div>
-      <div class="status-card neutral"><img class="status-thumb" src="${asset("dustbin")}" alt="Пылесборник" /><strong>Пылесборник</strong><b>Не контрол.</b><span class="meta">Датчика заполнения нет</span></div>
-    </div></section></div>`;
+    return `<div>${this._hero()}${this._trustBanner(snap)}${this._quickActions()}</div>`;
   }
 
   _cleaning() {
@@ -694,6 +770,17 @@ class S8OmniPanel extends HTMLElement {
     this.shadowRoot.querySelector("[data-header-primary]")?.addEventListener("click", () => { if (this._detail) this._switchWorkspace("cleaning", null); else this._toggleMenu(); });
     this.shadowRoot.querySelector("[data-refresh]")?.addEventListener("click", async (event) => { const b = event.currentTarget; if (!this._entityId("refresh") || b.disabled) return; b.disabled = true; b.classList.add("loading"); try { await this._call("button","press","refresh"); } finally { setTimeout(() => { b.disabled = false; b.classList.remove("loading"); }, 700); } });
     this.shadowRoot.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => this._switchWorkspace(b.dataset.view, null)));
+    this.shadowRoot.querySelector("[data-zoom-out]")?.addEventListener("click", () => this._zoomBy(-0.10));
+    this.shadowRoot.querySelector("[data-zoom-in]")?.addEventListener("click", () => this._zoomBy(0.10));
+    this.shadowRoot.querySelector("[data-zoom-reset]")?.addEventListener("click", () => this._resetTransform(true));
+    this.shadowRoot.querySelectorAll("[data-station-stop]").forEach((b) => b.addEventListener("click", async () => {
+      if (b.disabled || !this._snapshot().connected) return;
+      const keys = String(b.dataset.stationStop || "").split(",").filter(Boolean);
+      if (!keys.length) return;
+      b.disabled = true;
+      try { for (const key of keys) await this._call("button", "press", key); }
+      finally { setTimeout(() => { b.disabled = false; }, 700); }
+    }));
     this.shadowRoot.querySelectorAll("[data-detail]").forEach((b) => b.addEventListener("click", () => this._switchWorkspace("cleaning", b.dataset.detail)));
     this.shadowRoot.querySelectorAll("[data-action]").forEach((b) => b.addEventListener("click", async () => { if (b.disabled || !this._snapshot().connected) return; b.disabled = true; try { if (b.dataset.action === "start") await this._call("vacuum","start","vacuum"); if (b.dataset.action === "pause") await this._call("vacuum","pause","vacuum"); if (b.dataset.action === "stop") await this._call("vacuum","stop","vacuum"); if (b.dataset.action === "home") await this._call("vacuum","return_to_base","vacuum"); } finally { setTimeout(() => { b.disabled = false; }, 650); } }));
     this.shadowRoot.querySelectorAll("[data-select-key]").forEach((b) => b.addEventListener("click", async () => { if (b.disabled || !this._snapshot().connected) return; await this._call("select","select_option",b.dataset.selectKey,{ option: b.dataset.selectValue }); }));

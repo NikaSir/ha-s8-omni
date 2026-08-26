@@ -8,7 +8,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.7.15",
+    "dashboard_version": "v0.7.16",
     "template": "NikaS Integration Panel Template v1.0",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -23,12 +23,20 @@
         "assets/status-robot.jpg",
         "assets/status-station.jpg",
         "assets/status-water.jpg",
-        "assets/status-dustbin.jpg"
+        "assets/status-dustbin.jpg",
+        "assets/hero-dock.webp",
+        "assets/hero-away.webp",
+        "assets/hero-dust.webp",
+        "assets/hero-wash.webp",
+        "assets/hero-dry.webp"
       ],
       "product_art_delivery": "integration_local_static_assets",
       "product_art_states": [
-        "clean",
-        "dock"
+        "dock",
+        "away",
+        "dust_collection",
+        "roller_cleaning",
+        "drying"
       ],
       "status_thumbnail_delivery": "integration_local_static_assets"
     },
@@ -57,7 +65,7 @@
         "diagnostics"
       ],
       "view_responsibilities": {
-        "overview": "approved_render_composition_with_live_verified_station_scene_frequent_actions_and_four_compact_statuses",
+        "overview": "state_aware_photographic_hero_resource_strip_kpis_and_actions_without_status_grid",
         "cleaning": "current_cleaning_metrics_key_profile_cards_and_separate_settings_drill_down",
         "station": "compact_station_state_summary_and_operations",
         "maintenance": "consumables_and_service",
@@ -80,7 +88,7 @@
       "card_proportions": "approved_reference_compact",
       "typography_scale": "compact_balanced_mobile",
       "overview_target": "approved_target_mockup_composition",
-      "overview_scene": "high_quality_static_product_art_plus_live_omni_status_overlay",
+      "overview_scene": "state_specific_local_webp_background_plus_live_text_and_resource_strip",
       "overview_scene_sources": [
         "robot_on_dock",
         "robot_status",
@@ -91,7 +99,7 @@
       ],
       "overview_scene_synthetic_levels": false,
       "overview_scene_duplicate_operation_tiles": false,
-      "status_layout": "four_compact_operational_cards_with_product_thumbnails",
+      "status_layout": "removed_from_overview_use_station_view_for_details",
       "status_sources": [
         "robot_status",
         "station_status",
@@ -113,7 +121,7 @@
       "compact_state_vocabulary": true,
       "hero_station_text_safe_zone": true,
       "split_words_inside_values": false,
-      "status_heading": "Статусы",
+      "status_heading": null,
       "touch_target_min_px": 44,
       "safe_area": true,
       "overview_scene_visual_depth": "approved_photographic_product_art",
@@ -136,7 +144,7 @@
         1.03
       ],
       "persistent_per_entry_and_view": true,
-      "permanent_zoom_controls": false
+      "permanent_zoom_controls": true
     }
   },
   "generated_ui": {
