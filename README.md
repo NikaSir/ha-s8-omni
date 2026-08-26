@@ -23,7 +23,7 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 
 `ha-s8-omni` owns its full appliance UI instead of exposing a loose collection of Lovelace entities as the primary experience.
 
-Dashboard **v0.7.15** follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2** and **NikaS Integration Panel Template v1.0**, with the primary acceptance viewport **iPhone Pro Max portrait**:
+Dashboard **v0.7.16** follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2** and **NikaS Integration Panel Template v1.0**, with the primary acceptance viewport **iPhone Pro Max portrait**:
 
 - symmetric Header: 52 px Menu/Back slot / centered title / 52 px Refresh, reduced to 48 px side slots on narrow mobile;
 - root views use an icon-only **Menu** button that opens the native Home Assistant sidebar; the **Настройки уборки** drill-down uses an explicit Back arrow to return to its parent Cleaning view;

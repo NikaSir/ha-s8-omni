@@ -32,6 +32,9 @@ This document records datapoints verified through Tuya Developer Platform, Local
 - **Start / continue:** `mode=smart` → `pause=false` → `power_go=true`.
 - **Pause:** `power_go=false` → `pause=true`.
 - **Return home:** `mode=chargego` → `pause=false` → `power_go=true`.
+- **Stop station dust collection:** `dp_dust=false` (stop-only public button).
+- **Stop mop self-cleaning:** `dp_roll_clean=false` (stop-only public button).
+- **Stop mop drying:** `dp_roll_hot=false` (stop-only public button).
 
 DP4 also carries the user-selected Clean Mode. Because `chargego` is a temporary service value used by return-to-base, the integration remembers the last non-service Clean Mode (`smart`, `selectroom`, `zone`, `pose`, or observed `part`) and exposes that remembered value through the Home Assistant `mode` select while docked. DP41 `work_mode` is a separate device work-type signal and is not used as the Clean Mode selector.
 
