@@ -49,14 +49,14 @@ class PanelDynamicActionsUiV0723Tests(unittest.TestCase):
         self.assertNotIn("button.disabled = false", self.bind)
 
     def test_runtime_and_manifest_versions_match(self) -> None:
-        self.assertIn('const UI_VERSION = "v0.7.23"', self.source)
+        self.assertIn('const UI_VERSION = "v0.7.24"', self.source)
         constants = (ROOT / "custom_components" / "s8_omni" / "const.py").read_text(encoding="utf-8")
         manifest = json.loads((ROOT / "custom_components" / "s8_omni" / "manifest.json").read_text(encoding="utf-8"))
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
-        self.assertIn('VERSION = "v1.00_b059"', constants)
-        self.assertIn('DASHBOARD_VERSION = "v0.7.23"', constants)
-        self.assertEqual("1.0.0b59", manifest["version"])
-        self.assertEqual("v0.7.23", panel["dashboard_version"])
+        self.assertIn('VERSION = "v1.00_b060"', constants)
+        self.assertIn('DASHBOARD_VERSION = "v0.7.24"', constants)
+        self.assertEqual("1.0.0b60", manifest["version"])
+        self.assertEqual("v0.7.24", panel["dashboard_version"])
 
 
 if __name__ == "__main__":

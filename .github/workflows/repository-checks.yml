@@ -58,7 +58,7 @@ jobs:
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.23"' "$production"
+          grep -q 'const UI_VERSION = "v0.7.24"' "$production"
           grep -q '_connectionIndicatorState()' "$production"
           grep -q 'class="connection-indicator' "$production"
           grep -q 'Данные актуальны' "$production"
@@ -122,7 +122,10 @@ jobs:
           grep -q 'Stop station dust collection' docs/PROTOCOL.md
           grep -Fq 'root.addEventListener("click", async (event) =>' "$production"
           grep -Fq 'const action = button.dataset.action;' "$production"
-          echo "S8 OMNI v0.7.23 fixed shell, delegated live actions and v1.6 contract OK"
+          grep -Fq '.state-hero .resource-strip{grid-row:3}' "$production"
+          grep -Fq '.state-hero .hero-metrics{grid-row:4' "$production"
+          if grep -Fq '.resource-strip{position:absolute' "$production"; then exit 1; fi
+          echo "S8 OMNI v0.7.24 fixed shell, separate resource row and v1.6 contract OK"
 
       - name: Validate panel manifest and state assets
         run: |
@@ -131,7 +134,7 @@ jobs:
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.23':
+          if panel.get('dashboard_version') != 'v0.7.24':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':

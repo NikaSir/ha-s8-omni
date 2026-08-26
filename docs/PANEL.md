@@ -6,7 +6,7 @@ The S8 OMNI integration owns and ships its canonical Home Assistant UI.
 
 - Panel: `/dashboard-s8-omni`
 
-Dashboard version: `v0.7.23`.
+Dashboard version: `v0.7.24`.
 
 The panel is registered through Home Assistant's custom-panel API. No Lovelace YAML, LocalTuya command, cloud request or direct Tuya DP write is required by the frontend.
 
