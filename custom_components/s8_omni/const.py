@@ -1,5 +1,5 @@
 DOMAIN = "s8_omni"
-VERSION = "v1.00_b049"
+VERSION = "v1.00_b050"
 DASHBOARD_VERSION = "v0.7.16"
 
 PANEL_ID = "s8_omni"

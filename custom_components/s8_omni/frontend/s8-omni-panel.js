@@ -555,7 +555,7 @@ class S8OmniPanel extends HTMLElement {
       .state-hero{padding:14px;overflow:hidden}
       .state-hero .hero-top{margin-bottom:10px}
       .state-hero h1{font-size:32px}
-      .state-scene{position:relative;height:330px;border-radius:22px;overflow:hidden;background:#f4f2ee;border:1px solid color-mix(in srgb,var(--divider-color) 60%,transparent);box-shadow:0 8px 24px rgba(20,42,52,.06)}
+      .state-scene{position:relative;height:388px;border-radius:22px;overflow:hidden;background:#f4f2ee;border:1px solid color-mix(in srgb,var(--divider-color) 60%,transparent);box-shadow:0 8px 24px rgba(20,42,52,.06)}
       .state-image{display:block;width:100%;height:100%;object-fit:cover;object-position:center;transition:opacity .18s ease,filter .18s ease}
       .state-scene.muted .state-image{opacity:.55;filter:grayscale(.28)}
       .resource-strip{position:absolute;left:10px;right:10px;bottom:10px;z-index:3;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch;background:rgba(255,255,255,.94);border:1px solid rgba(80,96,104,.10);border-radius:17px;box-shadow:0 8px 22px rgba(16,34,44,.08);backdrop-filter:blur(14px) saturate(120%);overflow:hidden}
@@ -567,7 +567,7 @@ class S8OmniPanel extends HTMLElement {
       .state-hero.operation h1{color:var(--primary-color)}.state-hero.warm h1{color:#c56b22}.state-hero.error h1{color:var(--error-color,#db4437)}
       .action.primary .action-icon ha-icon,.action.primary.running .action-icon ha-icon{color:currentColor!important;opacity:1!important}
       .action.primary.running:disabled{opacity:1}.action.primary.running:disabled .action-icon{opacity:1}
-      @media(max-width:430px){.state-scene{height:318px}.resource-strip{left:7px;right:7px;bottom:7px}.resource-chip{grid-template-columns:29px minmax(0,1fr);gap:4px;padding:7px 5px}.resource-chip ha-icon{--mdc-icon-size:22px}.resource-chip strong{font-size:8.8px}.resource-chip small{font-size:8.2px}.state-hero h1{font-size:30px}}
+      @media(max-width:430px){.state-scene{height:376px}.resource-strip{left:7px;right:7px;bottom:7px}.resource-chip{grid-template-columns:29px minmax(0,1fr);gap:4px;padding:7px 5px}.resource-chip ha-icon{--mdc-icon-size:22px}.resource-chip strong{font-size:8.8px}.resource-chip small{font-size:8.2px}.state-hero h1{font-size:30px}}
       /* v0.7.15 stable iOS gesture canvas */
       :host{height:100vh;height:100dvh;overflow:hidden}
       main{height:100vh;height:100dvh;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;padding-bottom:0}
@@ -671,7 +671,7 @@ class S8OmniPanel extends HTMLElement {
       return `<div class="quick-actions"><button class="action ready" type="button" disabled><span class="action-icon"><ha-icon icon="mdi:play"></ha-icon></span><strong>Уборка</strong><span class="action-sub">Недоступно</span></button><button class="action" type="button" disabled><span class="action-icon"><ha-icon icon="mdi:pause"></ha-icon></span><strong>Пауза</strong><span class="action-sub">Недоступно</span></button><button class="action primary stop" type="button" data-action="stop" ${available ? "" : "disabled"}><span class="action-icon"><ha-icon icon="mdi:stop"></ha-icon></span><strong>Стоп</strong><span class="action-sub">Прервать</span></button></div>`;
     }
     const homeClass = docked ? "action primary running" : "action";
-    return `<div class="quick-actions"><button class="action ready" type="button" data-action="start" ${available ? "" : "disabled"}><span class="action-icon"><ha-icon icon="mdi:play"></ha-icon></span><strong>Уборка</strong><span class="action-sub">Smart</span></button><button class="action" type="button" disabled><span class="action-icon"><ha-icon icon="mdi:pause"></ha-icon></span><strong>Пауза</strong><span class="action-sub">Недоступно</span></button><button class="${homeClass}" type="button" data-action="home" ${available && !docked ? "" : "disabled"}><span class="action-icon"><ha-icon icon="${docked ? "mdi:home-check" : "mdi:home"}"></ha-icon></span><strong>Домой</strong><span class="action-sub">${docked ? "На базе ✓" : "На станцию"}</span></button></div>`;
+    return `<div class="quick-actions"><button class="action ready" type="button" data-action="start" ${available ? "" : "disabled"}><span class="action-icon"><ha-icon icon="mdi:play"></ha-icon></span><strong>Уборка</strong><span class="action-sub">Smart</span></button><button class="action" type="button" disabled><span class="action-icon"><ha-icon icon="mdi:pause"></ha-icon></span><strong>Пауза</strong><span class="action-sub">Недоступно</span></button><button class="${homeClass}" type="button" data-action="home" ${available && !docked ? "" : "disabled"}><span class="action-icon"><ha-icon icon="${docked ? "mdi:home" : "mdi:home"}"></ha-icon></span><strong>Домой</strong><span class="action-sub">${docked ? "На базе ✓" : "На станцию"}</span></button></div>`;
   }
 
   _overview() {
