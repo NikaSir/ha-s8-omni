@@ -55,7 +55,7 @@ jobs:
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.16"' "$production"
+          grep -q 'const UI_VERSION = "v0.7.17"' "$production"
           grep -q 'const HERO_IMAGES = {' "$production"
           grep -q 'hero-dock.webp' "$production"
           grep -q 'hero-away.webp' "$production"
@@ -93,7 +93,7 @@ jobs:
           grep -q 'async_set_dp(self.desc.dp, False)' custom_components/s8_omni/button.py
           if grep -q 'async_set_dp(self.desc.dp, True)' custom_components/s8_omni/button.py; then exit 1; fi
           grep -q 'Stop station dust collection' docs/PROTOCOL.md
-          echo "S8 OMNI v0.7.16 state-aware Hero contract OK"
+          echo "S8 OMNI v0.7.17 state-aware Hero contract OK"
 
       - name: Validate panel manifest and state assets
         run: |
@@ -102,7 +102,7 @@ jobs:
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.16':
+          if panel.get('dashboard_version') != 'v0.7.17':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':
