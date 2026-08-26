@@ -1,0 +1,62 @@
+name: Apply service layout b052
+
+on:
+  push:
+    branches:
+      - fix/service-layout-b052
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/service-layout-b052
+          fetch-depth: 0
+      - name: Patch service page and bump versions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          panel = Path('custom_components/s8_omni/frontend/s8-omni-panel.js')
+          text = panel.read_text(encoding='utf-8')
+          text = text.replace('const UI_VERSION = "v0.7.16";', 'const UI_VERSION = "v0.7.17";', 1)
+
+          old = '<div class="info-row" data-more="fault"><span>Ошибка</span><strong>${escapeHtml(snap.connected ? this._formatEntity("fault","—") : "—")}</strong></div><button class="toggle-row" type="button" data-toggle="child_lock" ${childUsable ? "" : "disabled"}><span><strong>Блокировка от детей</strong><small>Защита кнопок робота</small></span><span class="toggle ${childUsable && child?.state === "on" ? "on" : ""}"></span></button>'
+          new = '<div class="info-row" data-more="fault"><span>Состояние</span><strong>${escapeHtml(snap.connected ? (String(this._stateValue("fault","—")) === "0" ? "Ошибок нет" : `Ошибка ${this._formatEntity("fault","—")}`) : "—")}</strong></div><button class="toggle-row service-toggle-row" type="button" data-toggle="child_lock" ${childUsable ? "" : "disabled"}><span class="toggle-copy"><strong>Блокировка от детей</strong><small>Защита кнопок робота</small></span><span class="toggle ${childUsable && child?.state === "on" ? "on" : ""}"></span></button>'
+          if old not in text:
+              raise SystemExit('maintenance markup anchor not found')
+          text = text.replace(old, new, 1)
+
+          marker = '      @keyframes spin{to{transform:rotate(360deg)}}'
+          css = '''      .service-toggle-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:18px;min-height:76px;padding-top:12px;padding-bottom:12px}\n      .service-toggle-row .toggle-copy{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-width:0;gap:4px;text-align:left}\n      .service-toggle-row .toggle-copy strong{display:block;font-size:15px;line-height:1.14;font-weight:760;color:var(--primary-text-color)}\n      .service-toggle-row .toggle-copy small{display:block;font-size:12px;line-height:1.18;color:var(--secondary-text-color);white-space:normal}\n      .service-toggle-row .toggle{justify-self:end;align-self:center;flex:0 0 auto}\n      @media(max-width:430px){.service-toggle-row{column-gap:14px;min-height:72px}.service-toggle-row .toggle-copy strong{font-size:14.5px}.service-toggle-row .toggle-copy small{font-size:11.5px}}\n'''
+          if marker not in text:
+              raise SystemExit('css marker not found')
+          text = text.replace(marker, css + marker, 1)
+          panel.write_text(text, encoding='utf-8')
+
+          const = Path('custom_components/s8_omni/const.py')
+          c = const.read_text(encoding='utf-8')
+          c = c.replace('VERSION = "v1.00_b051"', 'VERSION = "v1.00_b052"', 1)
+          c = c.replace('DASHBOARD_VERSION = "v0.7.16"', 'DASHBOARD_VERSION = "v0.7.17"', 1)
+          const.write_text(c, encoding='utf-8')
+
+          manifest = Path('custom_components/s8_omni/manifest.json')
+          m = manifest.read_text(encoding='utf-8').replace('"version": "1.0.0b51"', '"version": "1.0.0b52"', 1)
+          manifest.write_text(m, encoding='utf-8')
+          PY
+      - name: Commit generated patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add custom_components/s8_omni/frontend/s8-omni-panel.js custom_components/s8_omni/const.py custom_components/s8_omni/manifest.json
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "ui: polish service protection layout"
+            git push origin HEAD:fix/service-layout-b052
+          fi
