@@ -39,6 +39,9 @@ jobs:
       - name: Validate frontend JavaScript
         run: node --check custom_components/s8_omni/frontend/s8-omni-panel.js
 
+      - name: Run panel contract tests
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+
       - name: Enforce state-aware Overview and gesture contract
         shell: bash
         run: |
@@ -55,7 +58,7 @@ jobs:
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.22"' "$production"
+          grep -q 'const UI_VERSION = "v0.7.23"' "$production"
           grep -q '_connectionIndicatorState()' "$production"
           grep -q 'class="connection-indicator' "$production"
           grep -q 'Данные актуальны' "$production"
@@ -83,7 +86,8 @@ jobs:
           grep -q 'stop_roller_cleaning' "$production"
           grep -q 'stop_roller_drying' "$production"
           grep -q 'data-station-stop' "$production"
-          grep -q 'vacuum","stop","vacuum' "$production"
+          grep -Fq 'action === "stop" ? "stop"' "$production"
+          grep -Fq 'this._call("vacuum", service, "vacuum")' "$production"
           if grep -q 'data-zoom-out\|data-zoom-reset\|data-zoom-in\|zoom-controls' "$production"; then exit 1; fi
           grep -q '_bindWorkspaceGestures()' "$production"
           grep -q 'translate3d' "$production"
@@ -116,7 +120,9 @@ jobs:
           grep -q 'async_set_dp(self.desc.dp, False)' custom_components/s8_omni/button.py
           if grep -q 'async_set_dp(self.desc.dp, True)' custom_components/s8_omni/button.py; then exit 1; fi
           grep -q 'Stop station dust collection' docs/PROTOCOL.md
-          echo "S8 OMNI v0.7.22 fixed mobile shell, visible Overview actions, stable DOM and v1.5 shell contract OK"
+          grep -Fq 'root.addEventListener("click", async (event) =>' "$production"
+          grep -Fq 'const action = button.dataset.action;' "$production"
+          echo "S8 OMNI v0.7.23 fixed shell, delegated live actions and v1.6 contract OK"
 
       - name: Validate panel manifest and state assets
         run: |
@@ -125,7 +131,7 @@ jobs:
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.22':
+          if panel.get('dashboard_version') != 'v0.7.23':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':
