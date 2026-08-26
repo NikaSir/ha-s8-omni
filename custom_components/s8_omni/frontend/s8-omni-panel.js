@@ -71,6 +71,8 @@ class S8OmniPanel extends HTMLElement {
     this._suppressClicksUntil = 0;
     this._scaleToastTimer = null;
     this._resizeBound = false;
+    this._nativeScrollPositions = new Map();
+    this._pendingScrollTop = null;
     this._onRealViewportResize = () => requestAnimationFrame(() => this._clampAndApplyTransform(false));
   }
 
@@ -97,6 +99,10 @@ class S8OmniPanel extends HTMLElement {
   _queueRender() {
     if (this._gesturePointers?.size) { this._renderDeferred = true; return; }
     if (this._renderQueued) return;
+    const currentViewport = this.shadowRoot?.querySelector("[data-work-viewport]");
+    if (currentViewport && this._viewTransform.scale <= 1) {
+      this._nativeScrollPositions.set(this._transformStorageKey(), currentViewport.scrollTop);
+    }
     this._renderQueued = true;
     requestAnimationFrame(() => { this._renderQueued = false; this._render(); });
   }
@@ -272,7 +278,8 @@ class S8OmniPanel extends HTMLElement {
 
   _workspace(content) {
     this._restoreTransform(false);
-    return `<div class="work-viewport" data-work-viewport><div class="work-canvas" data-work-canvas style="transform:${this._transformCss()}"><div class="content">${content}</div></div><div class="scale-toast" data-scale-toast aria-live="polite"></div></div>`;
+    const mode = this._viewTransform.scale > 1 ? "is-zoomed" : "is-native";
+    return `<div class="work-viewport ${mode}" data-work-viewport><div class="work-canvas" data-work-canvas style="transform:${this._transformCss()}"><div class="content">${content}</div></div><div class="scale-toast" data-scale-toast aria-live="polite"></div></div>`;
   }
 
   _clampTransform(state = this._viewTransform) {
@@ -280,6 +287,7 @@ class S8OmniPanel extends HTMLElement {
     const canvas = this.shadowRoot?.querySelector("[data-work-canvas]");
     if (!viewport || !canvas) return state;
     const scale = Math.max(VIEW_SCALE_MIN, Math.min(VIEW_SCALE_MAX, Number(state.scale) || 1));
+    if (scale <= 1) return { scale, x: 0, y: 0 };
     const naturalWidth = Math.max(canvas.offsetWidth, 1);
     const naturalHeight = Math.max(canvas.scrollHeight, canvas.offsetHeight, 1);
     const minX = Math.min(0, viewport.clientWidth - naturalWidth * scale);
@@ -296,6 +304,11 @@ class S8OmniPanel extends HTMLElement {
     if (!canvas) return;
     this._viewTransform = this._clampTransform(this._viewTransform);
     canvas.style.transform = this._transformCss();
+    const viewport = this.shadowRoot?.querySelector("[data-work-viewport]");
+    if (viewport) {
+      viewport.classList.toggle("is-zoomed", this._viewTransform.scale > 1);
+      viewport.classList.toggle("is-native", this._viewTransform.scale <= 1);
+    }
     if (persist) this._saveTransform();
   }
 
@@ -312,6 +325,9 @@ class S8OmniPanel extends HTMLElement {
   _resetTransform(showToast = true) {
     this._viewTransform = { scale: 1, x: 0, y: 0 };
     this._clampAndApplyTransform(true);
+    const viewport = this.shadowRoot?.querySelector("[data-work-viewport]");
+    if (viewport) viewport.scrollTop = 0;
+    this._nativeScrollPositions.set(this._transformStorageKey(), 0);
     if (showToast) this._showScaleToast("Масштаб 100%");
   }
 
@@ -325,7 +341,18 @@ class S8OmniPanel extends HTMLElement {
     this._detail = detail;
     this._viewTransformKey = null;
     this._restoreTransform(true);
+    this._viewTransform = { scale: this._viewTransform.scale, x: 0, y: 0 };
+    this._pendingScrollTop = 0;
+    this._nativeScrollPositions.set(this._transformStorageKey(), 0);
     this._queueRender();
+  }
+
+  _restoreNativeScroll() {
+    const viewport = this.shadowRoot?.querySelector("[data-work-viewport]");
+    if (!viewport || this._viewTransform.scale > 1) return;
+    const saved = this._pendingScrollTop ?? this._nativeScrollPositions.get(this._transformStorageKey()) ?? 0;
+    this._pendingScrollTop = null;
+    viewport.scrollTop = Math.max(0, saved);
   }
 
   _bindWorkspaceGestures() {
@@ -342,6 +369,8 @@ class S8OmniPanel extends HTMLElement {
       const pts = [...this._gesturePointers.values()].slice(0, 2);
       if (pts.length < 2) return;
       const mid = midpoint(pts[0], pts[1]);
+      const nativeScrollTop = this._viewTransform.scale <= 1 ? viewport.scrollTop : 0;
+      if (nativeScrollTop) viewport.scrollTop = 0;
       this._gestureStart = {
         kind: "pinch",
         distance: Math.max(distance(pts[0], pts[1]), 1),
@@ -350,7 +379,7 @@ class S8OmniPanel extends HTMLElement {
         x: this._viewTransform.x,
         y: this._viewTransform.y,
         contentX: (mid.x - this._viewTransform.x) / this._viewTransform.scale,
-        contentY: (mid.y - this._viewTransform.y) / this._viewTransform.scale,
+        contentY: (mid.y + nativeScrollTop - this._viewTransform.y) / this._viewTransform.scale,
         startedAt: performance.now(),
       };
       this._hadMultiTouch = true;
@@ -363,12 +392,19 @@ class S8OmniPanel extends HTMLElement {
       if (event.target?.closest?.("input,select")) return;
       const p = point(event);
       this._gesturePointers.set(event.pointerId, { ...p, startX: p.x, startY: p.y });
-      try { viewport.setPointerCapture(event.pointerId); } catch (_err) {}
       if (this._gesturePointers.size === 1) {
-        this._gestureStart = { kind: "pan", id: event.pointerId, pointerX: p.x, pointerY: p.y, x: this._viewTransform.x, y: this._viewTransform.y, startedAt: performance.now() };
+        if (this._viewTransform.scale > 1) {
+          try { viewport.setPointerCapture(event.pointerId); } catch (_err) {}
+          this._gestureStart = { kind: "pan", id: event.pointerId, pointerX: p.x, pointerY: p.y, x: this._viewTransform.x, y: this._viewTransform.y, startedAt: performance.now() };
+        } else {
+          this._gestureStart = { kind: "native", id: event.pointerId, startedAt: performance.now() };
+        }
         this._gestureMoved = false;
         this._hadMultiTouch = false;
       } else if (this._gesturePointers.size === 2) {
+        for (const id of this._gesturePointers.keys()) {
+          try { viewport.setPointerCapture(id); } catch (_err) {}
+        }
         startPinch();
       }
     });
@@ -391,7 +427,14 @@ class S8OmniPanel extends HTMLElement {
         event.preventDefault();
         return;
       }
-      if (this._gestureStart?.kind === "pan" && this._gestureStart.id === event.pointerId) {
+      if (this._gestureStart?.kind === "native") {
+        if (Math.hypot(p.x - previous.startX, p.y - previous.startY) > 4) {
+          this._gestureMoved = true;
+          this._cancelLongPresses();
+        }
+        return;
+      }
+      if (this._viewTransform.scale > 1 && this._gestureStart?.kind === "pan" && this._gestureStart.id === event.pointerId) {
         const dx = p.x - this._gestureStart.pointerX, dy = p.y - this._gestureStart.pointerY;
         if (Math.hypot(dx, dy) > 4) {
           this._gestureMoved = true;
@@ -411,7 +454,9 @@ class S8OmniPanel extends HTMLElement {
       if (this._gesturePointers.size === 1 && this._hadMultiTouch) {
         const [remaining] = this._gesturePointers.entries();
         const [id, p] = remaining;
-        this._gestureStart = { kind: "pan", id, pointerX: p.x, pointerY: p.y, x: this._viewTransform.x, y: this._viewTransform.y, startedAt: performance.now() };
+        this._gestureStart = this._viewTransform.scale > 1
+          ? { kind: "pan", id, pointerX: p.x, pointerY: p.y, x: this._viewTransform.x, y: this._viewTransform.y, startedAt: performance.now() }
+          : { kind: "native", id, startedAt: performance.now() };
         return;
       }
       if (this._gesturePointers.size) return;
@@ -429,7 +474,7 @@ class S8OmniPanel extends HTMLElement {
           this._suppressClicksUntil = Date.now() + 320;
         }
       } else {
-        if (this._viewTransform.scale >= VIEW_SCALE_SNAP_MIN && this._viewTransform.scale <= VIEW_SCALE_SNAP_MAX) {
+        if (wasMulti && this._viewTransform.scale >= VIEW_SCALE_SNAP_MIN && this._viewTransform.scale <= VIEW_SCALE_SNAP_MAX) {
           this._viewTransform.scale = 1;
           this._clampAndApplyTransform(false);
           this._showScaleToast("Масштаб 100%");
@@ -450,7 +495,13 @@ class S8OmniPanel extends HTMLElement {
         event.stopImmediatePropagation();
       }
     }, true);
+    viewport.addEventListener("scroll", () => {
+      if (this._viewTransform.scale <= 1) {
+        this._nativeScrollPositions.set(this._transformStorageKey(), viewport.scrollTop);
+      }
+    }, { passive: true });
     viewport.addEventListener("wheel", (event) => {
+      if (this._viewTransform.scale <= 1) return;
       this._viewTransform = this._clampTransform({ scale: this._viewTransform.scale, x: this._viewTransform.x - event.deltaX, y: this._viewTransform.y - event.deltaY });
       this._clampAndApplyTransform(true);
       event.preventDefault();
@@ -586,6 +637,27 @@ class S8OmniPanel extends HTMLElement {
       .service-toggle-row .toggle-copy small{display:block;font-size:12px;line-height:1.18;color:var(--secondary-text-color);white-space:normal}
       .service-toggle-row .toggle{justify-self:end;align-self:center;flex:0 0 auto}
       @media(max-width:430px){.service-toggle-row{column-gap:14px;min-height:72px}.service-toggle-row .toggle-copy strong{font-size:14.5px}.service-toggle-row .toggle-copy small{font-size:11.5px}}
+      /* v0.7.17: NIKAS Specialized Panel UI Standard v1.5 shell. */
+      .app-header{grid-template-columns:52px minmax(0,1fr) 52px;gap:8px;min-height:calc(62px + env(safe-area-inset-top));padding:env(safe-area-inset-top) max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left))}
+      .header-action{width:44px;height:44px;justify-self:center;border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:16px;background:var(--card-background-color);box-shadow:0 3px 12px rgba(0,0,0,.07);color:var(--primary-text-color)}
+      .header-action.refresh{color:var(--primary-color)}.header-action ha-icon{--mdc-icon-size:25px}
+      .header-title strong{font-size:21px;font-weight:800}.header-title span{font-size:12px;font-weight:560;color:var(--secondary-text-color)}
+      .work-viewport.is-native{overflow-x:hidden;overflow-y:auto;overscroll-behavior-x:none;overscroll-behavior-y:none;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+      .work-viewport.is-native .work-canvas{position:relative;left:auto;top:auto;min-height:100%;touch-action:pan-y;-webkit-user-select:auto;user-select:auto;will-change:auto}
+      .work-viewport.is-zoomed{overflow:hidden;overscroll-behavior:none;touch-action:none}
+      .work-viewport.is-zoomed .work-canvas{position:absolute;left:0;top:0;touch-action:none;-webkit-user-select:none;user-select:none;will-change:transform}
+      nav{background:color-mix(in srgb,var(--card-background-color) 97%,transparent);border-top:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);box-shadow:0 -3px 14px rgba(0,0,0,.05)}
+      nav button{min-height:52px;border-radius:14px;color:var(--secondary-text-color)}
+      nav button ha-icon{--mdc-icon-size:28px}nav button span{font-size:12px;font-weight:700;white-space:nowrap}
+      nav button.active{background:color-mix(in srgb,var(--primary-color) 11%,transparent);color:var(--primary-color);box-shadow:none}
+      .inline-back{display:inline-flex;align-items:center;gap:7px;min-height:44px;margin:0 0 10px;padding:0 13px;border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:14px;background:var(--card-background-color);color:var(--primary-color);font-weight:700}
+      .inline-back ha-icon{--mdc-icon-size:22px}
+      @media(max-width:520px){
+        .app-header{grid-template-columns:48px minmax(0,1fr) 48px;min-height:calc(60px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top)}
+        .header-action{width:44px;height:44px;border-radius:16px}.header-action ha-icon{--mdc-icon-size:25px}
+        .header-title strong{font-size:21px}.header-title span{font-size:12px}
+        nav button{min-height:52px;border-radius:14px}nav button ha-icon{--mdc-icon-size:28px}
+      }
       @keyframes spin{to{transform:rotate(360deg)}}
       @media(max-width:360px){.hero-top{grid-template-columns:1fr}.connection-badge{justify-self:start}.status-grid{grid-template-columns:repeat(2,1fr)}.segments.four{grid-template-columns:repeat(2,1fr)}.diagnostic-strip{grid-template-columns:1fr}.omni-legend{width:30%}.omni-art{width:69%}}
       @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
@@ -594,7 +666,7 @@ class S8OmniPanel extends HTMLElement {
 
   _header() {
     const detail = this._detail === "cleaning-settings";
-    return `<header class="app-header"><button class="header-action" type="button" data-header-primary aria-label="${detail ? "Назад" : "Меню"}"><ha-icon icon="${detail ? "mdi:arrow-left" : "mdi:menu"}"></ha-icon></button><div class="header-title"><strong>${detail ? "Настройки уборки" : "S8 OMNI"}</strong><span>${detail ? "S8 OMNI · Уборка" : `Робот-пылесос · UI ${UI_VERSION}`}</span></div><button class="header-action refresh" type="button" data-refresh aria-label="Обновить" ${this._entityId("refresh") ? "" : "disabled"}><ha-icon icon="mdi:refresh"></ha-icon></button></header>`;
+    return `<header class="app-header"><button class="header-action" type="button" data-header-primary aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button><div class="header-title"><strong>${detail ? "Настройки уборки" : "S8 OMNI"}</strong><span>${detail ? "S8 OMNI · Уборка" : `Робот-пылесос · UI ${UI_VERSION}`}</span></div><button class="header-action refresh" type="button" data-refresh aria-label="Обновить" ${this._entityId("refresh") ? "" : "disabled"}><ha-icon icon="mdi:refresh"></ha-icon></button></header>`;
   }
 
   _trustBanner(snap) {
@@ -735,7 +807,9 @@ class S8OmniPanel extends HTMLElement {
   }
 
   _body() {
-    if (this._detail === "cleaning-settings") return this._cleaningSettings();
+    if (this._detail === "cleaning-settings") {
+      return `<button class="inline-back" type="button" data-detail-back><ha-icon icon="mdi:arrow-left"></ha-icon><span>Уборка</span></button>${this._cleaningSettings()}`;
+    }
     if (this._view === "cleaning") return this._cleaning();
     if (this._view === "station") return this._station();
     if (this._view === "maintenance") return this._maintenance();
@@ -749,7 +823,8 @@ class S8OmniPanel extends HTMLElement {
   }
 
   _bind() {
-    this.shadowRoot.querySelector("[data-header-primary]")?.addEventListener("click", () => { if (this._detail) this._switchWorkspace("cleaning", null); else this._toggleMenu(); });
+    this.shadowRoot.querySelector("[data-header-primary]")?.addEventListener("click", () => this._toggleMenu());
+    this.shadowRoot.querySelector("[data-detail-back]")?.addEventListener("click", () => this._switchWorkspace("cleaning", null));
     this.shadowRoot.querySelector("[data-refresh]")?.addEventListener("click", async (event) => { const b = event.currentTarget; if (!this._entityId("refresh") || b.disabled) return; b.disabled = true; b.classList.add("loading"); try { await this._call("button","press","refresh"); } finally { setTimeout(() => { b.disabled = false; b.classList.remove("loading"); }, 700); } });
     this.shadowRoot.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => this._switchWorkspace(b.dataset.view, null)));
     this.shadowRoot.querySelectorAll("[data-station-stop]").forEach((b) => b.addEventListener("click", async () => {
@@ -769,17 +844,25 @@ class S8OmniPanel extends HTMLElement {
     this._bindWorkspaceGestures();
   }
 
+  _finishRender() {
+    this._bind();
+    requestAnimationFrame(() => {
+      this._clampAndApplyTransform(false);
+      this._restoreNativeScroll();
+    });
+  }
+
   _render() {
     if (!this.shadowRoot) return;
     this._restoreTransform(false);
     if (!this._hass || !this._panel || this._registryLoading || !this._registryLoaded) {
-      this.shadowRoot.innerHTML = `<style>${this._styles()}</style><main>${this._header()}${this._workspace(`<div class="loading"><div><ha-icon icon="mdi:robot-vacuum"></ha-icon><p>Подключаем интерфейс…</p></div></div>`)}${this._nav()}</main>`; this._bind(); return;
+      this.shadowRoot.innerHTML = `<style>${this._styles()}</style><main>${this._header()}${this._workspace(`<div class="loading"><div><ha-icon icon="mdi:robot-vacuum"></ha-icon><p>Подключаем интерфейс…</p></div></div>`)}${this._nav()}</main>`; this._finishRender(); return;
     }
     if (this._registryError) {
-      this.shadowRoot.innerHTML = `<style>${this._styles()}</style><main>${this._header()}${this._workspace(`<div class="trust-banner"><ha-icon icon="mdi:alert-circle-outline"></ha-icon><div><strong>Не удалось загрузить реестр сущностей</strong><span>${escapeHtml(this._registryError)}</span></div></div>`)}${this._nav()}</main>`; this._bind(); return;
+      this.shadowRoot.innerHTML = `<style>${this._styles()}</style><main>${this._header()}${this._workspace(`<div class="trust-banner"><ha-icon icon="mdi:alert-circle-outline"></ha-icon><div><strong>Не удалось загрузить реестр сущностей</strong><span>${escapeHtml(this._registryError)}</span></div></div>`)}${this._nav()}</main>`; this._finishRender(); return;
     }
     this.shadowRoot.innerHTML = `<style>${this._styles()}</style><main>${this._header()}${this._workspace(this._body())}${this._nav()}</main>`;
-    this._bind();
+    this._finishRender();
   }
 }
 
