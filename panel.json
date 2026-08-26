@@ -144,7 +144,7 @@
         1.03
       ],
       "persistent_per_entry_and_view": true,
-      "permanent_zoom_controls": true
+      "permanent_zoom_controls": false
     }
   },
   "generated_ui": {
