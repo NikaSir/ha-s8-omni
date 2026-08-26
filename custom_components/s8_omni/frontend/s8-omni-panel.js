@@ -742,7 +742,7 @@ class S8OmniPanel extends HTMLElement {
       .state-hero.operation h1{color:var(--primary-color)}.state-hero.warm h1{color:#c56b22}.state-hero.error h1{color:var(--error-color,#db4437)}
       .action.primary .action-icon ha-icon,.action.primary.running .action-icon ha-icon{color:currentColor!important;opacity:1!important}
       .action.primary.running:disabled{opacity:1}.action.primary.running:disabled .action-icon{opacity:1}
-      @media(max-width:430px){.state-scene{height:352px}.resource-strip{left:7px;right:7px;bottom:7px}.resource-chip{grid-template-columns:30px minmax(0,1fr);gap:4px;padding:7px 4px}.resource-chip ha-icon{--mdc-icon-size:23px}.resource-chip strong{font-size:11.7px;line-height:1.04}.resource-chip small{font-size:10.6px;line-height:1.04}.state-hero h1{font-size:30px}}
+      @media(max-width:430px){.state-scene{height:320px}.resource-strip{left:7px;right:7px;bottom:7px}.resource-chip{grid-template-columns:30px minmax(0,1fr);gap:4px;padding:7px 4px}.resource-chip ha-icon{--mdc-icon-size:23px}.resource-chip strong{font-size:11.7px;line-height:1.04}.resource-chip small{font-size:10.6px;line-height:1.04}.state-hero h1{font-size:30px}}
       /* v0.7.15 stable iOS gesture canvas */
       :host{height:100vh;height:100dvh;min-height:0;max-height:100dvh;overflow:hidden;overscroll-behavior:none}
       main{height:100%;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;overscroll-behavior:none;padding-bottom:0}

@@ -94,7 +94,7 @@ jobs:
           grep -Fq 'if (Math.abs(scale - 1) < 0.0001) return "none";' "$production"
           grep -Fq ':host{height:100vh;height:100dvh;min-height:0;max-height:100dvh' "$production"
           grep -Fq 'main{height:100%;min-height:0;display:grid' "$production"
-          grep -Fq '@media(max-width:430px){.state-scene{height:352px}' "$production"
+          grep -Fq '@media(max-width:430px){.state-scene{height:320px}' "$production"
           if grep -q 'min-height:100vh' "$production"; then exit 1; fi
           if grep -q 'scrollLeft' "$production"; then exit 1; fi
           grep -q 'scrollTop' "$production"
@@ -159,7 +159,7 @@ jobs:
               'identity_transform_at_100': 'none',
               'defer_rerender_during_native_scroll': True,
               'viewport_height_owner': 'host',
-              'mobile_overview_scene_height_px': 352,
+              'mobile_overview_scene_height_px': 320,
           }
           for key, value in required.items():
               if transform.get(key) != value:
