@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.16";
+const UI_VERSION = "v0.7.17";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.72;
 const VIEW_SCALE_MAX = 2.20;
@@ -580,6 +580,12 @@ class S8OmniPanel extends HTMLElement {
       .scale-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
       .action.stop{color:var(--error-color,#db4437);border-color:color-mix(in srgb,var(--error-color,#db4437) 28%,var(--divider-color));background:color-mix(in srgb,var(--error-color,#db4437) 6%,var(--card-background-color))}
       .action.stop .action-icon{background:color-mix(in srgb,var(--error-color,#db4437) 12%,transparent)}
+      .service-toggle-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:18px;min-height:76px;padding-top:12px;padding-bottom:12px}
+      .service-toggle-row .toggle-copy{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-width:0;gap:4px;text-align:left}
+      .service-toggle-row .toggle-copy strong{display:block;font-size:15px;line-height:1.14;font-weight:760;color:var(--primary-text-color)}
+      .service-toggle-row .toggle-copy small{display:block;font-size:12px;line-height:1.18;color:var(--secondary-text-color);white-space:normal}
+      .service-toggle-row .toggle{justify-self:end;align-self:center;flex:0 0 auto}
+      @media(max-width:430px){.service-toggle-row{column-gap:14px;min-height:72px}.service-toggle-row .toggle-copy strong{font-size:14.5px}.service-toggle-row .toggle-copy small{font-size:11.5px}}
       @keyframes spin{to{transform:rotate(360deg)}}
       @media(max-width:360px){.hero-top{grid-template-columns:1fr}.connection-badge{justify-self:start}.status-grid{grid-template-columns:repeat(2,1fr)}.segments.four{grid-template-columns:repeat(2,1fr)}.diagnostic-strip{grid-template-columns:1fr}.omni-legend{width:30%}.omni-art{width:69%}}
       @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
@@ -718,7 +724,7 @@ class S8OmniPanel extends HTMLElement {
   }
   _maintenance() {
     const snap = this._snapshot(); const child = this._state("child_lock"); const childUsable = snap.connected && this._available(child);
-    return `${this._trustBanner(snap)}<section class="view-heading"><span class="eyebrow">S8 OMNI</span><h2>Обслуживание</h2><p>Остаточный ресурс расходников.</p></section>${this._resource("filter_life","Фильтр","mdi:air-filter",snap.connected)}${this._resource("side_brush_life","Боковая щётка","mdi:fan",snap.connected)}${this._resource("main_brush_life","Основная щётка","mdi:brush",snap.connected)}<section class="card"><div class="section-title"><div><span class="eyebrow">Система</span><h2>Защита и ошибки</h2></div></div><div class="info-row" data-more="fault"><span>Ошибка</span><strong>${escapeHtml(snap.connected ? this._formatEntity("fault","—") : "—")}</strong></div><button class="toggle-row" type="button" data-toggle="child_lock" ${childUsable ? "" : "disabled"}><span><strong>Блокировка от детей</strong><small>Защита кнопок робота</small></span><span class="toggle ${childUsable && child?.state === "on" ? "on" : ""}"></span></button></section>`;
+    return `${this._trustBanner(snap)}<section class="view-heading"><span class="eyebrow">S8 OMNI</span><h2>Обслуживание</h2><p>Остаточный ресурс расходников.</p></section>${this._resource("filter_life","Фильтр","mdi:air-filter",snap.connected)}${this._resource("side_brush_life","Боковая щётка","mdi:fan",snap.connected)}${this._resource("main_brush_life","Основная щётка","mdi:brush",snap.connected)}<section class="card"><div class="section-title"><div><span class="eyebrow">Система</span><h2>Защита и ошибки</h2></div></div><div class="info-row" data-more="fault"><span>Состояние</span><strong>${escapeHtml(snap.connected ? (String(this._stateValue("fault","—")) === "0" ? "Ошибок нет" : `Ошибка ${this._formatEntity("fault","—")}`) : "—")}</strong></div><button class="toggle-row service-toggle-row" type="button" data-toggle="child_lock" ${childUsable ? "" : "disabled"}><span class="toggle-copy"><strong>Блокировка от детей</strong><small>Защита кнопок робота</small></span><span class="toggle ${childUsable && child?.state === "on" ? "on" : ""}"></span></button></section>`;
   }
 
   _diagRow(label, value) { return `<div class="info-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value === null || value === undefined ? "—" : String(value))}</strong></div>`; }
