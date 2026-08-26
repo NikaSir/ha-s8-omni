@@ -26,24 +26,24 @@ Before device-side testing, back up Home Assistant and disable **only S8 OMNI** 
 5. Keep Stop unimplemented unless a controlled test proves unambiguous semantics.
 6. Keep station writes, DND schedule, cleaning timer, map/room payloads and consumable resets out of public UI until verified.
 
-## Dashboard v0.5.4 — NikaS app-shell and iPhone fit acceptance
+## Dashboard v0.7.17 — NikaS app-shell and iPhone fit acceptance
 
 Control viewport: **iPhone Pro Max · portrait**. Also inspect a narrow viewport near 360 CSS px for defensive layout behavior.
 
 ### Header
 
 - [ ] Header is visible on Overview, Cleaning, Station, Maintenance and Diagnostics.
-- [ ] Left control is icon-only `mdi:arrow-left`; there is no visible `Назад` text.
-- [ ] Root Back explicitly navigates to `/dashboard-actions` on all five root views.
+- [ ] Left control is icon-only `mdi:menu` and emits the native composed/bubbling `hass-toggle-menu` event.
+- [ ] Any Back control required by a detail view is inside the working area and never replaces the system Menu.
 - [ ] Center title is **S8 OMNI** without a decorative robot/brand icon beside it.
 - [ ] Secondary line is `Робот-пылесос · UI v0.5.4` and does not force horizontal overflow.
 - [ ] Right control is the single global `mdi:refresh` action.
 - [ ] Desktop/default Header grid is symmetric `52 px | minmax(0,1fr) | 52 px`.
 - [ ] Mobile Header grid is symmetric `48 px | minmax(0,1fr) | 48 px`.
-- [ ] Back and Refresh remain at least 44×44 px touch targets.
+- [ ] Menu and Refresh use matching plaques and remain at least 44×44 px touch targets.
 - [ ] Title stays visually centered relative to the viewport.
 - [ ] Header respects iOS top/left/right Safe Area.
-- [ ] Root Back never uses browser history as its navigation contract.
+- [ ] Header contains no device action or integration-specific navigation.
 - [ ] Hold/double tap on Header performs no robot/station action.
 
 ### Primary action row

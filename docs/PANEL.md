@@ -5,9 +5,8 @@ The S8 OMNI integration owns and ships its canonical Home Assistant UI.
 ## Stable routes
 
 - Panel: `/dashboard-s8-omni`
-- Parent / Back from root views: `/dashboard-actions`
 
-Dashboard version: `v0.5.4`.
+Dashboard version: `v0.7.17`.
 
 The panel is registered through Home Assistant's custom-panel API. No Lovelace YAML, LocalTuya command, cloud request or direct Tuya DP write is required by the frontend.
 
@@ -15,9 +14,9 @@ The panel is registered through Home Assistant's custom-panel API. No Lovelace Y
 
 Primary viewport: **iPhone Pro Max, portrait**.
 
-The panel follows **Home Assistant NikaS · Integration Dashboard UI Standard v1.2** and **NikaS Integration Panel Template v1.0**:
+The panel follows **NIKAS Specialized Panel UI Standard v1.5** and **NikaS Integration Panel Template v1.0**:
 
-1. **Header** — compact persistent application header with icon-only Back on the left, geometrically centered title and one global Refresh action on the right.
+1. **Header** — compact persistent application header with the Home Assistant system Menu on the left, geometrically centered title and one global Refresh action on the right.
 2. **Content** — current system state or selected workflow.
 3. **Bottom Tab Bar** — full-width, fixed Overview / Cleaning / Station / Maintenance / Diagnostics navigation with iOS Safe Area handling.
 
@@ -35,14 +34,14 @@ On mobile widths up to 480 CSS px:
 48 px | minmax(0, 1fr) | 48 px
 ```
 
-The two side slots remain symmetric, so `S8 OMNI` stays centered against the viewport rather than the free space between controls. Back and Refresh remain at least 44×44 px touch targets. The subtitle is a single secondary line with ellipsis protection.
+The two side slots remain symmetric, so `S8 OMNI` stays centered against the viewport rather than the free space between controls. Menu and Refresh remain at least 44×44 px touch targets and use matching plaques. The subtitle is a single secondary line with ellipsis protection.
 
 On the five root views:
 
-- Header Back exits the S8 OMNI application to `/dashboard-actions`.
+- Header Menu emits the native composed/bubbling `hass-toggle-menu` event.
 - Header Refresh requests an immediate local coordinator refresh through the public `button` entity owned by `ha-s8-omni`.
 - Bottom Tab Bar switches root sections inside S8 OMNI.
-- browser history is not used as the root Back contract.
+- any parent/detail Back action belongs inside the working area and never replaces the system Menu.
 
 The hero card does not repeat S8 OMNI as another large title. The Header identifies the application; the hero identifies **current state**.
 
@@ -100,7 +99,7 @@ Second-level screen, not a sixth root tab. It is the only editable cleaning-prof
 - volume;
 - Do Not Disturb.
 
-On this child screen Header Back returns to root **Cleaning**. The full-width Bottom Tab Bar remains visible; choosing another root tab exits the child workflow and opens that section.
+On this child screen an inline Back control inside the working area returns to root **Cleaning**; the Header keeps the system Menu. The full-width Bottom Tab Bar remains visible; choosing another root tab exits the child workflow and opens that section.
 
 ### Station
 

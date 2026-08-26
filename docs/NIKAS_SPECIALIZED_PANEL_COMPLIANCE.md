@@ -20,9 +20,9 @@
 | Fixed UPS Bottom Tab Bar | PASS | Outside viewport, safe-area aware, equal 52 px minimum tabs, MDI `ha-icon` 28 px, 12/700 labels and 11% active theme background. |
 | Machine-readable contract and CI agree | PASS | `panel.json` and repository checks now require native-scroll-at-100, >100 pan gating, axis clamp, resize clamp and tab-top reset. |
 | Local product art and stable delivery | PASS | One production module and local state-specific JPG/WEBP assets; no runtime historical imports. |
-| Approved brand source exists | GAP | No approved S8 OMNI integration/repository brand mark is present. Do not derive one from product photography or invent artwork. |
-| Integration icon visible through supported HA Brands path | GAP | After source approval, publish `icon.png` and `icon@2x.png` for domain `s8_omni` through Home Assistant Brands; add dark variants only if necessary. |
-| README/GitHub repository identity | GAP | Text identity is consistent, but a visual hero/social preview waits for the approved source asset and repository-settings update. |
+| Approved brand source exists | PASS | The selected S8 OMNI mark is preserved as the square alpha assets `brand/icon.png` and `brand/icon@2x.png`. |
+| Integration icon packaged through supported brand path | PASS | Domain `s8_omni` ships 256 px `custom_components/s8_omni/brand/icon.png` and its 512 px `icon@2x.png` companion. The theme-neutral artwork needs no dark variant. |
+| README/repository visual identity | PASS | README displays the packaged approved mark; the same square source is suitable for repository avatar/social-preview configuration. |
 | iPhone field acceptance | GAP | Static and CI checks pass, but Companion App verification is still required after installation. |
 
 ## Required phone check
