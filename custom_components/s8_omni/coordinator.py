@@ -77,12 +77,18 @@ class S8OmniCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         try:
             data = await self.hass.async_add_executor_job(self._read_sync)
-            await self._async_update_clean_mode(data)
         except Exception as err:
             self.last_poll_success = False
             raise UpdateFailed(f"S8 OMNI local read failed: {err}") from err
+
+        # Connectivity describes the Tuya LAN transaction itself. Auxiliary local
+        # bookkeeping must never turn a successful device response into "Нет связи".
         self.last_poll_success = True
         self.last_successful_update = datetime.now(timezone.utc)
+        try:
+            await self._async_update_clean_mode(data)
+        except Exception as err:
+            _LOGGER.warning("S8 OMNI clean-mode bookkeeping failed after a successful local poll: %s", err)
         return data
 
     @property
