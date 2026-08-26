@@ -20,18 +20,18 @@ class PanelUiStandardV16V0722Tests(unittest.TestCase):
         for marker in (
             "data-stable-view",
             "_boundStableViews = new WeakSet()",
-            "activeView.inert = false",
-            "view.inert = !isActive",
-            "view.hidden = !isActive",
+            'activeView.removeAttribute("inert")',
+            'view.setAttribute("inert", "")',
+            "view.hidden = !active",
         ):
             self.assertIn(marker, self.source)
 
     def test_indicator_is_pointwise_and_lider_styled(self) -> None:
         self.assertIn("class=\"trust-banner connection-indicator", self.source)
-        self.assertIn(".trust-banner.is-local{background:color-mix(in srgb,var(--green) 11%,var(--card))", self.source)
-        self.assertIn("border-color:color-mix(in srgb,var(--green) 30%,transparent)", self.source)
-        self.assertIn(".trust-banner strong{font-size:15px", self.source)
-        self.assertIn(".trust-banner span{font-size:12px", self.source)
+        self.assertIn(".connection-indicator.local{background:color-mix(in srgb,var(--success-color,#43a047) 11%,var(--card-background-color))", self.source)
+        self.assertIn("border-color:color-mix(in srgb,var(--success-color,#43a047) 30%,var(--divider-color))", self.source)
+        self.assertIn(".connection-copy strong{font-size:15px", self.source)
+        self.assertIn(".connection-copy small{font-size:12px", self.source)
         key = self.source.split("  _stableStructureKey() {", 1)[1].split("_bindStableContent", 1)[0]
         self.assertNotIn("telemetry_age", key)
         self.assertNotIn("this._hass.states", key)
