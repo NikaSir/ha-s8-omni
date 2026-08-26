@@ -1,0 +1,41 @@
+name: Fix CI contract b052
+
+on:
+  push:
+    branches:
+      - fix/service-layout-b052
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/service-layout-b052
+          fetch-depth: 0
+      - name: Update UI contract references
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/repository-checks.yml')
+          t = p.read_text(encoding='utf-8').replace('v0.7.16', 'v0.7.17')
+          p.write_text(t, encoding='utf-8')
+          p = Path('panel.json')
+          t = p.read_text(encoding='utf-8').replace('"dashboard_version": "v0.7.16"', '"dashboard_version": "v0.7.17"')
+          p.write_text(t, encoding='utf-8')
+          PY
+      - name: Commit contract bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/repository-checks.yml panel.json
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "ci: align checks with UI v0.7.17"
+            git push origin HEAD:fix/service-layout-b052
+          fi
