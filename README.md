@@ -1,5 +1,9 @@
 # S8 OMNI for Home Assistant
 
+<p align="center">
+  <img src="custom_components/s8_omni/brand/icon@2x.png" width="180" alt="S8 OMNI integration icon">
+</p>
+
 Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum and OMNI station, built from verified Tuya LAN datapoints.
 
 > Current development line: **v1.00_b046** (`1.0.0b46`). This is an early test build.
