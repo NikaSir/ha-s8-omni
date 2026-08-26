@@ -1,8 +1,8 @@
 # Specialized Panel Compliance Audit
 
 **Audit target:** NIKAS Specialized Panel UI Standard v1.5
-**Runtime:** `custom_components/s8_omni/frontend/s8-omni-panel.js` v0.7.20
-**Manifest:** integration `1.0.0b56`
+**Runtime:** `custom_components/s8_omni/frontend/s8-omni-panel.js` v0.7.21
+**Manifest:** integration `1.0.0b57`
 
 ## Compliance
 
@@ -11,7 +11,7 @@
 | One autonomous production bundle and one viewport/canvas | PASS | One `s8-omni-panel.js`, one `.work-viewport` and one `.work-canvas`; registration uses the single versioned module URL. |
 | 75–200% focal pinch, 97–103 snap, two-finger reset toast, persistence | PASS | Midpoint pinch, scale constants, reset/toast and per-entry/view localStorage are implemented. |
 | Native vertical scroll at 100%; x/y zero; no horizontal or one-finger transform pan | PASS | `is-native` uses `overflow-y:auto`, `overflow-x:hidden`, `touch-action:pan-y`; clamp returns x/y zero at scale <=1; at exactly 100% the canvas uses `transform:none`. |
-| Stable iOS scroll, viewport ownership and live updates | PASS | The host alone owns `100dvh`; the shell mounts once. Home Assistant polling synchronizes only changed text/classes/attributes, and structural content changes are blocked during native scroll momentum. |
+| Stable iOS scroll, viewport ownership and live updates | PASS | On phones the host is fixed with `inset:0`, so the outer Home Assistant page cannot move the shell. The shell mounts once; polling synchronizes only changed text/classes/attributes, and structural content changes are blocked during native scroll momentum. |
 | Pan only above 100% and only overflowing axes | PASS | Pan creation/move is gated by `scale > 1`; independent minX/minY clamp actual scaled overflow. |
 | Clamp after gesture/render/resize | PASS | Clamp runs at completion, after render and on window/visualViewport resize. |
 | Tab/detail transition returns to top, saved scale retained | PASS | `_switchWorkspace()` restores scale but resets x/y and native scroll top. |
@@ -28,4 +28,4 @@
 
 ## Required phone check
 
-Test Overview, Cleaning Settings and long Diagnostics at 100% and above 100%. Confirm native scroll without flicker or image disappearance across several 5-second telemetry polls, no horizontal/top displacement, stationary more-info, axis-limited pan, clamping after resize, permanent HA menu and fixed UPS-sized Header/Bottom navigation.
+Test Overview, Cleaning Settings and long Diagnostics at 100% and above 100%. Confirm native scroll without flicker across several 5-second telemetry polls; verify both long and short tabs cannot move the Header or Bottom navigation, and that all three Overview quick actions remain fully visible above the Bottom Tab Bar.
