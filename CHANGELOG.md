@@ -1,3 +1,9 @@
+## v1.00_b057 / UI v0.7.21
+
+- Fixed the mobile panel shell to the visual viewport with `position: fixed; inset: 0`, preventing short views and outer Home Assistant scrolling from moving the Bottom Tab Bar.
+- Kept Header, work viewport and Bottom Tab Bar as three isolated grid rows; only the work viewport owns vertical scrolling.
+- Reduced the mobile Overview product scene from 352 px to 320 px so the full quick-action row remains above the Bottom Tab Bar without shrinking buttons or typography.
+
 ## v1.00_b056 / UI v0.7.20
 
 - Mounted the panel shell once: Header, zoom viewport and Bottom Tab Bar now remain permanent DOM nodes across Home Assistant polling updates.

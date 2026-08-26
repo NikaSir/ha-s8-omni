@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.20";
+const UI_VERSION = "v0.7.21";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.72;
 const VIEW_SCALE_MAX = 2.20;
@@ -777,9 +777,12 @@ class S8OmniPanel extends HTMLElement {
       .inline-back{display:inline-flex;align-items:center;gap:7px;min-height:44px;margin:0 0 10px;padding:0 13px;border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:14px;background:var(--card-background-color);color:var(--primary-color);font-weight:700}
       .inline-back ha-icon{--mdc-icon-size:22px}
       @media(max-width:520px){
+        :host{position:fixed;inset:0;width:auto;height:auto;min-height:0;max-height:none}
+        main{position:absolute;inset:0;width:auto;height:auto}
         .app-header{grid-template-columns:48px minmax(0,1fr) 48px;min-height:calc(60px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top)}
         .header-action{width:44px;height:44px;border-radius:16px}.header-action ha-icon{--mdc-icon-size:25px}
         .header-title strong{font-size:21px}.header-title span{font-size:12px}
+        .state-scene{height:320px}
         nav button{min-height:52px;border-radius:14px}nav button ha-icon{--mdc-icon-size:28px}
       }
       @keyframes spin{to{transform:rotate(360deg)}}
