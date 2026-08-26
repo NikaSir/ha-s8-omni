@@ -1,3 +1,9 @@
+## v1.00_b062 / UI v0.7.26
+
+- Combined battery, mode and telemetry into one three-section metric strip with a shared border, background, radius and shadow.
+- Replaced the spaced uppercase metric headings with 13 px semibold title-case labels in the primary text color.
+- Preserved the accepted photo height, action clearance, resource strip, fixed navigation and stable pointwise DOM updates.
+
 ## v1.00_b061 / UI v0.7.25
 
 - Rebuilt the battery, mode and telemetry cards as an explicit two-column grid so their icons, labels and values align consistently without clipping on iPhone Pro Max widths.

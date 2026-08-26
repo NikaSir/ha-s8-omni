@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.25";
+const UI_VERSION = "v0.7.26";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.72;
 const VIEW_SCALE_MAX = 2.20;
@@ -839,10 +839,11 @@ class S8OmniPanel extends HTMLElement {
       .state-hero .state-scene{grid-row:2;width:100%;min-width:0;contain:layout paint;isolation:isolate}
       .state-hero .state-image{position:absolute;inset:0;width:100%;height:100%;max-width:none}
       .state-hero .resource-strip{grid-row:3}
-      .state-hero .hero-metrics{grid-row:4;width:100%;min-width:0}
-      .state-hero .hero-metrics>div{position:relative;display:grid;grid-template-columns:28px minmax(0,1fr);grid-template-rows:auto auto minmax(26px,auto) auto;column-gap:6px;align-content:center;min-height:94px;padding:8px 8px 7px}
+      .state-hero .hero-metrics{grid-row:4;width:100%;min-width:0;gap:0;background:rgba(255,255,255,.90);border:1px solid rgba(92,108,116,.10);border-radius:18px;box-shadow:0 4px 12px rgba(20,52,66,.045);overflow:hidden}
+      .state-hero .hero-metrics>div{position:relative;display:grid;grid-template-columns:28px minmax(0,1fr);grid-template-rows:auto auto minmax(26px,auto) auto;column-gap:6px;align-content:center;min-height:94px;padding:8px 8px 7px;background:transparent;border:0;border-radius:0;box-shadow:none;overflow:hidden}
+      .state-hero .hero-metrics>div:not(:last-child)::after{content:"";position:absolute;right:0;top:12px;bottom:12px;width:1px;background:var(--divider-color)}
       .state-hero .hero-metrics .metric-icon{position:static;grid-column:1;grid-row:1/span 2;align-self:center;justify-self:center;--mdc-icon-size:24px}
-      .state-hero .hero-metrics span{grid-column:2;grid-row:1;letter-spacing:.025em;white-space:nowrap;overflow:visible;text-overflow:clip}
+      .state-hero .hero-metrics span{grid-column:2;grid-row:1;color:var(--primary-text-color);font-size:13px;font-weight:750;text-transform:none;letter-spacing:0;white-space:nowrap;overflow:visible;text-overflow:clip}
       .state-hero .hero-metrics strong{grid-column:2;grid-row:2;margin-top:3px}
       .state-hero .hero-metrics small{grid-column:2;grid-row:3;margin-top:3px;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.08}
       .state-hero .hero-metrics .battery-bar{grid-column:1/-1;grid-row:4;margin:6px 0 0}

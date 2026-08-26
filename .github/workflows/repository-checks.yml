@@ -58,7 +58,7 @@ jobs:
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.25"' "$production"
+          grep -q 'const UI_VERSION = "v0.7.26"' "$production"
           grep -q '_connectionIndicatorState()' "$production"
           grep -q 'class="connection-indicator' "$production"
           grep -q 'Данные актуальны' "$production"
@@ -125,9 +125,11 @@ jobs:
           grep -Fq '.state-hero .resource-strip{grid-row:3}' "$production"
           grep -Fq '.state-hero .hero-metrics{grid-row:4' "$production"
           grep -Fq '.state-hero .hero-metrics>div{position:relative;display:grid;grid-template-columns:28px minmax(0,1fr)' "$production"
+          grep -Fq '.state-hero .hero-metrics>div:not(:last-child)::after' "$production"
           grep -Fq '.state-hero .hero-metrics .metric-icon{position:static' "$production"
+          grep -Fq 'font-size:13px;font-weight:750;text-transform:none;letter-spacing:0' "$production"
           if grep -Fq '.resource-strip{position:absolute' "$production"; then exit 1; fi
-          echo "S8 OMNI v0.7.25 final Overview composition and v1.6 contract OK"
+          echo "S8 OMNI v0.7.26 unified three-section metrics and v1.6 contract OK"
 
       - name: Validate panel manifest and state assets
         run: |
@@ -136,7 +138,7 @@ jobs:
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.25':
+          if panel.get('dashboard_version') != 'v0.7.26':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':

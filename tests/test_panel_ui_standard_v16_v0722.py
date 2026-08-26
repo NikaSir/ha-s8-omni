@@ -80,7 +80,7 @@ class PanelUiStandardV16V0722Tests(unittest.TestCase):
             self.source,
         )
         self.assertIn(
-            ".state-hero .hero-metrics{grid-row:4;width:100%;min-width:0}",
+            ".state-hero .hero-metrics{grid-row:4;width:100%;min-width:0;gap:0;background:",
             self.source,
         )
         self.assertIn(
@@ -101,7 +101,19 @@ class PanelUiStandardV16V0722Tests(unittest.TestCase):
 
     def test_overview_metrics_use_non_overlapping_grid(self) -> None:
         self.assertIn(
+            ".state-hero .hero-metrics{grid-row:4;width:100%;min-width:0;gap:0;background:",
+            self.source,
+        )
+        self.assertIn(
             ".state-hero .hero-metrics>div{position:relative;display:grid;grid-template-columns:28px minmax(0,1fr)",
+            self.source,
+        )
+        self.assertIn(
+            "padding:8px 8px 7px;background:transparent;border:0;border-radius:0;box-shadow:none;overflow:hidden",
+            self.source,
+        )
+        self.assertIn(
+            '.state-hero .hero-metrics>div:not(:last-child)::after{content:"";',
             self.source,
         )
         self.assertIn(
@@ -109,7 +121,7 @@ class PanelUiStandardV16V0722Tests(unittest.TestCase):
             self.source,
         )
         self.assertIn(
-            ".state-hero .hero-metrics span{grid-column:2;grid-row:1;letter-spacing:.025em",
+            ".state-hero .hero-metrics span{grid-column:2;grid-row:1;color:var(--primary-text-color);font-size:13px;font-weight:750;text-transform:none;letter-spacing:0",
             self.source,
         )
         self.assertIn(
