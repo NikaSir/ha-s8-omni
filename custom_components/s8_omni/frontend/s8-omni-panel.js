@@ -1,7 +1,7 @@
-const UI_VERSION = "v0.7.28";
+const UI_VERSION = "v0.7.29";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
-const VIEW_SCALE_MIN = 0.72;
-const VIEW_SCALE_MAX = 2.20;
+const VIEW_SCALE_MIN = 0.75;
+const VIEW_SCALE_MAX = 2.00;
 const VIEW_SCALE_SNAP_MIN = 0.97;
 const VIEW_SCALE_SNAP_MAX = 1.03;
 const VIEW_STATE_PREFIX = "s8_omni.view_transform.v2";
@@ -50,6 +50,7 @@ const ENTITY_SUFFIXES = [
   "resume_cleaning", "do_not_disturb", "child_lock", "mode", "suction", "water", "volume", "refresh",
   "stop_dust_collection", "stop_roller_cleaning", "stop_roller_drying",
 ];
+const ENTITY_SUFFIXES_BY_LENGTH = [...ENTITY_SUFFIXES].sort((left, right) => right.length - left.length);
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -243,7 +244,7 @@ class S8OmniPanel extends HTMLElement {
       const mapped = {};
       for (const item of entries) {
         if (item.config_entry_id !== entryId || item.platform !== "s8_omni") continue;
-        const suffix = ENTITY_SUFFIXES.find((key) => item.unique_id?.endsWith(`_${key}`));
+        const suffix = ENTITY_SUFFIXES_BY_LENGTH.find((key) => item.unique_id?.endsWith(`_${key}`));
         if (suffix) mapped[suffix] = item.entity_id;
       }
       this._entities = mapped;
@@ -698,6 +699,12 @@ class S8OmniPanel extends HTMLElement {
     this.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId }, bubbles: true, composed: true }));
   }
   _toggleMenu() { this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: true, composed: true })); }
+  _navigateParent() {
+    const path = this._panel?.config?.parent_path;
+    if (!path || window.location.pathname === path) return;
+    window.history.pushState(null, "", path);
+    window.dispatchEvent(new CustomEvent("location-changed", { bubbles: true, composed: true }));
+  }
 
   _styles() {
     return `
@@ -876,6 +883,28 @@ class S8OmniPanel extends HTMLElement {
       .action.ready .action-icon{background:color-mix(in srgb,var(--primary-color) 10%,transparent)}
       .action:disabled{opacity:.32}
       @media(max-width:430px){.action{min-height:82px}.state-hero .hero-hint{font-size:13px}}
+      /* v0.7.29: audited mobile composition and current shell contract. */
+      .header-title{width:100%;padding:4px 8px;border:0;border-radius:14px;background:transparent;color:var(--primary-text-color);cursor:pointer;-webkit-appearance:none;appearance:none}
+      .header-title:active{background:color-mix(in srgb,var(--primary-color) 7%,transparent)}
+      .state-hero{grid-template-rows:auto auto auto;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;overflow:visible;margin-bottom:10px}
+      .state-hero::after{display:none}
+      .state-hero>.hero-primary,.state-hero>.resource-strip,.state-hero>.hero-metrics{grid-column:1;justify-self:stretch;width:100%;min-width:0;max-width:100%}
+      .state-hero>.hero-primary{grid-row:1;position:relative;padding:14px;overflow:hidden;background:linear-gradient(135deg,var(--card-background-color) 72%,color-mix(in srgb,var(--primary-color) 6%,var(--card-background-color)) 100%);border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:22px;box-shadow:0 6px 18px rgba(0,0,0,.04)}
+      .state-hero>.hero-primary::after{content:"";position:absolute;width:205px;height:205px;right:-70px;top:-92px;border-radius:50%;background:color-mix(in srgb,var(--primary-color) 7%,transparent);pointer-events:none}
+      .state-hero .hero-top{grid-row:auto;grid-template-columns:minmax(0,1fr) minmax(168px,42%);min-height:96px;align-items:start;gap:12px;margin-bottom:10px}
+      .state-hero .hero-top>div:first-child{display:flex;min-height:92px;flex-direction:column;justify-content:center;padding-top:0}
+      .state-hero .state-scene{grid-row:auto;height:360px}
+      .state-hero .resource-strip{grid-row:2;margin-top:10px;background:var(--card-background-color)}
+      .state-hero .hero-metrics{grid-row:3;margin-top:10px;background:var(--card-background-color)}
+      .state-hero .connection-indicator{width:100%;min-width:0;max-width:100%;padding:12px;column-gap:9px}
+      .state-hero .connection-copy{display:grid;grid-template-rows:auto auto;row-gap:4px}
+      .state-hero .connection-copy strong,.state-hero .connection-copy small{display:block;white-space:nowrap}
+      .state-hero .hero-metrics>div{grid-template-columns:24px minmax(0,1fr);column-gap:5px;padding:8px 6px 7px}
+      .state-hero .hero-metrics .metric-icon{--mdc-icon-size:23px}
+      .state-hero .hero-metrics strong{font-size:17px;white-space:normal;overflow-wrap:normal}
+      .state-hero .hero-metrics small{font-size:12px}
+      .state-hero .battery-bar i{background:#079fd1}
+      @media(max-width:520px){.state-hero .state-scene{height:264px}.state-hero .hero-top{grid-template-columns:minmax(0,1fr) minmax(168px,44%)}.state-hero>.hero-primary{padding:13px}.state-hero .hero-metrics strong{font-size:16px}}
       @keyframes spin{to{transform:rotate(360deg)}}
       @media(max-width:360px){.hero-top,.state-hero .hero-top{grid-template-columns:1fr}.connection-indicator{justify-self:start}.status-grid{grid-template-columns:repeat(2,1fr)}.segments.four{grid-template-columns:repeat(2,1fr)}.diagnostic-strip{grid-template-columns:1fr}.omni-legend{width:30%}.omni-art{width:69%}}
       @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
@@ -883,8 +912,7 @@ class S8OmniPanel extends HTMLElement {
   }
 
   _header() {
-    const detail = this._detail === "cleaning-settings";
-    return `<header class="app-header"><button class="header-action" type="button" data-header-primary aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button><div class="header-title"><strong>${detail ? "Настройки уборки" : "S8 OMNI"}</strong><span>${detail ? "S8 OMNI · Уборка" : `Робот-пылесос · UI ${UI_VERSION}`}</span></div><button class="header-action refresh" type="button" data-refresh aria-label="Обновить" ${this._entityId("refresh") ? "" : "disabled"}><ha-icon icon="mdi:refresh"></ha-icon></button></header>`;
+    return `<header class="app-header"><button class="header-action" type="button" data-header-primary aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button><button class="header-title" type="button" data-header-home aria-label="Вернуться на основную панель"><strong>S8 OMNI</strong><span>UI ${UI_VERSION}</span></button><button class="header-action refresh" type="button" data-refresh aria-label="Обновить" ${this._entityId("refresh") ? "" : "disabled"}><ha-icon icon="mdi:refresh"></ha-icon></button></header>`;
   }
 
   _trustBanner(snap) {
@@ -956,8 +984,6 @@ class S8OmniPanel extends HTMLElement {
       stationLabel = "Ошибка";
       stationTone = "error";
       stationIcon = "mdi:home-alert-outline";
-    } else if (snap.robot === "charging") {
-      stationLabel = "Заряжает";
     } else if (ops.size > 1 || snap.station === "multiple_operations") {
       stationLabel = "Работает";
     } else if (ops.has("dust_collection") || snap.station === "dust_collection") {
@@ -966,10 +992,18 @@ class S8OmniPanel extends HTMLElement {
       stationLabel = "Промывка";
     } else if (ops.has("drying") || snap.station === "drying") {
       stationLabel = "Сушка";
+    } else if (snap.robot === "charging") {
+      stationLabel = "Заряжает";
     } else if (snap.onDock === true || snap.robot === "charged") {
       stationLabel = "Готова";
     }
-    return `<section class="card hero state-hero ${state.tone || ""}" data-more="composite_status"><div class="hero-top"><div><h1>${escapeHtml(state.title)}</h1><p class="hero-hint">${escapeHtml(state.hint)}</p></div><div class="connection-indicator ${connection.tone}" data-more="local_connection" role="status" aria-label="${escapeHtml(connection.label)} · ${escapeHtml(connection.freshnessLabel)}"><i class="connection-lamp"></i><span class="connection-copy"><strong>${escapeHtml(connection.label)}</strong><small class="${connection.freshnessTone}">${escapeHtml(connection.freshnessLabel)}</small></span></div></div><div class="state-scene ${snap.unreliable ? "muted" : ""}"><img class="state-image" src="${image}" alt="S8 OMNI — ${escapeHtml(state.title)}" /></div>${this._resourceStrip(snap)}<div class="hero-metrics"><div data-more="battery"><ha-icon class="metric-icon battery${batteryTone}" icon="${batteryIcon}"></ha-icon><span>АКБ</span><strong>${battery}</strong><small>Текущий заряд</small><div class="battery-bar"><i style="width:${snap.battery ?? 0}%"></i></div></div><div data-more="mode"><ha-icon class="metric-icon mode" icon="${modeIcon}"></ha-icon><span>Режим</span><strong>${escapeHtml(mode)}</strong><small>${escapeHtml(modeMeta)}</small></div><div class="${stationTone ? `station-${stationTone}` : ""}" data-more="station_status"><ha-icon class="metric-icon station ${stationTone}" icon="${stationIcon}"></ha-icon><span>Станция</span><strong>${escapeHtml(stationLabel)}</strong><small>${stationLabel === "Готова" ? "Готова" : stationLabel === "Ошибка" ? "Требует внимания" : stationLabel}</small></div></div></section>`;
+    const stationMeta = stationLabel === "Нет данных" ? "Состояние неизвестно"
+      : stationLabel === "Ошибка" ? "Требует внимания"
+      : stationLabel === "Готова" ? "Готова к работе"
+      : stationLabel === "Заряжает" ? "Идёт зарядка"
+      : stationLabel === "Ожидает" ? "На связи"
+      : "Операция активна";
+    return `<section class="card hero state-hero ${state.tone || ""}" data-more="composite_status"><div class="hero-primary"><div class="hero-top"><div><h1>${escapeHtml(state.title)}</h1><p class="hero-hint">${escapeHtml(state.hint)}</p></div><div class="connection-indicator ${connection.tone}" data-more="local_connection" role="status" aria-label="${escapeHtml(connection.label)} · ${escapeHtml(connection.freshnessLabel)}"><i class="connection-lamp"></i><span class="connection-copy"><strong>${escapeHtml(connection.label)}</strong><small class="${connection.freshnessTone}">${escapeHtml(connection.freshnessLabel)}</small></span></div></div><div class="state-scene ${snap.unreliable ? "muted" : ""}"><img class="state-image" src="${image}" alt="S8 OMNI — ${escapeHtml(state.title)}" /></div></div>${this._resourceStrip(snap)}<div class="hero-metrics"><div data-more="battery"><ha-icon class="metric-icon battery${batteryTone}" icon="${batteryIcon}"></ha-icon><span>АКБ</span><strong>${battery}</strong><small>Текущий заряд</small><div class="battery-bar"><i style="width:${snap.battery ?? 0}%"></i></div></div><div data-more="mode"><ha-icon class="metric-icon mode" icon="${modeIcon}"></ha-icon><span>Режим</span><strong>${escapeHtml(mode)}</strong><small>${escapeHtml(modeMeta)}</small></div><div class="${stationTone ? `station-${stationTone}` : ""}" data-more="station_status"><ha-icon class="metric-icon station ${stationTone}" icon="${stationIcon}"></ha-icon><span>Станция</span><strong>${escapeHtml(stationLabel)}</strong><small>${escapeHtml(stationMeta)}</small></div></div></section>`;
   }
 
   _quickActions() {
@@ -981,16 +1015,17 @@ class S8OmniPanel extends HTMLElement {
     const docked = snap.onDock === true || ["charging", "charged"].includes(snap.robot);
     const faultValue = Number(this._stateValue("fault", 0));
     const attention = snap.composite === "error" || (Number.isFinite(faultValue) && faultValue !== 0);
-    const stationStops = this._activeStationStopKeys(snap).filter((key) => Boolean(this._entityId(key)));
-    const stationActive = stationStops.length > 0;
+    const activeStationStops = this._activeStationStopKeys(snap);
+    const stationStops = activeStationStops.filter((key) => Boolean(this._entityId(key)));
+    const stationActive = activeStationStops.length > 0;
     const stopKeys = stationStops.join(",");
     const actionButton = (label, icon, action = null, enabled = false, ready = false, extra = "") => `<button class="action${ready ? " ready" : ""}${extra ? ` ${extra}` : ""}" type="button"${action ? ` data-action="${action}"` : ""}${enabled ? "" : " disabled"}><span class="action-icon"><ha-icon icon="${icon}"></ha-icon></span><strong>${label}</strong></button>`;
 
     if (stationActive) {
-      return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", null, false)}${actionButton("Пауза", "mdi:pause", null, false)}<button class="action stop" type="button" data-station-stop="${stopKeys}"><span class="action-icon"><ha-icon icon="mdi:stop"></ha-icon></span><strong>Стоп</strong></button></div>`;
+      return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", null, false)}${actionButton("Пауза", "mdi:pause", null, false)}<button class="action stop" type="button" data-station-stop="${stopKeys}"${stationStops.length ? "" : " disabled"}><span class="action-icon"><ha-icon icon="mdi:stop"></ha-icon></span><strong>Стоп</strong></button></div>`;
     }
     if (attention) {
-      return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", "start", available, true)}${actionButton("Пауза", "mdi:pause", null, false)}${actionButton("Домой", "mdi:home", null, false)}</div>`;
+      return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", null, false)}${actionButton("Пауза", "mdi:pause", null, false)}${actionButton("Домой", "mdi:home", null, false)}</div>`;
     }
     if (cleaning) {
       return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", null, false)}${actionButton("Пауза", "mdi:pause", "pause", available, true)}${actionButton("Домой", "mdi:home", "home", available, true)}</div>`;
@@ -1075,6 +1110,7 @@ class S8OmniPanel extends HTMLElement {
 
   _bind() {
     this.shadowRoot.querySelector("[data-header-primary]")?.addEventListener("click", () => this._toggleMenu());
+    this.shadowRoot.querySelector("[data-header-home]")?.addEventListener("click", () => this._navigateParent());
     this.shadowRoot.querySelector("[data-refresh]")?.addEventListener("click", async (event) => { const b = event.currentTarget; if (!this._entityId("refresh") || b.disabled) return; b.disabled = true; b.classList.add("loading"); try { await this._call("button","press","refresh"); } finally { setTimeout(() => { b.disabled = false; b.classList.remove("loading"); }, 700); } });
     this.shadowRoot.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => this._switchWorkspace(b.dataset.view, null)));
     this._bindStableContent(this.shadowRoot.querySelector("[data-stable-view]"));

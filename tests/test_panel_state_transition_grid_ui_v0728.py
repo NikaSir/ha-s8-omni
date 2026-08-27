@@ -15,11 +15,11 @@ class PanelStateTransitionGridUiV0728Tests(unittest.TestCase):
 
     def test_state_hero_uses_one_explicit_grid_column(self) -> None:
         self.assertIn(
-            ".state-hero{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto;align-content:start;width:100%;min-width:0}",
+            ".state-hero{grid-template-rows:auto auto auto;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;overflow:visible;margin-bottom:10px}",
             self.source,
         )
         self.assertIn(
-            ".state-hero>.hero-top,.state-hero>.state-scene,.state-hero>.resource-strip,.state-hero>.hero-metrics{grid-column:1;justify-self:stretch;width:100%;min-width:0;max-width:100%}",
+            ".state-hero>.hero-primary,.state-hero>.resource-strip,.state-hero>.hero-metrics{grid-column:1;justify-self:stretch;width:100%;min-width:0;max-width:100%}",
             self.source,
         )
 
@@ -40,9 +40,9 @@ class PanelStateTransitionGridUiV0728Tests(unittest.TestCase):
 
     def test_scene_resource_and_metrics_rows_stay_full_width(self) -> None:
         for marker in (
-            ".state-hero .state-scene{grid-row:2;width:100%;min-width:0",
-            ".state-hero .resource-strip{grid-row:3}",
-            ".state-hero .hero-metrics{grid-row:4;width:100%;min-width:0",
+            ".state-hero>.hero-primary{grid-row:1;position:relative",
+            ".state-hero .resource-strip{grid-row:2",
+            ".state-hero .hero-metrics{grid-row:3",
         ):
             self.assertIn(marker, self.source)
 
