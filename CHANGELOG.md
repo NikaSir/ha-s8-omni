@@ -1,3 +1,11 @@
+## v1.00_b063 / UI v0.7.27
+
+- Applied the approved Overview hierarchy for base, charging, cleaning, pause, return and attention states; removed the redundant `СОСТОЯНИЕ` eyebrow and charging-complete duplication.
+- Replaced the Overview telemetry-age KPI with the operational `Станция` KPI while leaving telemetry freshness in the standard connection indicator and Diagnostics.
+- Added six approved state-specific local WebP scenes and preload them so live state transitions only update the existing image source without rebuilding the stable DOM shell.
+- Aligned the three action buttons with the approved state semantics and kept them above the fixed Bottom Tab Bar; station maintenance operations retain their dedicated Stop action.
+- Kept the three-section `Чистая вода / Грязная вода / Пыль/мешок` resource strip unchanged.
+
 ## v1.00_b062 / UI v0.7.26
 
 - Combined battery, mode and telemetry into one three-section metric strip with a shared border, background, radius and shadow.

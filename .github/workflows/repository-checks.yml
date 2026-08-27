@@ -51,14 +51,14 @@ jobs:
           registration="custom_components/s8_omni/__init__.py"
           test -f "$production"
           test -d "$assets_dir"
-          for file in hero-dock.webp hero-away.webp hero-dust.webp hero-wash.webp hero-dry.webp product-clean.jpg product-dock.jpg status-robot.jpg status-station.jpg status-water.jpg status-dustbin.jpg; do
+          for file in hero-base.webp hero-charging.webp hero-cleaning.webp hero-paused.webp hero-return.webp hero-error.webp hero-dock.webp hero-away.webp hero-dust.webp hero-wash.webp hero-dry.webp product-clean.jpg product-dock.jpg status-robot.jpg status-station.jpg status-water.jpg status-dustbin.jpg; do
             test -f "$assets_dir/$file" || { echo "Missing asset: $file"; exit 1; }
           done
           test "$(find "$frontend_dir" -maxdepth 1 -type f -name '*.js' | wc -l | tr -d ' ')" = "1"
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.26"' "$production"
+          grep -q 'const UI_VERSION = "v0.7.27"' "$production"
           grep -q '_connectionIndicatorState()' "$production"
           grep -q 'class="connection-indicator' "$production"
           grep -q 'Данные актуальны' "$production"
@@ -67,6 +67,12 @@ jobs:
           grep -q 'stale_after_seconds' custom_components/s8_omni/coordinator.py
           grep -q 'telemetry_status' custom_components/s8_omni/binary_sensor.py
           grep -q 'const HERO_IMAGES = {' "$production"
+          grep -q 'hero-base.webp' "$production"
+          grep -q 'hero-charging.webp' "$production"
+          grep -q 'hero-cleaning.webp' "$production"
+          grep -q 'hero-paused.webp' "$production"
+          grep -q 'hero-return.webp' "$production"
+          grep -q 'hero-error.webp' "$production"
           grep -q 'hero-dock.webp' "$production"
           grep -q 'hero-away.webp' "$production"
           grep -q 'hero-dust.webp' "$production"
@@ -78,9 +84,12 @@ jobs:
           grep -q 'Сбор пыли' "$production"
           grep -q 'Мойка швабры' "$production"
           grep -q 'Сушка швабры' "$production"
-          grep -q 'Возврат на станцию' "$production"
-          grep -q 'На базе · Заряжен' "$production"
-          grep -q 'title: "Простой"' "$production"
+          grep -q 'Возвращается на базу' "$production"
+          grep -q 'title: "На базе"' "$production"
+          grep -q 'title: "Ожидание"' "$production"
+          grep -Fq '<span>Станция</span>' "$production"
+          if grep -Fq '<span class="eyebrow">Состояние</span>' "$production"; then exit 1; fi
+          if grep -Fq '<span>Телеметрия</span>' "$production"; then exit 1; fi
           if grep -q '<section class="card statuses-card"' "$production"; then exit 1; fi
           grep -q 'stop_dust_collection' "$production"
           grep -q 'stop_roller_cleaning' "$production"
@@ -129,7 +138,7 @@ jobs:
           grep -Fq '.state-hero .hero-metrics .metric-icon{position:static' "$production"
           grep -Fq 'font-size:13px;font-weight:750;text-transform:none;letter-spacing:0' "$production"
           if grep -Fq '.resource-strip{position:absolute' "$production"; then exit 1; fi
-          echo "S8 OMNI v0.7.26 unified three-section metrics and v1.6 contract OK"
+          echo "S8 OMNI v0.7.27 approved state Overview and v1.6 contract OK"
 
       - name: Validate panel manifest and state assets
         run: |
@@ -138,7 +147,7 @@ jobs:
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.26':
+          if panel.get('dashboard_version') != 'v0.7.27':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':
@@ -147,6 +156,7 @@ jobs:
               'assets/product-clean.jpg','assets/product-dock.jpg',
               'assets/status-robot.jpg','assets/status-station.jpg','assets/status-water.jpg','assets/status-dustbin.jpg',
               'assets/hero-dock.webp','assets/hero-away.webp','assets/hero-dust.webp','assets/hero-wash.webp','assets/hero-dry.webp',
+              'assets/hero-base.webp','assets/hero-charging.webp','assets/hero-cleaning.webp','assets/hero-paused.webp','assets/hero-return.webp','assets/hero-error.webp',
           }
           assets = set(frontend.get('assets', []))
           if assets != expected:
@@ -154,7 +164,8 @@ jobs:
           for rel in assets:
               if not (root / rel).is_file():
                   raise SystemExit(f'Manifest asset missing: {rel}')
-          if set(frontend.get('product_art_states', [])) != {'dock','away','dust_collection','roller_cleaning','drying'}:
+          expected_states = {'base','charging','cleaning','paused','returning','error','dock','away','dust_collection','roller_cleaning','drying'}
+          if set(frontend.get('product_art_states', [])) != expected_states:
               raise SystemExit('state art mapping mismatch')
           indicator = panel.get('availability', {}).get('connection_indicator', {})
           if indicator.get('stale_after_scan_periods') != 3:
@@ -179,7 +190,7 @@ jobs:
               'identity_transform_at_100': 'none',
               'defer_rerender_during_native_scroll': True,
               'viewport_height_owner': 'host',
-              'mobile_overview_scene_height_px': 320,
+              'mobile_overview_scene_height_px': 292,
               'tabs_mounted_once': True,
               'whole_tree_replace_after_mount': False,
               'meaningful_text_min_px': 12,
@@ -201,7 +212,7 @@ jobs:
           import hashlib
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend/assets')
-          webps = ['hero-dock.webp','hero-away.webp','hero-dust.webp','hero-wash.webp','hero-dry.webp']
+          webps = ['hero-base.webp','hero-charging.webp','hero-cleaning.webp','hero-paused.webp','hero-return.webp','hero-error.webp','hero-dock.webp','hero-away.webp','hero-dust.webp','hero-wash.webp','hero-dry.webp']
           for name in webps:
               data = (root/name).read_bytes()
               if len(data) < 5000 or data[:4] != b'RIFF' or data[8:12] != b'WEBP':

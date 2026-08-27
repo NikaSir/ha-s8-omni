@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.26";
+const UI_VERSION = "v0.7.27";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.72;
 const VIEW_SCALE_MAX = 2.20;
@@ -6,12 +6,25 @@ const VIEW_SCALE_SNAP_MIN = 0.97;
 const VIEW_SCALE_SNAP_MAX = 1.03;
 const VIEW_STATE_PREFIX = "s8_omni.view_transform.v2";
 const HERO_IMAGES = {
+  base: `${ASSET_ROOT}/hero-base.webp?v=${encodeURIComponent(UI_VERSION)}`,
+  charging: `${ASSET_ROOT}/hero-charging.webp?v=${encodeURIComponent(UI_VERSION)}`,
+  cleaning: `${ASSET_ROOT}/hero-cleaning.webp?v=${encodeURIComponent(UI_VERSION)}`,
+  paused: `${ASSET_ROOT}/hero-paused.webp?v=${encodeURIComponent(UI_VERSION)}`,
+  returning: `${ASSET_ROOT}/hero-return.webp?v=${encodeURIComponent(UI_VERSION)}`,
+  error: `${ASSET_ROOT}/hero-error.webp?v=${encodeURIComponent(UI_VERSION)}`,
   dock: `${ASSET_ROOT}/hero-dock.webp?v=${encodeURIComponent(UI_VERSION)}`,
   away: `${ASSET_ROOT}/hero-away.webp?v=${encodeURIComponent(UI_VERSION)}`,
   dust: `${ASSET_ROOT}/hero-dust.webp?v=${encodeURIComponent(UI_VERSION)}`,
   wash: `${ASSET_ROOT}/hero-wash.webp?v=${encodeURIComponent(UI_VERSION)}`,
   dry: `${ASSET_ROOT}/hero-dry.webp?v=${encodeURIComponent(UI_VERSION)}`,
 };
+if (typeof Image !== "undefined") {
+  for (const src of Object.values(HERO_IMAGES)) {
+    const image = new Image();
+    image.decoding = "async";
+    image.src = src;
+  }
+}
 
 const ROBOT_LABELS = {
   idle: "Ожидание", cleaning: "Уборка", zone_cleaning: "Зона", room_cleaning: "Комнаты",
@@ -22,7 +35,7 @@ const ROBOT_LABELS = {
 const STATION_LABELS = { idle: "Ожидание", dust_collection: "Сбор пыли", roller_cleaning: "Промывка", drying: "Сушка", multiple_operations: "Несколько", unknown: "Нет данных" };
 const COMPOSITE_LABELS = {
   idle: "Готов к уборке", cleaning: "Уборка", zone_cleaning: "Зона", room_cleaning: "Комнаты", paused: "Пауза",
-  returning_to_dock: "Возврат", charging: "Зарядка", charged: "На базе · Заряжен", sleeping: "Сон", repositioning: "Поиск позиции",
+  returning_to_dock: "Возврат", charging: "Зарядка", charged: "На базе", sleeping: "Сон", repositioning: "Поиск позиции",
   docked_dust_collection: "На базе · Сбор пыли", docked_roller_cleaning: "На базе · Промывка", docked_drying: "На базе · Сушка",
   docked_station_active: "На базе · Станция активна", error: "Требуется внимание", unknown: "Нет данных",
 };
@@ -849,6 +862,19 @@ class S8OmniPanel extends HTMLElement {
       .state-hero .hero-metrics .battery-bar{grid-column:1/-1;grid-row:4;margin:6px 0 0}
       .state-hero .connection-indicator{min-width:168px;max-width:100%}
       .eyebrow,.hero-metrics span,.hero-metrics small,.action .action-sub,.segment,.station-summary-item span,.diagnostic-strip span,.resource-chip strong,.resource-chip small,.service-toggle-row .toggle-copy small,.status-card strong,.status-card span.meta,.legend-row,.legend-copy strong,.legend-copy small{font-size:12px}
+      /* v0.7.27: approved state-aware Overview composition. */
+      .state-hero .hero-top{align-items:center;margin-bottom:10px}
+      .state-hero .hero-top>div:first-child{padding-top:3px}
+      .state-hero h1{margin-top:0;font-size:25px;line-height:1.04;letter-spacing:-.035em}
+      .state-hero .hero-hint{margin-top:7px;font-size:13px;line-height:1.22}
+      .state-hero .hero-metrics .metric-icon.station{color:var(--primary-color)}
+      .state-hero .hero-metrics .metric-icon.station.error,.state-hero .hero-metrics .station-error strong,.state-hero .hero-metrics .station-error small{color:var(--error-color,#db4437)}
+      .quick-actions{margin-top:0;margin-bottom:11px}
+      .action{min-height:84px}
+      .action.ready{background:color-mix(in srgb,var(--primary-color) 11%,var(--card-background-color));color:var(--primary-color);border-color:color-mix(in srgb,var(--primary-color) 20%,var(--divider-color));box-shadow:0 5px 15px rgba(20,52,66,.045)}
+      .action.ready .action-icon{background:color-mix(in srgb,var(--primary-color) 10%,transparent)}
+      .action:disabled{opacity:.32}
+      @media(max-width:430px){.action{min-height:82px}.state-hero .hero-hint{font-size:13px}}
       @keyframes spin{to{transform:rotate(360deg)}}
       @media(max-width:360px){.hero-top,.state-hero .hero-top{grid-template-columns:1fr}.connection-indicator{justify-self:start}.status-grid{grid-template-columns:repeat(2,1fr)}.segments.four{grid-template-columns:repeat(2,1fr)}.diagnostic-strip{grid-template-columns:1fr}.omni-legend{width:30%}.omni-art{width:69%}}
       @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
@@ -877,8 +903,12 @@ class S8OmniPanel extends HTMLElement {
   }
 
   _heroState(snap) {
-    if (snap.connection === "disconnected") return { image: "dock", title: "Нет связи", hint: "Нет актуальной локальной телеметрии", tone: "error" };
-    if (snap.connection === "unknown") return { image: "dock", title: "Нет данных", hint: "Первоначальный локальный опрос ещё не завершён", tone: "warn" };
+    if (snap.connection === "disconnected") return { image: "base", title: "Нет связи", hint: "Нет актуальной локальной телеметрии", tone: "error" };
+    if (snap.connection === "unknown") return { image: "base", title: "Нет данных", hint: "Первоначальный локальный опрос ещё не завершён", tone: "warn" };
+    const faultValue = Number(this._stateValue("fault", 0));
+    if (snap.composite === "error" || (Number.isFinite(faultValue) && faultValue !== 0)) {
+      return { image: "error", title: "Требуется внимание", hint: "Проверьте робот или станцию", tone: "error" };
+    }
     const ops = new Set(snap.stationOperations || []);
     if (ops.size > 1 || snap.station === "multiple_operations") {
       const labels = [...ops].map((x) => STATION_OPERATION_LABELS[x] || x).join(" · ");
@@ -887,13 +917,15 @@ class S8OmniPanel extends HTMLElement {
     if (ops.has("dust_collection") || snap.station === "dust_collection") return { image: "dust", title: "Сбор пыли", hint: "Станция опустошает пылесборник робота", tone: "operation" };
     if (ops.has("roller_cleaning") || snap.station === "roller_cleaning") return { image: "wash", title: "Мойка швабры", hint: "Станция промывает швабру", tone: "operation" };
     if (ops.has("drying") || snap.station === "drying") return { image: "dry", title: "Сушка швабры", hint: "Станция сушит швабру тёплым воздухом", tone: "warm" };
-    if (snap.composite === "returning_to_dock" || snap.robot === "returning_to_dock") return { image: "away", title: "Возврат на станцию", hint: "Робот возвращается на станцию", tone: "operation" };
-    if (["cleaning", "zone_cleaning", "room_cleaning"].includes(snap.composite) || ["cleaning", "zone_cleaning", "room_cleaning"].includes(snap.robot)) return { image: "away", title: "Уборка", hint: "Робот выполняет уборку", tone: "operation" };
-    if (snap.composite === "paused" || snap.robot === "paused") return { image: "away", title: "Пауза", hint: "Уборка приостановлена", tone: "neutral" };
-    if (snap.robot === "charging") return { image: "dock", title: "Зарядка", hint: "Робот на станции и заряжается", tone: "good" };
-    if (snap.robot === "charged") return { image: "dock", title: "На базе · Заряжен", hint: "Робот на станции, заряд завершён", tone: "good" };
-    if (snap.onDock === true) return { image: "dock", title: "Простой", hint: "Робот и станция в ожидании", tone: "neutral" };
-    return { image: "away", title: "Простой", hint: "Робот ожидает команду", tone: "neutral" };
+    if (snap.composite === "returning_to_dock" || snap.robot === "returning_to_dock") return { image: "returning", title: "Возврат", hint: "Возвращается на базу", tone: "operation" };
+    if (["cleaning", "zone_cleaning", "room_cleaning"].includes(snap.composite) || ["cleaning", "zone_cleaning", "room_cleaning"].includes(snap.robot)) return { image: "cleaning", title: "Уборка", hint: "Выполняется уборка", tone: "operation" };
+    if (snap.composite === "paused" || snap.robot === "paused") return { image: "paused", title: "Пауза", hint: "Уборка приостановлена", tone: "neutral" };
+    if (snap.robot === "charging") {
+      const charge = snap.battery === null ? "—" : `${Math.round(snap.battery)}%`;
+      return { image: "charging", title: "Заряжается", hint: `Идёт зарядка · ${charge}`, tone: "good" };
+    }
+    if (snap.robot === "charged" || snap.onDock === true) return { image: "base", title: "На базе", hint: "Готов к уборке", tone: "good" };
+    return { image: "away", title: "Ожидание", hint: "Робот ожидает команду", tone: "neutral" };
   }
 
   _resourceStrip(snap) {
@@ -908,12 +940,35 @@ class S8OmniPanel extends HTMLElement {
     const charging = !snap.unreliable && snap.robot === "charging";
     const charged = !snap.unreliable && snap.robot === "charged";
     const battery = snap.battery === null ? "—" : `${Math.round(snap.battery)}%`;
-    const age = snap.age === null ? "—" : this._formatDuration(snap.age);
     const mode = this._modeLabel(snap), modeMeta = this._modeMeta(snap, mode);
-    const batteryIcon = this._batteryIcon(snap, charging, charged), modeIcon = this._modeIcon(snap), telemetryIcon = this._telemetryIcon(snap), telemetryMeta = this._telemetryMeta(snap);
+    const batteryIcon = this._batteryIcon(snap, charging, charged), modeIcon = this._modeIcon(snap);
     const batteryTone = snap.battery !== null && snap.battery < 15 ? " low" : "";
-    const image = HERO_IMAGES[state.image] || HERO_IMAGES.dock;
-    return `<section class="card hero state-hero ${state.tone || ""}" data-more="composite_status"><div class="hero-top"><div><span class="eyebrow">Состояние</span><h1>${escapeHtml(state.title)}</h1><p class="hero-hint">${escapeHtml(state.hint)}</p></div><div class="connection-indicator ${connection.tone}" data-more="local_connection" role="status" aria-label="${escapeHtml(connection.label)} · ${escapeHtml(connection.freshnessLabel)}"><i class="connection-lamp"></i><span class="connection-copy"><strong>${escapeHtml(connection.label)}</strong><small class="${connection.freshnessTone}">${escapeHtml(connection.freshnessLabel)}</small></span></div></div><div class="state-scene ${snap.unreliable ? "muted" : ""}"><img class="state-image" src="${image}" alt="S8 OMNI — ${escapeHtml(state.title)}" /></div>${this._resourceStrip(snap)}<div class="hero-metrics"><div data-more="battery"><ha-icon class="metric-icon battery${batteryTone}" icon="${batteryIcon}"></ha-icon><span>АКБ</span><strong>${battery}</strong><small>Текущий заряд</small><div class="battery-bar"><i style="width:${snap.battery ?? 0}%"></i></div></div><div data-more="mode"><ha-icon class="metric-icon mode" icon="${modeIcon}"></ha-icon><span>Режим</span><strong>${escapeHtml(mode)}</strong><small>${escapeHtml(modeMeta)}</small></div><div data-more="telemetry_age"><ha-icon class="metric-icon telemetry" icon="${telemetryIcon}"></ha-icon><span>Телеметрия</span><strong>${escapeHtml(age)}</strong><small>${escapeHtml(telemetryMeta)}</small></div></div></section>`;
+    const image = HERO_IMAGES[state.image] || HERO_IMAGES.base;
+    const ops = new Set(snap.stationOperations || []);
+    let stationLabel = "Ожидает";
+    let stationTone = "";
+    let stationIcon = "mdi:home";
+    if (snap.unreliable) {
+      stationLabel = "Нет данных";
+      stationIcon = "mdi:home-question";
+    } else if (state.tone === "error") {
+      stationLabel = "Ошибка";
+      stationTone = "error";
+      stationIcon = "mdi:home-alert-outline";
+    } else if (snap.robot === "charging") {
+      stationLabel = "Заряжает";
+    } else if (ops.size > 1 || snap.station === "multiple_operations") {
+      stationLabel = "Работает";
+    } else if (ops.has("dust_collection") || snap.station === "dust_collection") {
+      stationLabel = "Сбор пыли";
+    } else if (ops.has("roller_cleaning") || snap.station === "roller_cleaning") {
+      stationLabel = "Промывка";
+    } else if (ops.has("drying") || snap.station === "drying") {
+      stationLabel = "Сушка";
+    } else if (snap.onDock === true || snap.robot === "charged") {
+      stationLabel = "Готова";
+    }
+    return `<section class="card hero state-hero ${state.tone || ""}" data-more="composite_status"><div class="hero-top"><div><h1>${escapeHtml(state.title)}</h1><p class="hero-hint">${escapeHtml(state.hint)}</p></div><div class="connection-indicator ${connection.tone}" data-more="local_connection" role="status" aria-label="${escapeHtml(connection.label)} · ${escapeHtml(connection.freshnessLabel)}"><i class="connection-lamp"></i><span class="connection-copy"><strong>${escapeHtml(connection.label)}</strong><small class="${connection.freshnessTone}">${escapeHtml(connection.freshnessLabel)}</small></span></div></div><div class="state-scene ${snap.unreliable ? "muted" : ""}"><img class="state-image" src="${image}" alt="S8 OMNI — ${escapeHtml(state.title)}" /></div>${this._resourceStrip(snap)}<div class="hero-metrics"><div data-more="battery"><ha-icon class="metric-icon battery${batteryTone}" icon="${batteryIcon}"></ha-icon><span>АКБ</span><strong>${battery}</strong><small>Текущий заряд</small><div class="battery-bar"><i style="width:${snap.battery ?? 0}%"></i></div></div><div data-more="mode"><ha-icon class="metric-icon mode" icon="${modeIcon}"></ha-icon><span>Режим</span><strong>${escapeHtml(mode)}</strong><small>${escapeHtml(modeMeta)}</small></div><div class="${stationTone ? `station-${stationTone}` : ""}" data-more="station_status"><ha-icon class="metric-icon station ${stationTone}" icon="${stationIcon}"></ha-icon><span>Станция</span><strong>${escapeHtml(stationLabel)}</strong><small>${stationLabel === "Готова" ? "Готова" : stationLabel === "Ошибка" ? "Требует внимания" : stationLabel}</small></div></div></section>`;
   }
 
   _quickActions() {
@@ -923,29 +978,33 @@ class S8OmniPanel extends HTMLElement {
     const paused = vacuum?.state === "paused" || snap.robot === "paused";
     const returning = snap.robot === "returning_to_dock" || snap.composite === "returning_to_dock";
     const docked = snap.onDock === true || ["charging", "charged"].includes(snap.robot);
+    const faultValue = Number(this._stateValue("fault", 0));
+    const attention = snap.composite === "error" || (Number.isFinite(faultValue) && faultValue !== 0);
     const stationStops = this._activeStationStopKeys(snap).filter((key) => Boolean(this._entityId(key)));
     const stationActive = stationStops.length > 0;
     const stopKeys = stationStops.join(",");
+    const actionButton = (label, icon, action = null, enabled = false, ready = false, extra = "") => `<button class="action${ready ? " ready" : ""}${extra ? ` ${extra}` : ""}" type="button"${action ? ` data-action="${action}"` : ""}${enabled ? "" : " disabled"}><span class="action-icon"><ha-icon icon="${icon}"></ha-icon></span><strong>${label}</strong></button>`;
 
     if (stationActive) {
-      return `<div class="quick-actions"><button class="action ready" type="button" disabled><span class="action-icon"><ha-icon icon="mdi:play"></ha-icon></span><strong>Уборка</strong><span class="action-sub">Недоступно</span></button><button class="action" type="button" disabled><span class="action-icon"><ha-icon icon="mdi:pause"></ha-icon></span><strong>Пауза</strong><span class="action-sub">Недоступно</span></button><button class="action primary stop" type="button" data-station-stop="${stopKeys}"><span class="action-icon"><ha-icon icon="mdi:stop"></ha-icon></span><strong>Стоп</strong><span class="action-sub">Прервать</span></button></div>`;
+      return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", null, false)}${actionButton("Пауза", "mdi:pause", null, false)}<button class="action stop" type="button" data-station-stop="${stopKeys}"><span class="action-icon"><ha-icon icon="mdi:stop"></ha-icon></span><strong>Стоп</strong></button></div>`;
+    }
+    if (attention) {
+      return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", "start", available, true)}${actionButton("Пауза", "mdi:pause", null, false)}${actionButton("Домой", "mdi:home", null, false)}</div>`;
     }
     if (cleaning) {
-      return `<div class="quick-actions"><button class="action running" type="button" disabled><span class="action-icon"><ha-icon icon="mdi:robot-vacuum"></ha-icon></span><strong>Уборка</strong><span class="action-sub">Идёт</span></button><button class="action primary" type="button" data-action="pause" ${available ? "" : "disabled"}><span class="action-icon"><ha-icon icon="mdi:pause"></ha-icon></span><strong>Пауза</strong><span class="action-sub">Приостановить</span></button><button class="action primary stop" type="button" data-action="stop" ${available ? "" : "disabled"}><span class="action-icon"><ha-icon icon="mdi:stop"></ha-icon></span><strong>Стоп</strong><span class="action-sub">Завершить</span></button></div>`;
+      return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", null, false)}${actionButton("Пауза", "mdi:pause", "pause", available, true)}${actionButton("Домой", "mdi:home", "home", available, true)}</div>`;
     }
     if (paused) {
-      return `<div class="quick-actions"><button class="action primary" type="button" data-action="start" ${available ? "" : "disabled"}><span class="action-icon"><ha-icon icon="mdi:play"></ha-icon></span><strong>Продолжить</strong><span class="action-sub">Уборку</span></button><button class="action" type="button" disabled><span class="action-icon"><ha-icon icon="mdi:pause"></ha-icon></span><strong>Пауза</strong><span class="action-sub">Активна</span></button><button class="action primary stop" type="button" data-action="stop" ${available ? "" : "disabled"}><span class="action-icon"><ha-icon icon="mdi:stop"></ha-icon></span><strong>Стоп</strong><span class="action-sub">Завершить</span></button></div>`;
+      return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", "start", available, true)}${actionButton("Пауза", "mdi:pause", null, false)}${actionButton("Домой", "mdi:home", "home", available, true)}</div>`;
     }
     if (returning) {
-      return `<div class="quick-actions"><button class="action ready" type="button" disabled><span class="action-icon"><ha-icon icon="mdi:play"></ha-icon></span><strong>Уборка</strong><span class="action-sub">Недоступно</span></button><button class="action" type="button" disabled><span class="action-icon"><ha-icon icon="mdi:pause"></ha-icon></span><strong>Пауза</strong><span class="action-sub">Недоступно</span></button><button class="action primary stop" type="button" data-action="stop" ${available ? "" : "disabled"}><span class="action-icon"><ha-icon icon="mdi:stop"></ha-icon></span><strong>Стоп</strong><span class="action-sub">Прервать</span></button></div>`;
+      return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", null, false)}${actionButton("Пауза", "mdi:pause", "pause", available, true)}${actionButton("Домой", "mdi:home", null, false)}</div>`;
     }
-    const homeClass = docked ? "action primary running" : "action";
-    return `<div class="quick-actions"><button class="action ready" type="button" data-action="start" ${available ? "" : "disabled"}><span class="action-icon"><ha-icon icon="mdi:play"></ha-icon></span><strong>Уборка</strong><span class="action-sub">Smart</span></button><button class="action" type="button" disabled><span class="action-icon"><ha-icon icon="mdi:pause"></ha-icon></span><strong>Пауза</strong><span class="action-sub">Недоступно</span></button><button class="${homeClass}" type="button" data-action="home" ${available && !docked ? "" : "disabled"}><span class="action-icon"><ha-icon icon="${docked ? "mdi:home" : "mdi:home"}"></ha-icon></span><strong>Домой</strong><span class="action-sub">${docked ? "На базе ✓" : "На станцию"}</span></button></div>`;
+    return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", "start", available, true)}${actionButton("Пауза", "mdi:pause", null, false)}${actionButton("Домой", "mdi:home", "home", available && !docked, !docked)}</div>`;
   }
 
   _overview() {
-    const snap = this._snapshot();
-    return `<div>${this._hero()}${this._trustBanner(snap)}${this._quickActions()}</div>`;
+    return `<div>${this._hero()}${this._quickActions()}</div>`;
   }
 
   _cleaning() {
