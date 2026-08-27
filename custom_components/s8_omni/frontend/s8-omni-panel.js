@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.27";
+const UI_VERSION = "v0.7.28";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.72;
 const VIEW_SCALE_MAX = 2.20;
@@ -847,8 +847,9 @@ class S8OmniPanel extends HTMLElement {
       .connection-indicator.local{background:color-mix(in srgb,var(--success-color,#43a047) 11%,var(--card-background-color));border-color:color-mix(in srgb,var(--success-color,#43a047) 30%,var(--divider-color))}
       .connection-indicator.offline{background:color-mix(in srgb,var(--error-color,#db4437) 10%,var(--card-background-color));border-color:color-mix(in srgb,var(--error-color,#db4437) 30%,var(--divider-color))}
       .connection-indicator.unknown{background:color-mix(in srgb,var(--secondary-text-color) 8%,var(--card-background-color));border-color:color-mix(in srgb,var(--secondary-text-color) 28%,var(--divider-color))}
-      .state-hero{display:grid;grid-template-rows:auto auto auto auto;align-content:start}
+      .state-hero{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto;align-content:start;width:100%;min-width:0}
       .state-hero .hero-top{grid-row:1;grid-template-columns:minmax(0,1fr) minmax(168px,max-content);width:100%;isolation:isolate}
+      .state-hero>.hero-top,.state-hero>.state-scene,.state-hero>.resource-strip,.state-hero>.hero-metrics{grid-column:1;justify-self:stretch;width:100%;min-width:0;max-width:100%}
       .state-hero .state-scene{grid-row:2;width:100%;min-width:0;contain:layout paint;isolation:isolate}
       .state-hero .state-image{position:absolute;inset:0;width:100%;height:100%;max-width:none}
       .state-hero .resource-strip{grid-row:3}
@@ -862,7 +863,7 @@ class S8OmniPanel extends HTMLElement {
       .state-hero .hero-metrics .battery-bar{grid-column:1/-1;grid-row:4;margin:6px 0 0}
       .state-hero .connection-indicator{min-width:168px;max-width:100%}
       .eyebrow,.hero-metrics span,.hero-metrics small,.action .action-sub,.segment,.station-summary-item span,.diagnostic-strip span,.resource-chip strong,.resource-chip small,.service-toggle-row .toggle-copy small,.status-card strong,.status-card span.meta,.legend-row,.legend-copy strong,.legend-copy small{font-size:12px}
-      /* v0.7.27: approved state-aware Overview composition. */
+      /* v0.7.28: lock the state-aware Overview to one explicit grid column across live state transitions. */
       .state-hero .hero-top{align-items:center;margin-bottom:10px}
       .state-hero .hero-top>div:first-child{padding-top:3px}
       .state-hero h1{margin-top:0;font-size:25px;line-height:1.04;letter-spacing:-.035em}

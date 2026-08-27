@@ -57,10 +57,13 @@ class PanelUiStandardV16V0722Tests(unittest.TestCase):
         self.assertIn("<nav aria-label=\"Основные разделы\">", self.source)
         self.assertIn("grid-template-rows:auto minmax(0,1fr) auto", self.source)
 
-
     def test_overview_state_transition_keeps_explicit_geometry(self) -> None:
         self.assertIn(
-            ".state-hero{display:grid;grid-template-rows:auto auto auto auto;align-content:start}",
+            ".state-hero{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto;align-content:start;width:100%;min-width:0}",
+            self.source,
+        )
+        self.assertIn(
+            ".state-hero>.hero-top,.state-hero>.state-scene,.state-hero>.resource-strip,.state-hero>.hero-metrics{grid-column:1;justify-self:stretch;width:100%;min-width:0;max-width:100%}",
             self.source,
         )
         self.assertIn(

@@ -58,7 +58,7 @@ jobs:
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.27"' "$production"
+          grep -q 'const UI_VERSION = "v0.7.28"' "$production"
           grep -q '_connectionIndicatorState()' "$production"
           grep -q 'class="connection-indicator' "$production"
           grep -q 'Данные актуальны' "$production"
@@ -115,6 +115,8 @@ jobs:
           grep -Fq ':host{height:100vh;height:100dvh;min-height:0;max-height:100dvh' "$production"
           grep -Fq 'main{height:100%;min-height:0;display:grid' "$production"
           grep -Fq '@media(max-width:430px){.state-scene{height:292px}' "$production"
+          grep -Fq '.state-hero{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto;align-content:start;width:100%;min-width:0}' "$production"
+          grep -Fq '.state-hero>.hero-top,.state-hero>.state-scene,.state-hero>.resource-strip,.state-hero>.hero-metrics{grid-column:1;justify-self:stretch;width:100%;min-width:0;max-width:100%}' "$production"
           if grep -q 'min-height:100vh' "$production"; then exit 1; fi
           if grep -q 'scrollLeft' "$production"; then exit 1; fi
           grep -q 'scrollTop' "$production"
@@ -138,7 +140,7 @@ jobs:
           grep -Fq '.state-hero .hero-metrics .metric-icon{position:static' "$production"
           grep -Fq 'font-size:13px;font-weight:750;text-transform:none;letter-spacing:0' "$production"
           if grep -Fq '.resource-strip{position:absolute' "$production"; then exit 1; fi
-          echo "S8 OMNI v0.7.27 approved state Overview and v1.6 contract OK"
+          echo "S8 OMNI v0.7.28 state-transition grid fix and v1.6 contract OK"
 
       - name: Validate panel manifest and state assets
         run: |
@@ -147,7 +149,7 @@ jobs:
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.27':
+          if panel.get('dashboard_version') != 'v0.7.28':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':
