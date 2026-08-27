@@ -8,7 +8,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.7.27",
+    "dashboard_version": "v0.7.28",
     "template": "NikaS Integration Panel Template v1.0",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -134,7 +134,7 @@
       "quick_action_icon_px": 34,
       "card_proportions": "approved_reference_compact",
       "typography_scale": "compact_balanced_mobile",
-      "overview_target": "approved_v0.7.27_state_render_composition",
+      "overview_target": "approved_v0.7.28_state_transition_grid_fix",
       "overview_scene": "approved_state_specific_local_webp_background_plus_live_status_resource_strip_and_station_summary",
       "overview_scene_sources": [
         "robot_on_dock",

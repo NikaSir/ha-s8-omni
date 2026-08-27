@@ -1,3 +1,9 @@
+## v1.00_b064 / UI v0.7.28
+
+- Fixed the live Overview state-transition layout collapse seen when the robot entered Cleaning and other non-idle states.
+- Added an explicit single-column CSS Grid track to the state Hero and pinned Header, scene, resource strip and KPI strip to that column, removing the implicit-track sizing ambiguity on iOS/WebView.
+- Preserved the approved v0.7.27 state images, resource strip, state-aware actions, fixed bottom navigation and stable pointwise DOM update model.
+
 ## v1.00_b063 / UI v0.7.27
 
 - Applied the approved Overview hierarchy for base, charging, cleaning, pause, return and attention states; removed the redundant `СОСТОЯНИЕ` eyebrow and charging-complete duplication.
