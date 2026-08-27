@@ -8,7 +8,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.7.26",
+    "dashboard_version": "v0.7.27",
     "template": "NikaS Integration Panel Template v1.0",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -28,10 +28,22 @@
         "assets/hero-away.webp",
         "assets/hero-dust.webp",
         "assets/hero-wash.webp",
-        "assets/hero-dry.webp"
+        "assets/hero-dry.webp",
+        "assets/hero-base.webp",
+        "assets/hero-charging.webp",
+        "assets/hero-cleaning.webp",
+        "assets/hero-paused.webp",
+        "assets/hero-return.webp",
+        "assets/hero-error.webp"
       ],
       "product_art_delivery": "integration_local_static_assets",
       "product_art_states": [
+        "base",
+        "charging",
+        "cleaning",
+        "paused",
+        "returning",
+        "error",
         "dock",
         "away",
         "dust_collection",
@@ -100,7 +112,7 @@
         "diagnostics"
       ],
       "view_responsibilities": {
-        "overview": "state_aware_photographic_hero_resource_strip_kpis_and_actions_without_status_grid",
+        "overview": "state_aware_photographic_hero_resource_strip_battery_mode_station_and_actions_without_duplicate_telemetry",
         "cleaning": "current_cleaning_metrics_key_profile_cards_and_separate_settings_drill_down",
         "station": "compact_station_state_summary_and_operations",
         "maintenance": "consumables_and_service",
@@ -122,8 +134,8 @@
       "quick_action_icon_px": 34,
       "card_proportions": "approved_reference_compact",
       "typography_scale": "compact_balanced_mobile",
-      "overview_target": "approved_target_mockup_composition",
-      "overview_scene": "state_specific_local_webp_background_plus_live_text_and_resource_strip",
+      "overview_target": "approved_v0.7.27_state_render_composition",
+      "overview_scene": "approved_state_specific_local_webp_background_plus_live_status_resource_strip_and_station_summary",
       "overview_scene_sources": [
         "robot_on_dock",
         "robot_status",
@@ -191,7 +203,7 @@
       "identity_transform_at_100": "none",
       "defer_rerender_during_native_scroll": true,
       "viewport_height_owner": "host",
-      "mobile_overview_scene_height_px": 320,
+      "mobile_overview_scene_height_px": 292,
       "stable_dom_shell": true,
       "hass_update_strategy": "in_place_text_class_and_attribute_sync",
       "telemetry_age_in_structure_key": false,
