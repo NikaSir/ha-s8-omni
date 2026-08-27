@@ -34,11 +34,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -- .github/workflows/repository-checks.yml
           git add custom_components/s8_omni/frontend/s8-omni-panel.js \
                   custom_components/s8_omni/const.py \
                   custom_components/s8_omni/manifest.json \
                   panel.json \
-                  .github/workflows/repository-checks.yml \
                   tests/test_panel_dynamic_actions_ui_v0723.py \
                   CHANGELOG.md
           git diff --cached --check
