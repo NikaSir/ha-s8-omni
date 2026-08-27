@@ -1,10 +1,43 @@
-const UI_VERSION = "v0.7.29";
+const UI_VERSION = "v0.7.30";
+const HEADER_VERSION_PREFIX = "UI v";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.75;
 const VIEW_SCALE_MAX = 2.00;
 const VIEW_SCALE_SNAP_MIN = 0.97;
 const VIEW_SCALE_SNAP_MAX = 1.03;
 const VIEW_STATE_PREFIX = "s8_omni.view_transform.v2";
+const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
+const RETURN_ROUTE_KEY = "nikas.s8_omni.return_route.v1";
+const SAFE_DEFAULT_ROUTE = "/dashboard-actions";
+const SAFE_ROUTE_PREFIXES = ["/dashboard-house", "/dashboard-actions", "/dashboard-infrastructure"];
+
+function safeReturnRoute(value) {
+  if (!value) return null;
+  try {
+    const url = new URL(decodeURIComponent(String(value).trim()), window.location.origin);
+    if (url.origin !== window.location.origin) return null;
+    const allowed = SAFE_ROUTE_PREFIXES.some((prefix) => url.pathname === prefix || url.pathname.startsWith(`${prefix}/`));
+    return allowed ? `${url.pathname}${url.search}${url.hash}` : null;
+  } catch (_error) {
+    return null;
+  }
+}
+
+function resolveReturnRoute(panel) {
+  const current = new URL(window.location.href);
+  const explicit = safeReturnRoute(current.searchParams.get("return_to") || current.searchParams.get("from"));
+  let handedOff = null;
+  let saved = null;
+  try {
+    handedOff = safeReturnRoute(sessionStorage.getItem(SOURCE_ROUTE_KEY));
+    sessionStorage.removeItem(SOURCE_ROUTE_KEY);
+    saved = safeReturnRoute(sessionStorage.getItem(RETURN_ROUTE_KEY));
+  } catch (_error) {}
+  const configured = safeReturnRoute(panel?._panel?.config?.parent_route || panel?._panel?.config?.parent_path);
+  const route = explicit || handedOff || saved || safeReturnRoute(document.referrer) || configured || SAFE_DEFAULT_ROUTE;
+  try { sessionStorage.setItem(RETURN_ROUTE_KEY, route); } catch (_error) {}
+  return route;
+}
 const HERO_IMAGES = {
   base: `${ASSET_ROOT}/hero-base.webp?v=${encodeURIComponent(UI_VERSION)}`,
   charging: `${ASSET_ROOT}/hero-charging.webp?v=${encodeURIComponent(UI_VERSION)}`,
@@ -187,6 +220,7 @@ class S8OmniPanel extends HTMLElement {
     this._stableMounted = false;
     this._stablePatchQueued = false;
     this._stableStructureCache = null;
+    this._returnRoute = null;
     this._boundStableViews = new WeakSet();
     this._onRealViewportResize = () => requestAnimationFrame(() => this._clampAndApplyTransform(false));
   }
@@ -700,7 +734,7 @@ class S8OmniPanel extends HTMLElement {
   }
   _toggleMenu() { this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: true, composed: true })); }
   _navigateParent() {
-    const path = this._panel?.config?.parent_path;
+    const path = safeReturnRoute(this._returnRoute) || SAFE_DEFAULT_ROUTE;
     if (!path || window.location.pathname === path) return;
     window.history.pushState(null, "", path);
     window.dispatchEvent(new CustomEvent("location-changed", { bubbles: true, composed: true }));
@@ -846,7 +880,7 @@ class S8OmniPanel extends HTMLElement {
         .state-scene{height:292px}
         nav button{min-height:52px;border-radius:14px}nav button ha-icon{--mdc-icon-size:28px}
       }
-      /* v0.7.22: NIKAS Specialized Panel UI Standard v1.6. */
+      /* v0.7.22: NIKAS Specialized Panel UI Standard v1.7. */
       .stable-view[hidden],.trust-banner.is-hidden{display:none!important}
       .header-title strong{font-size:23px;font-weight:800}.header-title span{font-size:14px;font-weight:560}
       .hero h1,.state-hero h1,.station-hero h2,.view-heading h2{font-size:25px}
@@ -883,9 +917,9 @@ class S8OmniPanel extends HTMLElement {
       .action.ready .action-icon{background:color-mix(in srgb,var(--primary-color) 10%,transparent)}
       .action:disabled{opacity:.32}
       @media(max-width:430px){.action{min-height:82px}.state-hero .hero-hint{font-size:13px}}
-      /* v0.7.29: audited mobile composition and current shell contract. */
-      .header-title{width:100%;padding:4px 8px;border:0;border-radius:14px;background:transparent;color:var(--primary-text-color);cursor:pointer;-webkit-appearance:none;appearance:none}
-      .header-title:active{background:color-mix(in srgb,var(--primary-color) 7%,transparent)}
+      /* v0.7.30: audited mobile composition and NikaS v1.7 source return. */
+      .header-title{width:100%;min-height:44px;padding:4px 8px;border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:16px;background:var(--card-background-color);color:var(--primary-text-color);cursor:pointer;box-shadow:0 4px 14px rgba(23,45,76,.06);-webkit-appearance:none;appearance:none}
+      .header-title:active{transform:scale(.985);background:color-mix(in srgb,var(--primary-color) 7%,var(--card-background-color))}
       .state-hero{grid-template-rows:auto auto auto;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;overflow:visible;margin-bottom:10px}
       .state-hero::after{display:none}
       .state-hero>.hero-primary,.state-hero>.resource-strip,.state-hero>.hero-metrics{grid-column:1;justify-self:stretch;width:100%;min-width:0;max-width:100%}
@@ -912,7 +946,7 @@ class S8OmniPanel extends HTMLElement {
   }
 
   _header() {
-    return `<header class="app-header"><button class="header-action" type="button" data-header-primary aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button><button class="header-title" type="button" data-header-home aria-label="Вернуться на основную панель"><strong>S8 OMNI</strong><span>UI ${UI_VERSION}</span></button><button class="header-action refresh" type="button" data-refresh aria-label="Обновить" ${this._entityId("refresh") ? "" : "disabled"}><ha-icon icon="mdi:refresh"></ha-icon></button></header>`;
+    return `<header class="app-header"><button class="header-action" type="button" data-header-primary aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button><button class="header-title" type="button" data-header-home aria-label="Вернуться в базовую панель NikaS"><strong>S8 OMNI</strong><span>${HEADER_VERSION_PREFIX}${UI_VERSION.replace(/^v/, "")}</span></button><button class="header-action refresh" type="button" data-refresh aria-label="Обновить" ${this._entityId("refresh") ? "" : "disabled"}><ha-icon icon="mdi:refresh"></ha-icon></button></header>`;
   }
 
   _trustBanner(snap) {
@@ -1271,6 +1305,7 @@ class S8OmniPanel extends HTMLElement {
       return;
     }
     this._restoreTransform(false);
+    this._returnRoute = resolveReturnRoute(this);
     this.shadowRoot.innerHTML = `<style>${this._styles()}</style><main>${this._header()}${this._workspace(this._stableBodyMarkup())}${this._nav()}</main>`;
     this._stableMounted = true;
     this._stableStructureCache = this._stableStructureKey();

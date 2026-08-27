@@ -57,9 +57,13 @@ class PanelMobileAuditUiV0729Tests(unittest.TestCase):
         self.assertIn(".state-hero .connection-copy strong,.state-hero .connection-copy small{display:block", self.source)
 
     def test_header_center_returns_to_parent(self) -> None:
-        self.assertIn('data-header-home aria-label="Вернуться на основную панель"', self.source)
-        self.assertIn("this._panel?.config?.parent_path", self.source)
+        self.assertIn('data-header-home aria-label="Вернуться в базовую панель NikaS"', self.source)
+        self.assertIn('SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1"', self.source)
+        self.assertIn('["/dashboard-house", "/dashboard-actions", "/dashboard-infrastructure"]', self.source)
+        self.assertIn('current.searchParams.get("return_to") || current.searchParams.get("from")', self.source)
+        self.assertIn("panel?._panel?.config?.parent_path", self.source)
         self.assertIn('new CustomEvent("location-changed"', self.source)
+        self.assertNotIn("history.back(", self.source)
         self.assertIn('this.shadowRoot.querySelector("[data-header-home]")', self.source)
 
     def test_zoom_and_manifest_match_current_contract(self) -> None:
@@ -67,7 +71,7 @@ class PanelMobileAuditUiV0729Tests(unittest.TestCase):
         self.assertIn("const VIEW_SCALE_MAX = 2.00", self.source)
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
         self.assertEqual([0.75, 2.0], panel["workspace_transform"]["scale_range"])
-        self.assertEqual("navigate_to_parent_path", panel["navigation"]["header_center_action"])
+        self.assertEqual("return_to_source_base_panel", panel["navigation"]["header_center_action"])
 
 
 if __name__ == "__main__":

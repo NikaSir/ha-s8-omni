@@ -230,3 +230,6 @@ All notable project changes are recorded here.
 - Consumable/map reset writes are intentionally deferred pending verification.
 - DND schedule, cleaning timers and raw map/control payloads are intentionally deferred pending verification.
 - Station DP134/135/136 remain read-only until station write semantics are verified end-to-end.
+## v1.00_b066 / UI v0.7.30
+
+- Add the standard v1.7 clickable two-line title plaque and explicit return to the originating NikaS base panel without `history.back()`.

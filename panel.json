@@ -8,7 +8,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.7.29",
+    "dashboard_version": "v0.7.30",
     "template": "NikaS Integration Panel Template v1.0",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -95,10 +95,12 @@
       "header_button_px": 44,
       "header_icon_px": 25,
       "header_title_px": 21,
-      "header_center_action": "navigate_to_parent_path",
+      "header_center_action": "return_to_source_base_panel",
+      "source_route_handoff_key": "nikas.specialized.source_route.v1",
+      "allowed_source_roots": ["/dashboard-house", "/dashboard-actions", "/dashboard-infrastructure"],
       "header_center_lines": [
         "S8 OMNI",
-        "UI v0.7.29"
+        "UI v0.7.30"
       ],
       "primary_navigation": "full_width_fixed_bottom_tab_bar",
       "bottom_tab_min_height_px": 52,
@@ -228,7 +230,7 @@
       "two_finger_reset_guarded": true,
       "pinch_blocks_more_info": true
     },
-    "standard": "NIKAS Specialized Panel UI Standard v1.6"
+    "standard": "NIKAS Specialized Panel UI Standard v1.7"
   },
   "generated_ui": {
     "summary_entity_unique_id_suffix": "composite_status",

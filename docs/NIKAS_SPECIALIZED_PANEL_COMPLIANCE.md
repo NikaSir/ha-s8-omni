@@ -1,8 +1,8 @@
 # Specialized Panel Compliance Audit
 
-**Audit target:** NIKAS Specialized Panel UI Standard v1.6
-**Runtime:** `custom_components/s8_omni/frontend/s8-omni-panel.js` v0.7.29
-**Manifest:** integration `1.0.0b65`
+**Audit target:** NIKAS Specialized Panel UI Standard v1.7
+**Runtime:** `custom_components/s8_omni/frontend/s8-omni-panel.js` v0.7.30
+**Manifest:** integration `1.0.0b66`
 
 ## Compliance
 
@@ -16,7 +16,7 @@
 | Clamp after gesture/render/resize | PASS | Clamp runs at completion, after render and on window/visualViewport resize. |
 | Tab/detail transition returns to top, saved scale retained | PASS | `_switchWorkspace()` restores scale but resets x/y and native scroll top. |
 | Hold/more-info and click guards | PASS | The second pointer immediately cancels holds and suppresses synthetic clicks; a guarded two-finger double tap resets scale, transform and native scroll without opening history or more-info. |
-| Fixed UPS Header | PASS | 52/1fr/52 (48 narrow), 62/60 minimum plus safe area, matching 44×44 radius-16 bordered plaques, 25 px icons and v1.6 title/subtitle typography (23/14 wider, 21/13 phone). |
+| Fixed UPS Header | PASS | 52/1fr/52 (48 narrow), 62/60 minimum plus safe area, matching 44×44 radius-16 bordered plaques, 25 px icons and v1.7 title/subtitle typography (23/14 wider, 21/13 phone). |
 | Permanent left system menu; internal Back | PASS | Header always uses `mdi:menu` and composed/bubbling `hass-toggle-menu`; Cleaning Settings Back is now `.inline-back` inside content. |
 | Pointwise two-level connection indicator | PASS | The opt-in shared indicator keeps a stable node; only semantic channel/freshness categories, lamp, text, classes and values change. LIDER status tint/border and 16/13 typography are applied. |
 | Meaningful typography range | PASS | Runtime CSS declarations are constrained to 12–25 px; actions, navigation and essential telemetry never use annotation-sized text. |
