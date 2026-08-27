@@ -1,3 +1,11 @@
+## v1.00_b065 / UI v0.7.29
+
+- Restored the approved mobile Overview composition as four independent surfaces: state/photo, unchanged resource strip, three-section KPI strip and quick actions.
+- Stabilized the two-column state header and two-line connection indicator, and reduced the iPhone Pro Max scene to 264 px so actions remain clear of the fixed Bottom Tab Bar.
+- Fixed entity-registry suffix matching for `stop_dust_collection`, `stop_roller_cleaning` and `stop_roller_drying`; active station work now shows a Stop action instead of Start.
+- Made station operations override simultaneous charging in the Overview KPI and replaced duplicated KPI subtext with factual context.
+- Disabled robot start controls in attention/fault state, aligned workspace zoom with the 75–200% standard and made the centered Header plaque return to `/dashboard-actions`.
+
 ## v1.00_b064 / UI v0.7.28
 
 - Fixed the live Overview state-transition layout collapse seen when the robot entered Cleaning and other non-idle states.

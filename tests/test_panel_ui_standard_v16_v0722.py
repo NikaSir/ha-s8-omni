@@ -59,15 +59,15 @@ class PanelUiStandardV16V0722Tests(unittest.TestCase):
 
     def test_overview_state_transition_keeps_explicit_geometry(self) -> None:
         self.assertIn(
-            ".state-hero{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto;align-content:start;width:100%;min-width:0}",
+            ".state-hero{grid-template-rows:auto auto auto;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;overflow:visible;margin-bottom:10px}",
             self.source,
         )
         self.assertIn(
-            ".state-hero>.hero-top,.state-hero>.state-scene,.state-hero>.resource-strip,.state-hero>.hero-metrics{grid-column:1;justify-self:stretch;width:100%;min-width:0;max-width:100%}",
+            ".state-hero>.hero-primary,.state-hero>.resource-strip,.state-hero>.hero-metrics{grid-column:1;justify-self:stretch;width:100%;min-width:0;max-width:100%}",
             self.source,
         )
         self.assertIn(
-            ".state-hero .hero-top{grid-row:1;grid-template-columns:minmax(0,1fr) minmax(168px,max-content)",
+            ".state-hero .hero-top{grid-row:auto;grid-template-columns:minmax(0,1fr) minmax(168px,42%)",
             self.source,
         )
         self.assertIn(
@@ -79,22 +79,22 @@ class PanelUiStandardV16V0722Tests(unittest.TestCase):
             self.source,
         )
         self.assertIn(
-            ".state-hero .resource-strip{grid-row:3}",
+            ".state-hero .resource-strip{grid-row:2",
             self.source,
         )
         self.assertIn(
-            ".state-hero .hero-metrics{grid-row:4;width:100%;min-width:0;gap:0;background:",
+            ".state-hero .hero-metrics{grid-row:3",
             self.source,
         )
         self.assertIn(
-            ".state-hero .connection-indicator{min-width:168px;max-width:100%}",
+            ".state-hero .connection-indicator{width:100%;min-width:0;max-width:100%",
             self.source,
         )
 
     def test_resource_strip_is_a_separate_hero_row(self) -> None:
         hero = self.source.split("  _hero() {", 1)[1].split("  _quickActions() {", 1)[0]
         self.assertIn(
-            '</div>${this._resourceStrip(snap)}<div class="hero-metrics">',
+            '</div></div>${this._resourceStrip(snap)}<div class="hero-metrics">',
             hero,
         )
         scene = hero.split('<div class="state-scene', 1)[1].split("</div>", 1)[0]
@@ -104,11 +104,11 @@ class PanelUiStandardV16V0722Tests(unittest.TestCase):
 
     def test_overview_metrics_use_non_overlapping_grid(self) -> None:
         self.assertIn(
-            ".state-hero .hero-metrics{grid-row:4;width:100%;min-width:0;gap:0;background:",
+            ".state-hero .hero-metrics{grid-row:3",
             self.source,
         )
         self.assertIn(
-            ".state-hero .hero-metrics>div{position:relative;display:grid;grid-template-columns:28px minmax(0,1fr)",
+            ".state-hero .hero-metrics>div{grid-template-columns:24px minmax(0,1fr)",
             self.source,
         )
         self.assertIn(

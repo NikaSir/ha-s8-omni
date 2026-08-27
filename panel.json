@@ -8,7 +8,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.7.28",
+    "dashboard_version": "v0.7.29",
     "template": "NikaS Integration Panel Template v1.0",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -95,6 +95,11 @@
       "header_button_px": 44,
       "header_icon_px": 25,
       "header_title_px": 21,
+      "header_center_action": "navigate_to_parent_path",
+      "header_center_lines": [
+        "S8 OMNI",
+        "UI v0.7.29"
+      ],
       "primary_navigation": "full_width_fixed_bottom_tab_bar",
       "bottom_tab_min_height_px": 52,
       "bottom_tab_icon_px": 28,
@@ -134,7 +139,7 @@
       "quick_action_icon_px": 34,
       "card_proportions": "approved_reference_compact",
       "typography_scale": "compact_balanced_mobile",
-      "overview_target": "approved_v0.7.28_state_transition_grid_fix",
+      "overview_target": "approved_reference_separate_primary_resource_metrics_and_actions",
       "overview_scene": "approved_state_specific_local_webp_background_plus_live_status_resource_strip_and_station_summary",
       "overview_scene_sources": [
         "robot_on_dock",
@@ -181,6 +186,10 @@
         "bottom_navigation"
       ],
       "implementation": "translate3d_scale",
+      "scale_range": [
+        0.75,
+        2.0
+      ],
       "native_scroll_at_100": true,
       "horizontal_scroll_at_100": false,
       "origin_at_100": [
@@ -203,7 +212,7 @@
       "identity_transform_at_100": "none",
       "defer_rerender_during_native_scroll": true,
       "viewport_height_owner": "host",
-      "mobile_overview_scene_height_px": 292,
+      "mobile_overview_scene_height_px": 264,
       "stable_dom_shell": true,
       "hass_update_strategy": "in_place_text_class_and_attribute_sync",
       "telemetry_age_in_structure_key": false,
