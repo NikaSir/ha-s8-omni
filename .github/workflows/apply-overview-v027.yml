@@ -1,0 +1,46 @@
+name: Apply approved Overview v0.7.27
+
+on:
+  push:
+    branches:
+      - ui/overview-v0.7.27-state-art
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[overview-v027-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: ui/overview-v0.7.27-state-art
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Apply approved panel patch
+        run: python tools/apply_overview_v027.py
+      - name: Validate JavaScript syntax
+        run: node --check custom_components/s8_omni/frontend/s8-omni-panel.js
+      - name: Compile Python and run panel tests
+        run: |
+          python -m compileall -q custom_components
+          python -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Commit patched production files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add custom_components/s8_omni/frontend/s8-omni-panel.js \
+                  custom_components/s8_omni/const.py \
+                  custom_components/s8_omni/manifest.json \
+                  panel.json \
+                  .github/workflows/repository-checks.yml \
+                  tests/test_panel_dynamic_actions_ui_v0723.py \
+                  CHANGELOG.md
+          git diff --cached --check
+          git commit -m "Apply approved S8 Overview v0.7.27 [overview-v027-applied]"
+          git push origin HEAD:ui/overview-v0.7.27-state-art
