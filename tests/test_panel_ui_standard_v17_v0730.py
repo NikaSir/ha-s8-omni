@@ -37,11 +37,25 @@ class PanelUiStandardV17V0730Tests(unittest.TestCase):
 
     def test_center_title_is_visible_semantic_plaque(self) -> None:
         self.assertIn('button class="header-title" type="button" data-header-home', self.source)
-        self.assertIn(".header-title{width:100%;min-height:44px", self.source)
-        self.assertIn("background:var(--card-background-color)", self.source)
-        self.assertIn(".header-title:focus-visible{outline:3px", self.source)
-        self.assertIn(".header-title:active{transform:translateY(1px)", self.source)
-        self.assertIn("@media(max-width:520px){.header-title strong{font-size:21px}.header-title span{font-size:13px}", self.source)
+        self.assertIn(
+            ".header-title{justify-self:center;min-width:min(290px,100%);max-width:100%;min-height:44px;padding:5px 14px",
+            self.source,
+        )
+        self.assertIn(
+            "border:1px solid color-mix(in srgb,var(--primary-color,#03a9d9) 24%,var(--divider-color,#dfe3e8))",
+            self.source,
+        )
+        self.assertIn(
+            "background:color-mix(in srgb,var(--primary-color,#03a9d9) 5%,var(--card-background-color,#fff))",
+            self.source,
+        )
+        self.assertIn("box-shadow:0 5px 16px rgba(23,45,76,.06)", self.source)
+        self.assertIn(".header-title:focus-visible{outline:2px", self.source)
+        self.assertIn(".header-title:active{transform:scale(.985)", self.source)
+        self.assertIn(
+            "@media(max-width:520px){.header-title{min-width:0;width:100%;padding-inline:8px}.header-title strong{font-size:21px}.header-title span{font-size:13px}",
+            self.source,
+        )
         self.assertIn("<strong>S8 OMNI</strong><span>UI ${UI_VERSION}</span>", self.source)
 
     def test_manifest_declares_v17_contract(self) -> None:
