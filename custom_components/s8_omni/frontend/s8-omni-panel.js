@@ -929,9 +929,9 @@ class S8OmniPanel extends HTMLElement {
       .action:disabled{opacity:.32}
       @media(max-width:430px){.action{min-height:82px}.state-hero .hero-hint{font-size:13px}}
       /* v0.7.30: NikaS Specialized Panel UI Standard v1.7 source-aware shell. */
-      .header-title{width:100%;min-height:44px;padding:4px 8px;border:1px solid color-mix(in srgb,var(--divider-color) 60%,transparent);border-radius:16px;background:var(--card-background-color);box-shadow:0 7px 20px rgba(23,45,76,.055);color:var(--primary-text-color);cursor:pointer;-webkit-appearance:none;appearance:none}
-      .header-title:focus-visible{outline:3px solid color-mix(in srgb,var(--primary-color) 42%,transparent);outline-offset:2px}
-      .header-title:active{transform:translateY(1px);background:color-mix(in srgb,var(--primary-color) 9%,var(--card-background-color))}
+      .header-title{justify-self:center;min-width:min(290px,100%);max-width:100%;min-height:44px;padding:5px 14px;border:1px solid color-mix(in srgb,var(--primary-color,#03a9d9) 24%,var(--divider-color,#dfe3e8));border-radius:16px;background:color-mix(in srgb,var(--primary-color,#03a9d9) 5%,var(--card-background-color,#fff));box-shadow:0 5px 16px rgba(23,45,76,.06);color:var(--primary-text-color);cursor:pointer;-webkit-appearance:none;appearance:none}
+      .header-title:focus-visible{outline:2px solid var(--primary-color,#03a9d9);outline-offset:2px}
+      .header-title:active{transform:scale(.985);background:color-mix(in srgb,var(--primary-color,#03a9d9) 13%,var(--card-background-color,#fff));border-color:color-mix(in srgb,var(--primary-color,#03a9d9) 42%,var(--divider-color,#dfe3e8));box-shadow:0 2px 7px rgba(23,45,76,.05)}
       .state-hero{grid-template-rows:auto auto auto;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;overflow:visible;margin-bottom:10px}
       .state-hero::after{display:none}
       .state-hero>.hero-primary,.state-hero>.resource-strip,.state-hero>.hero-metrics{grid-column:1;justify-self:stretch;width:100%;min-width:0;max-width:100%}
