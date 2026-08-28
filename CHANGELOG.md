@@ -1,3 +1,11 @@
+## v1.00_b067 / UI v0.7.32
+
+- Reworked Cleaning into compact shared two-section metric surfaces while preserving the visible `Карта и комнаты` next-stage reminder.
+- Shows an active session with a zero-minute DP6 value as `< 1 мин`, stages suction/water edits until `Применить`, and keeps volume/DND on their verified entity-service paths.
+- Adds the confirmed DP41 work-type readout, uses `Выкл.` for closed water, and documents that the DND period remains configured in the official application.
+- Derives consumable percentages from the manufacturer life counters while retaining exact remaining minutes and warning tones; no unverified reset command is exposed.
+- Preserves the stop-only DP134/135/136 station contract and replaces the obsolete station-command placeholder with a factual explanation of the unified `Стоп` action.
+
 ## v1.00_b066 / UI v0.7.31
 
 - Requires both source-route hand-off values, rejects missing, invalid, stale and future timestamps, and consumes the pair before applying Header return-route precedence.

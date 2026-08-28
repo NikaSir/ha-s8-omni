@@ -6,7 +6,7 @@
 
 Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum and OMNI station, built from verified Tuya LAN datapoints.
 
-> Current development line: **v1.00_b046** (`1.0.0b46`). This is an early test build.
+> Current development line: **v1.00_b067** (`1.0.0b67`). This is an early test build.
 
 ## Scope
 
@@ -27,7 +27,7 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 
 `ha-s8-omni` owns its full appliance UI instead of exposing a loose collection of Lovelace entities as the primary experience.
 
-Dashboard **v0.7.31** follows **NIKAS Specialized Panel UI Standard v1.9**, **Navigation Contract v1.1** and **NikaS Integration Panel Template v1.9**, with the primary acceptance viewport **iPhone Pro Max portrait**:
+Dashboard **v0.7.32** follows **NIKAS Specialized Panel UI Standard v1.9**, **Navigation Contract v1.1** and **NikaS Integration Panel Template v1.9**, with the primary acceptance viewport **iPhone Pro Max portrait**:
 
 - symmetric Header: 52 px side rails / centred title / matching 44 px Menu and Refresh plaques, reduced to 48 px rails on narrow mobile;
 - the visible center title plaque captures the validated source base panel once and returns to the same Дом / Действия / Инфраструктура route;
@@ -44,14 +44,14 @@ Dashboard **v0.7.31** follows **NIKAS Specialized Panel UI Standard v1.9**, **Na
 - the Overview scene reserves a separate station-text safe zone so station state never overlaps the OMNI illustration;
 - while cleaning, **Пауза** becomes the primary action and the **Уборка** tile shows the running state instead of appearing accidentally disabled;
 - the root **Уборка** tab is deliberately read-only and starts with **Текущая уборка** time/area metrics;
-- **Всасывание** and **Подача воды** are shown as two separate key profile cards;
+- **Всасывание** and **Подача воды** share one compact two-section profile surface;
 - the standalone **Настроить уборку** card is visually separated from those information cards and shows secondary context for **Громкость** and **Не беспокоить**;
 - Start/Pause/Home are not repeated on the root Cleaning tab; daily actions stay on Overview;
-- editable suction, water, volume and DND controls live only one level lower and are not duplicated on the root Cleaning tab;
+- suction and water changes are staged on the drill-down until **Применить**; volume and DND retain their verified entity-service controls;
 - drill-down Back returns to the Cleaning root view while the bottom Tab Bar remains available for switching root sections;
 - Station view uses a compact three-column summary (**Робот / Заряд / Операция**) instead of three tall rows, keeps the three OMNI operation rows compact, and targets a typical iPhone Pro Max state without required vertical scrolling;
 - Station view keeps independent dust collection / roller cleaning / drying state and uses a prominent active-operation indicator;
-- Maintenance view keeps factual remaining resource and translates user-facing minute units to **мин**;
+- Maintenance view keeps exact remaining minutes, derives the matching manufacturer-life percentage and never exposes an unverified reset command;
 - Diagnostics keeps normalized and raw state context;
 - loading keeps Header and Bottom Tab Bar visible rather than rendering a blank page;
 - no duplicate large S8 OMNI title appears inside the hero card;
