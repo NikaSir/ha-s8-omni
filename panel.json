@@ -9,7 +9,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.7.31",
+    "dashboard_version": "v0.7.32",
     "template": "NikaS Integration Panel Template v1.9",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -111,7 +111,7 @@
       "header_title_focus_visible": true,
       "header_center_lines": [
         "S8 OMNI",
-        "UI v0.7.31"
+        "UI v0.7.32"
       ],
       "primary_navigation": "full_width_fixed_bottom_tab_bar",
       "bottom_tab_min_height_px": 52,
@@ -131,9 +131,9 @@
       ],
       "view_responsibilities": {
         "overview": "state_aware_photographic_hero_resource_strip_battery_mode_station_and_actions_without_duplicate_telemetry",
-        "cleaning": "current_cleaning_metrics_key_profile_cards_and_separate_settings_drill_down",
-        "station": "compact_station_state_summary_and_operations",
-        "maintenance": "consumables_and_service",
+        "cleaning": "current_cleaning_metrics_shared_profile_surface_and_separate_settings_drill_down",
+        "station": "compact_station_state_summary_operations_and_unified_stop_explanation",
+        "maintenance": "consumable_minutes_derived_percentages_and_service",
         "diagnostics": "technical_state_and_raw_context"
       },
       "drill_down": {
@@ -141,7 +141,9 @@
           "parent_view": "cleaning",
           "back_behavior": "return_to_parent_view",
           "bottom_tab_bar": "preserved",
-          "content_scope": "editable_cleaning_profile_only"
+          "content_scope": "verified_cleaning_profile_only",
+          "select_write_strategy": "stage_then_apply",
+          "dnd_period_source": "official_application_not_public_entity"
         }
       }
     },
@@ -179,6 +181,8 @@
         "suction",
         "water"
       ],
+      "cleaning_key_profile_layout": "one_shared_two_section_surface",
+      "cleaning_zero_minute_active_label": "< 1 мин",
       "cleaning_settings_secondary_summary": [
         "volume",
         "do_not_disturb"
@@ -257,7 +261,8 @@
   },
   "ownership": {
     "direct_tuya_dp_writes_from_ui": false,
-    "station_commands_require_public_integration_api": true,
+    "station_start_commands_exposed": false,
+    "station_stop_commands_public": true,
     "map_requires_public_integration_api": true
   }
 }
