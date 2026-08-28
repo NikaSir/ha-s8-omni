@@ -105,7 +105,7 @@ jobs:
           grep -Fq '_waitForReadback(key, expected, timeoutMs' "$production"
           grep -Fq '_callConfirmed(domain, service, key, extra, expected)' "$production"
           grep -Fq 'window.confirm(`Применить параметры уборки?' "$production"
-          grep -Fq 'action === "start" ? "Запустить уборку?" : "Отправить пылесос на базу?"' "$production"
+          grep -Fq 'action === "start" ? "Запустить уборку?" : action === "home" ? "Отправить пылесос на базу?" : null' "$production"
           grep -Fq 'блокировку от детей?' "$production"
           if grep -q 'data-zoom-out\|data-zoom-reset\|data-zoom-in\|zoom-controls' "$production"; then exit 1; fi
           grep -q '_bindWorkspaceGestures()' "$production"
