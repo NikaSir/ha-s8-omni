@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "custom_components" / "s8_omni" / "frontend" / "s8-omni-panel.js"
 
 
-class PanelUiStandardV17V0730Tests(unittest.TestCase):
+class PanelUiStandardV19V0731Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.source = SOURCE.read_text(encoding="utf-8")
@@ -31,6 +31,9 @@ class PanelUiStandardV17V0730Tests(unittest.TestCase):
             self.assertIn(marker, resolver)
         self.assertLess(resolver.index("explicit\n"), resolver.index("handedOff\n"))
         self.assertLess(resolver.index("handedOff\n"), resolver.index("saved\n"))
+        self.assertIn("handedOffRaw !== null", resolver)
+        self.assertIn("handedOffAtRaw !== null", resolver)
+        self.assertIn("handedOffAge >= 0", resolver)
         self.assertNotIn("history.back", self.source)
 
     def test_route_is_captured_once_and_navigation_is_explicit(self) -> None:
@@ -62,10 +65,10 @@ class PanelUiStandardV17V0730Tests(unittest.TestCase):
         )
         self.assertIn('<strong>S8 OMNI</strong><span>UI v${UI_VERSION.replace(/^v/, "")}</span>', self.source)
 
-    def test_manifest_declares_v18_contract(self) -> None:
+    def test_manifest_declares_v19_contract(self) -> None:
         navigation = self.panel["navigation"]
-        self.assertEqual("NIKAS Specialized Panel UI Standard v1.8", self.panel["standard"])
-        self.assertEqual("NikaS Integration Panel Template v1.8", self.panel["template"])
+        self.assertEqual("NIKAS Specialized Panel UI Standard v1.9", self.panel["standard"])
+        self.assertEqual("NikaS Integration Panel Template v1.9", self.panel["template"])
         self.assertEqual("source_aware_return", navigation["header_center_action"])
         self.assertEqual("nikas.specialized.source_route.v1", navigation["header_source_route_key"])
         self.assertEqual(44, navigation["header_title_touch_height_px"])

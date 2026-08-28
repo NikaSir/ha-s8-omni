@@ -1,8 +1,8 @@
 # Specialized Panel Compliance Audit
 
-**Audit target:** NIKAS Specialized Panel UI Standard v1.8 and Navigation Contract v1.0
+**Audit target:** NIKAS Specialized Panel UI Standard v1.9 and Navigation Contract v1.1
 
-**Runtime:** `custom_components/s8_omni/frontend/s8-omni-panel.js` v0.7.30
+**Runtime:** `custom_components/s8_omni/frontend/s8-omni-panel.js` v0.7.31
 
 **Manifest:** integration `1.0.0b66`
 
@@ -21,10 +21,11 @@
 | Fixed Bottom Tab Bar | PASS | Full-width edge-attached bar, 52 px minimum tabs, 28 px `ha-icon`, 12/700 labels and safe-area clearance. |
 | Two-level connection indicator | PASS | Stable 16/13 px local transport/freshness subtree with semantic tint; polling does not remount it. |
 | Typography envelope | PASS | Meaningful content remains within 12–25 px. |
-| Trust semantics | PASS | Unknown/unavailable/stale data is non-normal and commands are blocked without a trusted local snapshot. |
+| Trust semantics and command safety | PASS | Unknown/unavailable/stale data is non-normal; discovered entity targets are checked before service dispatch, duplicate in-flight calls are rejected and failures remain visible without optimistic success. |
 | Packaged brand and local artwork | PASS | Shipped 256/512 px integration icons and versioned local state assets are validated in CI. |
 | Verified station commands preserved | PASS | DP134/135/136 Stop buttons remain public integration entities; real-device washing and drying Stop were confirmed. |
-| Automated v1.8 guards | PASS | Repository tests verify canonical source-route precedence/allowlist, timestamped one-shot hand-off, title plaque, stable DOM, zoom, Header, navigation, assets and versions. |
+| Automated v1.9 guards | PASS | Repository tests verify canonical source-route precedence/allowlist, timestamped one-shot hand-off, title plaque, stable DOM, zoom, Header, navigation, assets and versions. |
+| Strict source hand-off | PASS | Route and timestamp are a required pair; invalid, expired and future timestamps are consumed and rejected before safe fallbacks. |
 | Mandatory real-phone acceptance | GAP | The rebuilt version still requires Companion App verification after installation. |
 
 ## Required phone check

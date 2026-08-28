@@ -39,7 +39,7 @@ jobs:
       - name: Validate frontend JavaScript
         run: node --check custom_components/s8_omni/frontend/s8-omni-panel.js
 
-      - name: Enforce NikaS UI standard v1.8
+      - name: Enforce NikaS UI standard v1.9
         run: python scripts/check_nikas_ui_standard.py
 
       - name: Run panel contract tests
@@ -61,7 +61,7 @@ jobs:
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.30"' "$production"
+          grep -q 'const UI_VERSION = "v0.7.31"' "$production"
           grep -q '_connectionIndicatorState()' "$production"
           grep -q 'class="connection-indicator' "$production"
           grep -q 'Данные актуальны' "$production"
@@ -163,7 +163,7 @@ jobs:
           grep -Fq 'window.dispatchEvent(new Event("location-changed"))' "$production"
           if grep -Fq 'history.back' "$production"; then exit 1; fi
           grep -Fq 'const ENTITY_SUFFIXES_BY_LENGTH' "$production"
-          echo "S8 OMNI v0.7.30 mobile audit and v1.8 contract OK"
+          echo "S8 OMNI v0.7.31 mobile audit and v1.9 contract OK"
 
       - name: Validate panel manifest and state assets
         run: |
@@ -172,7 +172,7 @@ jobs:
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.30':
+          if panel.get('dashboard_version') != 'v0.7.31':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':
@@ -204,7 +204,7 @@ jobs:
               raise SystemExit('source route hand-off mismatch')
           if navigation.get('header_safe_fallback') != '/dashboard-actions/home':
               raise SystemExit('source route fallback mismatch')
-          if panel.get('standard') != 'NIKAS Specialized Panel UI Standard v1.8':
+          if panel.get('standard') != 'NIKAS Specialized Panel UI Standard v1.9':
               raise SystemExit('panel standard mismatch')
           transform = panel.get('workspace_transform', {})
           required = {

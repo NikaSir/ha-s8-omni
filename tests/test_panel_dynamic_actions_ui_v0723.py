@@ -49,14 +49,23 @@ class PanelDynamicActionsUiV0723Tests(unittest.TestCase):
         self.assertNotIn("button.disabled = false", self.bind)
 
     def test_runtime_and_manifest_versions_match(self) -> None:
-        self.assertIn('const UI_VERSION = "v0.7.30"', self.source)
+        self.assertIn('const UI_VERSION = "v0.7.31"', self.source)
         constants = (ROOT / "custom_components" / "s8_omni" / "const.py").read_text(encoding="utf-8")
         manifest = json.loads((ROOT / "custom_components" / "s8_omni" / "manifest.json").read_text(encoding="utf-8"))
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
         self.assertIn('VERSION = "v1.00_b066"', constants)
-        self.assertIn('DASHBOARD_VERSION = "v0.7.30"', constants)
+        self.assertIn('DASHBOARD_VERSION = "v0.7.31"', constants)
         self.assertEqual("1.0.0b66", manifest["version"])
-        self.assertEqual("v0.7.30", panel["dashboard_version"])
+        self.assertEqual("v0.7.31", panel["dashboard_version"])
+
+    def test_commands_fail_closed_with_busy_and_visible_error_state(self) -> None:
+        self.assertIn("this._busyCommands = new Set()", self.source)
+        self.assertIn("this._busyCommands.has(commandKey)", self.source)
+        self.assertIn('["unknown", "unavailable"].includes(targetState)', self.source)
+        self.assertIn('class="trust-banner command-feedback', self.source)
+        self.assertIn("Команда выполняется", self.source)
+        self.assertIn("this._commandError = error instanceof Error", self.source)
+        self.assertNotIn("optimistic", self.source.lower())
 
 
 if __name__ == "__main__":
