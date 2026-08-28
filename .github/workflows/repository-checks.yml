@@ -61,7 +61,7 @@ jobs:
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.32"' "$production"
+          grep -q 'const UI_VERSION = "v0.7.33"' "$production"
           grep -q '_connectionIndicatorState()' "$production"
           grep -q 'class="connection-indicator' "$production"
           grep -q 'Данные актуальны' "$production"
@@ -100,6 +100,13 @@ jobs:
           grep -q 'data-station-stop' "$production"
           grep -Fq 'action === "stop" ? "stop"' "$production"
           grep -Fq 'this._call("vacuum", service, "vacuum")' "$production"
+          grep -Fq 'loading="eager" decoding="sync" fetchpriority="high"' "$production"
+          grep -Fq '_setCleaningDraft(key, value)' "$production"
+          grep -Fq '_waitForReadback(key, expected, timeoutMs' "$production"
+          grep -Fq '_callConfirmed(domain, service, key, extra, expected)' "$production"
+          grep -Fq 'window.confirm(`Применить параметры уборки?' "$production"
+          grep -Fq 'action === "start" ? "Запустить уборку?" : action === "home" ? "Отправить пылесос на базу?" : null' "$production"
+          grep -Fq 'блокировку от детей?' "$production"
           if grep -q 'data-zoom-out\|data-zoom-reset\|data-zoom-in\|zoom-controls' "$production"; then exit 1; fi
           grep -q '_bindWorkspaceGestures()' "$production"
           grep -q 'translate3d' "$production"
@@ -163,7 +170,7 @@ jobs:
           grep -Fq 'window.dispatchEvent(new Event("location-changed"))' "$production"
           if grep -Fq 'history.back' "$production"; then exit 1; fi
           grep -Fq 'const ENTITY_SUFFIXES_BY_LENGTH' "$production"
-          echo "S8 OMNI v0.7.32 mobile audit and v1.9 contract OK"
+          echo "S8 OMNI v0.7.33 mobile audit and v1.9 contract OK"
 
       - name: Validate panel manifest and state assets
         run: |
@@ -172,7 +179,7 @@ jobs:
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.32':
+          if panel.get('dashboard_version') != 'v0.7.33':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':
@@ -237,6 +244,24 @@ jobs:
                   raise SystemExit(f'workspace_transform {key} mismatch: {transform.get(key)!r}')
           if set(transform.get('shell_excluded', [])) != {'header','bottom_navigation'}:
               raise SystemExit('workspace shell exclusion mismatch')
+          detail = panel.get('navigation', {}).get('drill_down', {}).get('cleaning-settings', {})
+          if detail.get('select_write_strategy') != 'draft_explicit_apply_confirmation_write_readback':
+              raise SystemExit('cleaning write strategy mismatch')
+          if detail.get('draft_fields') != ['suction', 'water', 'volume', 'do_not_disturb']:
+              raise SystemExit('cleaning draft fields mismatch')
+          if detail.get('single_apply') is not True or detail.get('readback_required') is not True:
+              raise SystemExit('cleaning apply/readback contract mismatch')
+          first_paint = panel.get('first_paint', {})
+          if first_paint.get('hero_image_loading') != 'eager' or first_paint.get('hero_image_fetch_priority') != 'high':
+              raise SystemExit('first-paint image priority mismatch')
+          ownership = json.loads(Path('panel.json').read_text(encoding='utf-8')).get('ownership', {})
+          if ownership.get('station_stop_immediate') is not True:
+              raise SystemExit('station stop immediacy mismatch')
+          if ownership.get('profile_writes_require_confirmation_and_readback') is not True:
+              raise SystemExit('profile write safety mismatch')
+          metadata = json.loads(Path('.nikas-ui-standard.json').read_text(encoding='utf-8'))
+          if metadata.get('ui_version') != '0.7.33':
+              raise SystemExit('NikaS UI metadata version mismatch')
           print('Panel manifest OK')
           PY
 

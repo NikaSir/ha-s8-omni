@@ -43,9 +43,9 @@ class PanelCleaningUiV0732Tests(unittest.TestCase):
         self.assertNotIn('_segmentControl("work_mode"', self.source)
 
     def test_suction_and_water_are_staged_until_apply(self) -> None:
-        self.assertIn("this._cleaningDraft[key] = value", self.bind)
+        self.assertIn("this._setCleaningDraft(key, value)", self.bind)
         self.assertIn('button.matches("[data-apply-cleaning]")', self.bind)
-        self.assertIn('await this._call("select", "select_option", key', self.bind)
+        self.assertIn('await this._callConfirmed("select", "select_option", key', self.bind)
         segment_branch = self.bind.split('if (button.matches("[data-select-key]")) {', 1)[1].split(
             'if (button.matches("[data-apply-cleaning]")) {', 1
         )[0]
@@ -76,7 +76,16 @@ class PanelCleaningUiV0732Tests(unittest.TestCase):
     def test_manifest_records_the_cleaning_contract(self) -> None:
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
         detail = panel["navigation"]["drill_down"]["cleaning-settings"]
-        self.assertEqual("stage_then_apply", detail["select_write_strategy"])
+        self.assertEqual(
+            "draft_explicit_apply_confirmation_write_readback",
+            detail["select_write_strategy"],
+        )
+        self.assertEqual(
+            ["suction", "water", "volume", "do_not_disturb"],
+            detail["draft_fields"],
+        )
+        self.assertTrue(detail["single_apply"])
+        self.assertTrue(detail["readback_required"])
         self.assertEqual("official_application_not_public_entity", detail["dnd_period_source"])
         self.assertTrue(panel["mobile_fit"]["cleaning_key_profile_layout"].startswith("one_shared"))
 
