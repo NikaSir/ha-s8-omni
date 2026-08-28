@@ -1,6 +1,6 @@
 # Specialized Panel Compliance Audit
 
-**Audit target:** NIKAS Specialized Panel UI Standard v1.7
+**Audit target:** NIKAS Specialized Panel UI Standard v1.8 and Navigation Contract v1.0
 
 **Runtime:** `custom_components/s8_omni/frontend/s8-omni-panel.js` v0.7.30
 
@@ -24,7 +24,7 @@
 | Trust semantics | PASS | Unknown/unavailable/stale data is non-normal and commands are blocked without a trusted local snapshot. |
 | Packaged brand and local artwork | PASS | Shipped 256/512 px integration icons and versioned local state assets are validated in CI. |
 | Verified station commands preserved | PASS | DP134/135/136 Stop buttons remain public integration entities; real-device washing and drying Stop were confirmed. |
-| Automated v1.7 guards | PASS | Repository tests verify source-route precedence/allowlist, title plaque, stable DOM, zoom, Header, navigation, assets and versions. |
+| Automated v1.8 guards | PASS | Repository tests verify canonical source-route precedence/allowlist, timestamped one-shot hand-off, title plaque, stable DOM, zoom, Header, navigation, assets and versions. |
 | Mandatory real-phone acceptance | GAP | The rebuilt version still requires Companion App verification after installation. |
 
 ## Required phone check

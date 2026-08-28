@@ -39,6 +39,9 @@ jobs:
       - name: Validate frontend JavaScript
         run: node --check custom_components/s8_omni/frontend/s8-omni-panel.js
 
+      - name: Enforce NikaS UI standard v1.8
+        run: python scripts/check_nikas_ui_standard.py
+
       - name: Run panel contract tests
         run: python -m unittest discover -s tests -p 'test_*.py' -v
 
@@ -144,7 +147,10 @@ jobs:
           grep -Fq 'data-header-home aria-label="Вернуться в исходную базовую панель NikaS"' "$production"
           grep -Fq 'const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1"' "$production"
           grep -Fq 'const RETURN_ROUTE_KEY = "nikas.s8_omni.return_route.v1"' "$production"
-          grep -Fq 'const SAFE_ROUTE_PREFIXES = ["/dashboard-house", "/dashboard-actions", "/dashboard-infrastructure"]' "$production"
+          grep -Fq 'const SAFE_DEFAULT_ROUTE = "/dashboard-actions/home"' "$production"
+          grep -Fq 'return "/dashboard-house-v11/home"' "$production"
+          grep -Fq 'return "/dashboard-actions/home"' "$production"
+          grep -Fq 'return "/dashboard-infrastructure/overview"' "$production"
           grep -Fq '.header-title{justify-self:center;min-width:min(290px,100%);max-width:100%;min-height:44px;padding:5px 14px' "$production"
           grep -Fq 'color-mix(in srgb,var(--primary-color,#03a9d9) 24%,var(--divider-color,#dfe3e8))' "$production"
           grep -Fq 'color-mix(in srgb,var(--primary-color,#03a9d9) 5%,var(--card-background-color,#fff))' "$production"
@@ -157,7 +163,7 @@ jobs:
           grep -Fq 'window.dispatchEvent(new Event("location-changed"))' "$production"
           if grep -Fq 'history.back' "$production"; then exit 1; fi
           grep -Fq 'const ENTITY_SUFFIXES_BY_LENGTH' "$production"
-          echo "S8 OMNI v0.7.30 mobile audit and v1.7 contract OK"
+          echo "S8 OMNI v0.7.30 mobile audit and v1.8 contract OK"
 
       - name: Validate panel manifest and state assets
         run: |
@@ -196,9 +202,9 @@ jobs:
               raise SystemExit('source-aware Header return mismatch')
           if navigation.get('header_source_route_key') != 'nikas.specialized.source_route.v1':
               raise SystemExit('source route hand-off mismatch')
-          if navigation.get('header_safe_fallback') != '/dashboard-actions':
+          if navigation.get('header_safe_fallback') != '/dashboard-actions/home':
               raise SystemExit('source route fallback mismatch')
-          if panel.get('standard') != 'NIKAS Specialized Panel UI Standard v1.7':
+          if panel.get('standard') != 'NIKAS Specialized Panel UI Standard v1.8':
               raise SystemExit('panel standard mismatch')
           transform = panel.get('workspace_transform', {})
           required = {

@@ -6,9 +6,10 @@ const VIEW_SCALE_SNAP_MIN = 0.97;
 const VIEW_SCALE_SNAP_MAX = 1.03;
 const VIEW_STATE_PREFIX = "s8_omni.view_transform.v2";
 const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
+const SOURCE_ROUTE_AT_KEY = "nikas.specialized.source_route_at.v1";
 const RETURN_ROUTE_KEY = "nikas.s8_omni.return_route.v1";
-const SAFE_DEFAULT_ROUTE = "/dashboard-actions";
-const SAFE_ROUTE_PREFIXES = ["/dashboard-house", "/dashboard-actions", "/dashboard-infrastructure"];
+const SAFE_DEFAULT_ROUTE = "/dashboard-actions/home";
+const SOURCE_ROUTE_TTL_MS = 30_000;
 const HERO_IMAGES = {
   base: `${ASSET_ROOT}/hero-base.webp?v=${encodeURIComponent(UI_VERSION)}`,
   charging: `${ASSET_ROOT}/hero-charging.webp?v=${encodeURIComponent(UI_VERSION)}`,
@@ -70,10 +71,16 @@ function s8SafeReturnRoute(value) {
   try {
     const url = new URL(decodeURIComponent(String(value).trim()), window.location.origin);
     if (url.origin !== window.location.origin) return null;
-    const accepted = SAFE_ROUTE_PREFIXES.some(
-      (prefix) => url.pathname === prefix || url.pathname.startsWith(`${prefix}/`),
-    );
-    return accepted ? `${url.pathname}${url.search}${url.hash}` : null;
+    if (url.pathname === "/dashboard-house-v11" || url.pathname.startsWith("/dashboard-house-v11/")) {
+      return "/dashboard-house-v11/home";
+    }
+    if (url.pathname === "/dashboard-actions" || url.pathname.startsWith("/dashboard-actions/")) {
+      return "/dashboard-actions/home";
+    }
+    if (url.pathname === "/dashboard-infrastructure" || url.pathname.startsWith("/dashboard-infrastructure/")) {
+      return "/dashboard-infrastructure/overview";
+    }
+    return null;
   } catch (_err) {
     return null;
   }
@@ -87,8 +94,13 @@ function s8ResolveReturnRoute(panel) {
   let handedOff = null;
   let saved = null;
   try {
-    handedOff = s8SafeReturnRoute(sessionStorage.getItem(SOURCE_ROUTE_KEY));
+    const handedOffAtRaw = sessionStorage.getItem(SOURCE_ROUTE_AT_KEY);
+    const handedOffAt = Number(handedOffAtRaw);
+    const handoffIsFresh = handedOffAtRaw === null
+      || (Number.isFinite(handedOffAt) && Date.now() - handedOffAt <= SOURCE_ROUTE_TTL_MS);
+    handedOff = handoffIsFresh ? s8SafeReturnRoute(sessionStorage.getItem(SOURCE_ROUTE_KEY)) : null;
     sessionStorage.removeItem(SOURCE_ROUTE_KEY);
+    sessionStorage.removeItem(SOURCE_ROUTE_AT_KEY);
     saved = s8SafeReturnRoute(sessionStorage.getItem(RETURN_ROUTE_KEY));
   } catch (_err) {}
   const configured = s8SafeReturnRoute(
@@ -928,7 +940,7 @@ class S8OmniPanel extends HTMLElement {
       .action.ready .action-icon{background:color-mix(in srgb,var(--primary-color) 10%,transparent)}
       .action:disabled{opacity:.32}
       @media(max-width:430px){.action{min-height:82px}.state-hero .hero-hint{font-size:13px}}
-      /* v0.7.30: NikaS Specialized Panel UI Standard v1.7 source-aware shell. */
+      /* v0.7.30: NikaS Specialized Panel UI Standard v1.8 source-aware shell. */
       .header-title{justify-self:center;min-width:min(290px,100%);max-width:100%;min-height:44px;padding:5px 14px;border:1px solid color-mix(in srgb,var(--primary-color,#03a9d9) 24%,var(--divider-color,#dfe3e8));border-radius:16px;background:color-mix(in srgb,var(--primary-color,#03a9d9) 5%,var(--card-background-color,#fff));box-shadow:0 5px 16px rgba(23,45,76,.06);color:var(--primary-text-color);cursor:pointer;-webkit-appearance:none;appearance:none}
       .header-title:focus-visible{outline:2px solid var(--primary-color,#03a9d9);outline-offset:2px}
       .header-title:active{transform:scale(.985);background:color-mix(in srgb,var(--primary-color,#03a9d9) 13%,var(--card-background-color,#fff));border-color:color-mix(in srgb,var(--primary-color,#03a9d9) 42%,var(--divider-color,#dfe3e8));box-shadow:0 2px 7px rgba(23,45,76,.05)}
@@ -958,7 +970,7 @@ class S8OmniPanel extends HTMLElement {
   }
 
   _header() {
-    return `<header class="app-header"><button class="header-action" type="button" data-header-primary aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button><button class="header-title" type="button" data-header-home aria-label="Вернуться в исходную базовую панель NikaS"><strong>S8 OMNI</strong><span>UI ${UI_VERSION}</span></button><button class="header-action refresh" type="button" data-refresh aria-label="Обновить" ${this._entityId("refresh") ? "" : "disabled"}><ha-icon icon="mdi:refresh"></ha-icon></button></header>`;
+    return `<header class="app-header"><button class="header-action" type="button" data-header-primary aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button><button class="header-title" type="button" data-header-home aria-label="Вернуться в исходную базовую панель NikaS"><strong>S8 OMNI</strong><span>UI v${UI_VERSION.replace(/^v/, "")}</span></button><button class="header-action refresh" type="button" data-refresh aria-label="Обновить" ${this._entityId("refresh") ? "" : "disabled"}><ha-icon icon="mdi:refresh"></ha-icon></button></header>`;
   }
 
   _trustBanner(snap) {
