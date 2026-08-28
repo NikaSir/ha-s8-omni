@@ -92,11 +92,17 @@ Control viewport: **iPhone Pro Max · portrait**. Also inspect a narrow viewport
 - [ ] Child Header title is **Настройки уборки** with context `S8 OMNI · Уборка`.
 - [ ] Child Back returns to root **Cleaning**, not `/dashboard-actions`.
 - [ ] Suction choices: Тихий / Нормальный / Сильный.
-- [ ] Water choices: Закрыто / Низкий / Средний / Высокий.
+- [ ] Water choices: Выкл. / Низкий / Средний / Высокий.
 - [ ] Volume and DND controls are present.
 - [ ] Bottom Tab Bar remains visible with **Уборка** active.
 - [ ] Selecting another root tab closes the child workflow.
-- [ ] Existing entity/service writes are unchanged: public select/number/switch entities only.
+- [ ] Suction, water, volume and DND share one draft and one **Применить** action.
+- [ ] Live telemetry refresh does not reset an unsaved volume or DND value.
+- [ ] Cancelling the native summary confirmation sends no service call.
+- [ ] Apply uses only public select/number/switch entities and clears each draft value only after entity-state readback confirms it.
+- [ ] A readback timeout shows a visible error and preserves unconfirmed draft values for retry.
+- [ ] Child-lock change requires confirmation and verified entity-state readback.
+- [ ] Overview Start and Home require confirmation; Pause and an active station-operation **Стоп** remain immediate.
 
 ## v1.00_b016+ — disconnected / stale-state acceptance
 
@@ -223,7 +229,7 @@ A warmed browser cache is not sufficient evidence. At least one cold-cache local
 From **Settings → Devices & services → S8 OMNI → Download diagnostics**:
 
 - [ ] Diagnostics download is available for the S8 OMNI config entry.
-- [ ] Integration version is `v1.00_b067`; dashboard version is `v0.7.32`.
+- [ ] Integration version is `v1.00_b068`; dashboard version is `v0.7.33`.
 - [ ] Host/IP is replaced by a redaction marker.
 - [ ] Device ID is replaced by a redaction marker.
 - [ ] Local Key is replaced by a redaction marker.
@@ -252,9 +258,9 @@ From **Settings → Devices & services → S8 OMNI → Download diagnostics**:
 - [x] No panel action writes Tuya DP directly.
 - [x] No LocalTuya service is called by the panel.
 - [x] No cloud API is called by the panel.
-- [x] No station write buttons appear while DP134/135/136 remain read-only.
+- [x] No station start buttons appear; only the verified public unified Stop is exposed while a DP134/135/136 operation is active.
 - [x] Map/room controls remain deferred until a stable integration API exists.
-- [x] Consumable percentages are not invented.
+- [x] Consumable percentages are derived only from the documented manufacturer lifetime counters and exact minutes remain visible.
 - [x] Diagnostics exporter deliberately excludes raw map/path/command/timer payloads.
 - [x] Cleaning settings drill-down reuses existing public HA entities and introduces no new device write contract.
 - [x] Disconnected UI disables public device-write controls rather than attempting a command against stale state.

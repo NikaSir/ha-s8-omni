@@ -6,7 +6,7 @@ The S8 OMNI integration owns and ships its canonical Home Assistant UI.
 
 - Panel: `/dashboard-s8-omni`
 
-Dashboard version: `v0.7.32`.
+Dashboard version: `v0.7.33`.
 
 The panel is registered through Home Assistant's custom-panel API. No Lovelace YAML, LocalTuya command, cloud request or direct Tuya DP write is required by the frontend.
 
@@ -49,7 +49,7 @@ The hero card does not repeat S8 OMNI as another large title. The Header identif
 
 At the primary iPhone Pro Max portrait width, the panel must not depend on horizontal overflow or clipped labels.
 
-Dashboard `v0.7.32` applies these mobile rules:
+Dashboard `v0.7.33` applies these mobile rules:
 
 - Header side controls reduce from 52 px to 48 px while preserving symmetric geometry;
 - the three frequent actions remain **three equal columns**;
@@ -99,6 +99,8 @@ Second-level screen, not a sixth root tab. It is the only editable cleaning-prof
 - volume;
 - Do Not Disturb.
 
+All four values share one local draft. **Применить** first shows the complete change summary, then writes only confirmed public Home Assistant entities and verifies each new value by reading entity state back. Polling updates may refresh factual telemetry but cannot overwrite an unsaved draft value.
+
 On this child screen an inline Back control inside the working area returns to root **Cleaning**; the Header keeps the system Menu. The full-width Bottom Tab Bar remains visible; choosing another root tab exits the child workflow and opens that section.
 
 ### Station
@@ -113,7 +115,7 @@ Station owns station-specific detail:
 - drying;
 - explicit missing/unknown station telemetry.
 
-Station write controls remain absent until their semantics are verified and exposed as public integration entities/services.
+Station start controls remain absent. When dust collection, mop washing or drying is already active, Overview exposes the verified public unified **Стоп** action as an immediate emergency control; it is not mixed with profile settings or presented as an operation-start toggle.
 
 ### Maintenance
 
@@ -125,7 +127,7 @@ Maintenance owns factual consumable/service information:
 - fault state;
 - child lock.
 
-No invented percentages or unverified reset commands are shown.
+Derived percentages identify the same manufacturer lifetime counters while exact remaining minutes remain visible. No unverified reset command is shown.
 
 ### Diagnostics
 

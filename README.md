@@ -6,7 +6,7 @@
 
 Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum and OMNI station, built from verified Tuya LAN datapoints.
 
-> Current development line: **v1.00_b067** (`1.0.0b67`). This is an early test build.
+> Current development line: **v1.00_b068** (`1.0.0b68`). This is an early test build.
 
 ## Scope
 
@@ -27,7 +27,7 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 
 `ha-s8-omni` owns its full appliance UI instead of exposing a loose collection of Lovelace entities as the primary experience.
 
-Dashboard **v0.7.32** follows **NIKAS Specialized Panel UI Standard v1.9**, **Navigation Contract v1.1** and **NikaS Integration Panel Template v1.9**, with the primary acceptance viewport **iPhone Pro Max portrait**:
+Dashboard **v0.7.33** follows **NIKAS Specialized Panel UI Standard v1.9**, **Navigation Contract v1.1** and **NikaS Integration Panel Template v1.9**, with the primary acceptance viewport **iPhone Pro Max portrait**:
 
 - symmetric Header: 52 px side rails / centred title / matching 44 px Menu and Refresh plaques, reduced to 48 px rails on narrow mobile;
 - the visible center title plaque captures the validated source base panel once and returns to the same Дом / Действия / Инфраструктура route;
@@ -47,7 +47,7 @@ Dashboard **v0.7.32** follows **NIKAS Specialized Panel UI Standard v1.9**, **Na
 - **Всасывание** and **Подача воды** share one compact two-section profile surface;
 - the standalone **Настроить уборку** card is visually separated from those information cards and shows secondary context for **Громкость** and **Не беспокоить**;
 - Start/Pause/Home are not repeated on the root Cleaning tab; daily actions stay on Overview;
-- suction and water changes are staged on the drill-down until **Применить**; volume and DND retain their verified entity-service controls;
+- suction, water, volume and DND share one draft on the drill-down; **Применить** shows a confirmation summary and clears values only after the public Home Assistant entities read back the requested state;
 - drill-down Back returns to the Cleaning root view while the bottom Tab Bar remains available for switching root sections;
 - Station view uses a compact three-column summary (**Робот / Заряд / Операция**) instead of three tall rows, keeps the three OMNI operation rows compact, and targets a typical iPhone Pro Max state without required vertical scrolling;
 - Station view keeps independent dust collection / roller cleaning / drying state and uses a prominent active-operation indicator;

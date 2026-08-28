@@ -1,3 +1,11 @@
+## v1.00_b068 / UI v0.7.33
+
+- Rebuilt the cleaning-profile write path as one durable draft for suction, water, volume and Do Not Disturb, with a single explicit Apply action.
+- Added a native confirmation summary and entity-state readback after every profile write; unconfirmed values fail closed while remaining draft changes stay available for retry.
+- Prevented coordinator telemetry updates from overwriting unsaved slider and switch values, and added confirmation to Start, Return to base and child-lock changes.
+- Preserved the proven station-operation emergency Stop as an immediate action without adding unsupported station-start controls.
+- Made the panel host own the visual viewport, prioritized the first Overview image, aligned machine-readable version metadata and added regression checks for the complete contract.
+
 ## v1.00_b067 / UI v0.7.32
 
 - Reworked Cleaning into compact shared two-section metric surfaces while preserving the visible `Карта и комнаты` next-stage reminder.

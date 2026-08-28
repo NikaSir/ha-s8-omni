@@ -9,7 +9,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.7.32",
+    "dashboard_version": "v0.7.33",
     "template": "NikaS Integration Panel Template v1.9",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -111,7 +111,7 @@
       "header_title_focus_visible": true,
       "header_center_lines": [
         "S8 OMNI",
-        "UI v0.7.32"
+        "UI v0.7.33"
       ],
       "primary_navigation": "full_width_fixed_bottom_tab_bar",
       "bottom_tab_min_height_px": 52,
@@ -142,7 +142,15 @@
           "back_behavior": "return_to_parent_view",
           "bottom_tab_bar": "preserved",
           "content_scope": "verified_cleaning_profile_only",
-          "select_write_strategy": "stage_then_apply",
+          "select_write_strategy": "draft_explicit_apply_confirmation_write_readback",
+          "draft_fields": [
+            "suction",
+            "water",
+            "volume",
+            "do_not_disturb"
+          ],
+          "single_apply": true,
+          "readback_required": true,
           "dnd_period_source": "official_application_not_public_entity"
         }
       }
@@ -245,6 +253,11 @@
       "two_finger_reset_guarded": true,
       "pinch_blocks_more_info": true
     },
+    "first_paint": {
+      "shell_mount": "immediate",
+      "hero_image_loading": "eager",
+      "hero_image_fetch_priority": "high"
+    },
     "standard": "NIKAS Specialized Panel UI Standard v1.9"
   },
   "generated_ui": {
@@ -263,6 +276,9 @@
     "direct_tuya_dp_writes_from_ui": false,
     "station_start_commands_exposed": false,
     "station_stop_commands_public": true,
+    "station_stop_immediate": true,
+    "profile_writes_require_confirmation_and_readback": true,
+    "start_and_return_require_confirmation": true,
     "map_requires_public_integration_api": true
   }
 }

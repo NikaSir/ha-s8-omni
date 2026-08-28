@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.32";
+const UI_VERSION = "v0.7.33";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.75;
 const VIEW_SCALE_MAX = 2.00;
@@ -10,6 +10,7 @@ const SOURCE_ROUTE_AT_KEY = "nikas.specialized.source_route_at.v1";
 const RETURN_ROUTE_KEY = "nikas.s8_omni.return_route.v1";
 const SAFE_DEFAULT_ROUTE = "/dashboard-actions/home";
 const SOURCE_ROUTE_TTL_MS = 30_000;
+const COMMAND_READBACK_TIMEOUT_MS = 6_500;
 const HERO_IMAGES = {
   base: `${ASSET_ROOT}/hero-base.webp?v=${encodeURIComponent(UI_VERSION)}`,
   charging: `${ASSET_ROOT}/hero-charging.webp?v=${encodeURIComponent(UI_VERSION)}`,
@@ -802,6 +803,56 @@ class S8OmniPanel extends HTMLElement {
       this._queueLivePatch();
     }
   }
+  _controlValue(key) {
+    const value = this._stateValue(key);
+    if (key === "volume") {
+      const numeric = Number(value);
+      return Number.isFinite(numeric) ? Math.round(numeric) : null;
+    }
+    if (["do_not_disturb", "child_lock"].includes(key)) return value === "on";
+    return value;
+  }
+  _controlValuesEqual(key, left, right) {
+    if (key === "volume") return Number(left) === Number(right);
+    if (["do_not_disturb", "child_lock"].includes(key)) return Boolean(left) === Boolean(right);
+    return String(left ?? "") === String(right ?? "");
+  }
+  _setCleaningDraft(key, value) {
+    if (this._controlValuesEqual(key, value, this._controlValue(key))) delete this._cleaningDraft[key];
+    else this._cleaningDraft[key] = value;
+  }
+  _hasCleaningDraft() {
+    return ["suction", "water", "volume", "do_not_disturb"].some(
+      (key) => Object.prototype.hasOwnProperty.call(this._cleaningDraft, key)
+        && !this._controlValuesEqual(key, this._cleaningDraft[key], this._controlValue(key)),
+    );
+  }
+  _readbackMatches(key, expected) {
+    return this._controlValuesEqual(key, this._controlValue(key), expected);
+  }
+  async _waitForReadback(key, expected, timeoutMs = COMMAND_READBACK_TIMEOUT_MS) {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt <= timeoutMs) {
+      if (this._readbackMatches(key, expected)) return true;
+      await new Promise((resolve) => setTimeout(resolve, 180));
+    }
+    return false;
+  }
+  async _callConfirmed(domain, service, key, extra, expected) {
+    const accepted = await this._call(domain, service, key, extra);
+    if (!accepted) return false;
+    const readbackKey = `readback:${key}`;
+    this._busyCommands.add(readbackKey);
+    this._queueLivePatch();
+    try {
+      if (await this._waitForReadback(key, expected)) return true;
+      this._commandError = "Home Assistant принял команду, но устройство не подтвердило новое значение.";
+      return false;
+    } finally {
+      this._busyCommands.delete(readbackKey);
+      this._queueLivePatch();
+    }
+  }
   _showMoreInfo(key) {
     const entityId = this._entityId(key);
     if (!entityId) return;
@@ -833,7 +884,7 @@ class S8OmniPanel extends HTMLElement {
       .section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.section-title h2{font-size:24px}.metric-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;padding:5px;border-radius:22px;background:var(--secondary-background-color)}.metric{position:relative;min-height:96px;padding:12px 14px;background:transparent;display:grid;grid-template-columns:40px minmax(0,1fr);grid-template-rows:auto auto;align-content:center;column-gap:10px}.metric:first-child::after{content:"";position:absolute;right:0;top:12px;bottom:12px;width:1px;background:var(--divider-color)}.metric ha-icon{grid-row:1/span 2;align-self:center;color:var(--primary-color);--mdc-icon-size:28px}.metric span{color:var(--secondary-text-color);font-size:13px;align-self:end}.metric strong{font-size:21px;align-self:start}.profile-metric strong{font-size:19px;white-space:nowrap}
       .settings-entry{width:100%;min-height:82px;border:1px solid color-mix(in srgb,var(--divider-color) 70%,transparent);border-radius:20px;padding:13px;display:grid;grid-template-columns:48px minmax(0,1fr) 24px;gap:10px;align-items:center;background:var(--card-background-color);color:var(--primary-text-color);text-align:left;margin-bottom:12px}.settings-entry .icon{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:var(--secondary-background-color);color:var(--primary-color)}.settings-entry strong{display:block;font-size:16px}.settings-entry span span{display:block;margin-top:3px;color:var(--secondary-text-color);font-size:12px;line-height:1.25}
       .future-card{display:grid;grid-template-columns:46px minmax(0,1fr);gap:10px;padding:13px;margin-bottom:12px;border-radius:20px;border:1px dashed var(--divider-color)}.future-card .icon{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:var(--secondary-background-color);color:var(--secondary-text-color)}.future-card strong{font-size:15px}.future-card p{margin-top:3px;color:var(--secondary-text-color);font-size:12px;line-height:1.35}
-      .segment-group{margin-bottom:14px}.segment-label{display:flex;justify-content:space-between;gap:10px;margin-bottom:8px}.segment-label strong{font-size:15px}.segment-label span{color:var(--secondary-text-color);font-size:12px}.segments{display:grid;gap:5px;padding:5px;border-radius:16px;background:var(--secondary-background-color)}.segments.three{grid-template-columns:repeat(3,1fr)}.segments.four{grid-template-columns:repeat(4,1fr)}.segment{min-height:40px;border:0;border-radius:12px;background:transparent;color:var(--secondary-text-color);font-size:12px;font-weight:750}.segment.active{background:var(--card-background-color);color:var(--primary-color);box-shadow:0 2px 8px rgba(0,0,0,.05)}.mode-readout{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;margin-bottom:14px;padding:11px 12px;border-radius:16px;background:var(--secondary-background-color)}.mode-readout span{font-size:13px;color:var(--secondary-text-color)}.mode-readout strong{font-size:14px;text-align:right}.apply-row{display:flex;justify-content:flex-end;padding-top:2px}.apply-button{min-height:42px;padding:0 18px;border:1px solid color-mix(in srgb,var(--primary-color) 36%,var(--divider-color));border-radius:14px;background:color-mix(in srgb,var(--primary-color) 10%,var(--card-background-color));color:var(--primary-color);font-size:13px;font-weight:800}.apply-button:disabled{color:var(--disabled-text-color);background:var(--secondary-background-color);border-color:transparent}
+      .segment-group{margin-bottom:14px}.segment-label{display:flex;justify-content:space-between;gap:10px;margin-bottom:8px}.segment-label strong{font-size:15px}.segment-label span{color:var(--secondary-text-color);font-size:12px}.segments{display:grid;gap:5px;padding:5px;border-radius:16px;background:var(--secondary-background-color)}.segments.three{grid-template-columns:repeat(3,1fr)}.segments.four{grid-template-columns:repeat(4,1fr)}.segment{min-height:40px;border:0;border-radius:12px;background:transparent;color:var(--secondary-text-color);font-size:12px;font-weight:750}.segment.active{background:var(--card-background-color);color:var(--primary-color);box-shadow:0 2px 8px rgba(0,0,0,.05)}.mode-readout{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;margin-bottom:14px;padding:11px 12px;border-radius:16px;background:var(--secondary-background-color)}.mode-readout span{font-size:13px;color:var(--secondary-text-color)}.mode-readout strong{font-size:14px;text-align:right}.apply-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px 14px}.apply-card strong,.apply-card small{display:block}.apply-card strong{font-size:14px}.apply-card small{margin-top:3px;color:var(--secondary-text-color);font-size:12px;line-height:1.25}.apply-button{min-height:42px;padding:0 18px;border:1px solid color-mix(in srgb,var(--primary-color) 36%,var(--divider-color));border-radius:14px;background:color-mix(in srgb,var(--primary-color) 10%,var(--card-background-color));color:var(--primary-color);font-size:13px;font-weight:800}.apply-button:disabled{color:var(--disabled-text-color);background:var(--secondary-background-color);border-color:transparent}
       .slider-row,.toggle-row,.info-row{padding:12px 0;border-top:1px solid var(--divider-color)}.slider-row:first-child,.toggle-row:first-child,.info-row:first-child{border-top:0}.slider-head,.toggle-row,.info-row{display:flex;justify-content:space-between;gap:12px;align-items:center}.slider-head strong,.toggle-row strong,.info-row strong{font-size:14px}.toggle-row small,.info-row span{display:block;color:var(--secondary-text-color);font-size:12px;line-height:1.25;margin-top:3px}input[type=range]{width:100%;margin-top:11px;accent-color:var(--primary-color)}.toggle-row{width:100%;border-left:0;border-right:0;border-bottom:0;background:transparent;color:var(--primary-text-color);text-align:left}.toggle{flex:0 0 auto;width:46px;height:27px;border-radius:999px;background:var(--disabled-color,#bdbdbd);padding:3px}.toggle::after{content:"";display:block;width:21px;height:21px;border-radius:50%;background:white;box-shadow:0 1px 5px rgba(0,0,0,.18)}.toggle.on{background:var(--primary-color)}.toggle.on::after{transform:translateX(19px)}
       .station-hero{display:grid;grid-template-columns:70px minmax(0,1fr);gap:12px;align-items:center;padding:12px 14px}.station-device{width:70px;height:84px;border-radius:19px;background:var(--secondary-background-color);border:1px solid var(--divider-color);display:grid;place-items:center;color:var(--primary-color)}.station-device ha-icon{--mdc-icon-size:34px}.station-hero h2{font-size:25px;margin-top:4px}.station-hero p{margin-top:5px;color:var(--secondary-text-color);font-size:12px}.station-summary-card{padding:8px 10px}.station-summary{display:grid;grid-template-columns:repeat(3,1fr)}.station-summary-item{min-height:50px;padding:6px 8px;border-left:1px solid var(--divider-color)}.station-summary-item:first-child{border-left:0}.station-summary-item span{color:var(--secondary-text-color);font-size:12px}.station-summary-item strong{display:block;margin-top:4px;font-size:15px}.operation-list{display:grid;gap:6px}.operation{min-height:58px;border-radius:16px;padding:8px 9px;background:var(--secondary-background-color);display:grid;grid-template-columns:40px minmax(0,1fr) 28px;gap:8px;align-items:center}.operation.active{background:color-mix(in srgb,var(--primary-color) 9%,var(--secondary-background-color))}.operation .icon{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:var(--card-background-color);color:var(--primary-color)}.operation strong{font-size:14px}.operation span{display:block;color:var(--secondary-text-color);font-size:12px}.operation i{width:10px;height:10px;border-radius:50%;background:var(--divider-color)}.operation.active i{background:var(--primary-color);box-shadow:0 0 0 7px color-mix(in srgb,var(--primary-color) 12%,transparent)}
       .resource{min-height:88px;border-radius:20px;padding:13px;margin-bottom:9px;background:var(--card-background-color);border:1px solid color-mix(in srgb,var(--divider-color) 70%,transparent);display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:11px;align-items:center}.resource .icon{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;background:color-mix(in srgb,var(--primary-color) 11%,var(--secondary-background-color));color:var(--primary-color)}.resource strong{font-size:15px}.resource span{display:block;color:var(--secondary-text-color);font-size:12px}.resource b{font-size:19px;white-space:nowrap}.resource.critical b,.resource.critical .icon{color:var(--error-color,#db4437)}.resource.warning b,.resource.warning .icon{color:var(--warning-color,#ef8b24)}.resource.normal b{color:var(--success-color,#43a047)}
@@ -913,8 +964,8 @@ class S8OmniPanel extends HTMLElement {
       .action.primary .action-icon ha-icon,.action.primary.running .action-icon ha-icon{color:currentColor!important;opacity:1!important}
       .action.primary.running:disabled{opacity:1}.action.primary.running:disabled .action-icon{opacity:1}
       @media(max-width:430px){.state-scene{height:292px}.resource-chip{grid-template-columns:30px minmax(0,1fr);gap:4px;padding:7px 4px}.resource-chip ha-icon{--mdc-icon-size:23px}.resource-chip strong{font-size:12px;line-height:1.04}.resource-chip small{font-size:12px;line-height:1.04}.state-hero h1{font-size:25px}}
-      /* v0.7.15 stable iOS gesture canvas */
-      :host{height:100vh;height:100dvh;min-height:0;max-height:100dvh;overflow:hidden;overscroll-behavior:none}
+      /* Stable iOS gesture canvas; the host owns the visual viewport. */
+      :host{height:100vh;height:100dvh;min-height:0;max-height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;width:auto}
       main{height:100%;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;overscroll-behavior:none;padding-bottom:0}
       .app-header{position:relative;top:auto;z-index:60}
       nav{position:relative;left:auto;right:auto;bottom:auto;z-index:70}
@@ -991,7 +1042,7 @@ class S8OmniPanel extends HTMLElement {
       .action.ready .action-icon{background:color-mix(in srgb,var(--primary-color) 10%,transparent)}
       .action:disabled{opacity:.32}
       @media(max-width:430px){.action{min-height:82px}.state-hero .hero-hint{font-size:13px}}
-      /* v0.7.31: NikaS Specialized Panel UI Standard v1.9 source-aware shell. */
+      /* NikaS Specialized Panel UI Standard v1.9 source-aware shell. */
       .header-title{justify-self:center;min-width:min(290px,100%);max-width:100%;min-height:44px;padding:5px 14px;border:1px solid color-mix(in srgb,var(--primary-color,#03a9d9) 24%,var(--divider-color,#dfe3e8));border-radius:16px;background:color-mix(in srgb,var(--primary-color,#03a9d9) 5%,var(--card-background-color,#fff));box-shadow:0 5px 16px rgba(23,45,76,.06);color:var(--primary-text-color);cursor:pointer;-webkit-appearance:none;appearance:none}
       .header-title:focus-visible{outline:2px solid var(--primary-color,#03a9d9);outline-offset:2px}
       .header-title:active{transform:scale(.985);background:color-mix(in srgb,var(--primary-color,#03a9d9) 13%,var(--card-background-color,#fff));border-color:color-mix(in srgb,var(--primary-color,#03a9d9) 42%,var(--divider-color,#dfe3e8));box-shadow:0 2px 7px rgba(23,45,76,.05)}
@@ -1112,7 +1163,7 @@ class S8OmniPanel extends HTMLElement {
       : stationLabel === "Заряжает" ? "Идёт зарядка"
       : stationLabel === "Ожидает" ? "На связи"
       : "Операция активна";
-    return `<section class="card hero state-hero ${state.tone || ""}" data-more="composite_status"><div class="hero-primary"><div class="hero-top"><div><h1>${escapeHtml(state.title)}</h1><p class="hero-hint">${escapeHtml(state.hint)}</p></div><div class="connection-indicator ${connection.tone}" data-more="local_connection" role="status" aria-label="${escapeHtml(connection.label)} · ${escapeHtml(connection.freshnessLabel)}"><i class="connection-lamp"></i><span class="connection-copy"><strong>${escapeHtml(connection.label)}</strong><small class="${connection.freshnessTone}">${escapeHtml(connection.freshnessLabel)}</small></span></div></div><div class="state-scene ${snap.unreliable ? "muted" : ""}"><img class="state-image" src="${image}" alt="S8 OMNI — ${escapeHtml(state.title)}" /></div></div>${this._resourceStrip(snap)}<div class="hero-metrics"><div data-more="battery"><ha-icon class="metric-icon battery${batteryTone}" icon="${batteryIcon}"></ha-icon><span>АКБ</span><strong>${battery}</strong><small>Текущий заряд</small><div class="battery-bar"><i style="width:${snap.battery ?? 0}%"></i></div></div><div data-more="mode"><ha-icon class="metric-icon mode" icon="${modeIcon}"></ha-icon><span>Режим</span><strong>${escapeHtml(mode)}</strong><small>${escapeHtml(modeMeta)}</small></div><div class="${stationTone ? `station-${stationTone}` : ""}" data-more="station_status"><ha-icon class="metric-icon station ${stationTone}" icon="${stationIcon}"></ha-icon><span>Станция</span><strong>${escapeHtml(stationLabel)}</strong><small>${escapeHtml(stationMeta)}</small></div></div></section>`;
+    return `<section class="card hero state-hero ${state.tone || ""}" data-more="composite_status"><div class="hero-primary"><div class="hero-top"><div><h1>${escapeHtml(state.title)}</h1><p class="hero-hint">${escapeHtml(state.hint)}</p></div><div class="connection-indicator ${connection.tone}" data-more="local_connection" role="status" aria-label="${escapeHtml(connection.label)} · ${escapeHtml(connection.freshnessLabel)}"><i class="connection-lamp"></i><span class="connection-copy"><strong>${escapeHtml(connection.label)}</strong><small class="${connection.freshnessTone}">${escapeHtml(connection.freshnessLabel)}</small></span></div></div><div class="state-scene ${snap.unreliable ? "muted" : ""}"><img class="state-image" src="${image}" alt="S8 OMNI — ${escapeHtml(state.title)}" loading="eager" decoding="sync" fetchpriority="high" /></div></div>${this._resourceStrip(snap)}<div class="hero-metrics"><div data-more="battery"><ha-icon class="metric-icon battery${batteryTone}" icon="${batteryIcon}"></ha-icon><span>АКБ</span><strong>${battery}</strong><small>Текущий заряд</small><div class="battery-bar"><i style="width:${snap.battery ?? 0}%"></i></div></div><div data-more="mode"><ha-icon class="metric-icon mode" icon="${modeIcon}"></ha-icon><span>Режим</span><strong>${escapeHtml(mode)}</strong><small>${escapeHtml(modeMeta)}</small></div><div class="${stationTone ? `station-${stationTone}` : ""}" data-more="station_status"><ha-icon class="metric-icon station ${stationTone}" icon="${stationIcon}"></ha-icon><span>Станция</span><strong>${escapeHtml(stationLabel)}</strong><small>${escapeHtml(stationMeta)}</small></div></div></section>`;
   }
 
   _quickActions() {
@@ -1173,11 +1224,15 @@ class S8OmniPanel extends HTMLElement {
   _cleaningSettings() {
     const snap = this._snapshot(); const volume = this._state("volume"); const dnd = this._state("do_not_disturb");
     const commandBusy = this._busyCommands.size > 0;
-    const volumeValue = snap.connected && this._available(volume) ? Number(volume.state) : null; const dndUsable = snap.connected && this._available(dnd) && !commandBusy;
+    const rawVolume = snap.connected && this._available(volume) ? Number(volume.state) : null;
+    const rawDnd = snap.connected && this._available(dnd) ? dnd.state === "on" : null;
+    const volumeValue = Object.prototype.hasOwnProperty.call(this._cleaningDraft, "volume") ? this._cleaningDraft.volume : rawVolume;
+    const dndValue = Object.prototype.hasOwnProperty.call(this._cleaningDraft, "do_not_disturb") ? this._cleaningDraft.do_not_disturb : rawDnd;
+    const dndUsable = rawDnd !== null && !commandBusy;
     const workModeRaw = snap.connected ? String(snap.workMode || "").toLowerCase() : "";
     const workMode = WORK_MODE_LABELS[workModeRaw] || "Нет данных";
-    const hasDraft = ["suction", "water"].some((key) => Object.prototype.hasOwnProperty.call(this._cleaningDraft, key) && this._cleaningDraft[key] !== this._stateValue(key));
-    return `${this._trustBanner(snap)}<section class="card"><div class="mode-readout" data-more="work_mode"><span>Режим уборки</span><strong>${escapeHtml(workMode)}</strong></div>${this._segmentControl("suction",SUCTION_LABELS,"three","Мощность всасывания",this._label(SUCTION_LABELS,snap.connected ? this._stateValue("suction") : null,"Нет данных"))}${this._segmentControl("water",WATER_LABELS,"four","Подача воды",this._label(WATER_LABELS,snap.connected ? this._stateValue("water") : null,"Нет данных"))}<div class="apply-row"><button class="apply-button" type="button" data-apply-cleaning ${hasDraft && !commandBusy ? "" : "disabled"}>Применить</button></div></section><section class="card"><div class="section-title"><div><span class="eyebrow">Звук</span><h2>Громкость</h2></div></div><div class="slider-row"><div class="slider-head"><span><strong>Голосовые уведомления</strong></span><strong data-volume-label>${volumeValue === null ? "—" : `${Math.round(volumeValue)}%`}</strong></div><input type="range" min="0" max="100" step="1" value="${volumeValue === null ? 0 : volumeValue}" data-volume ${volumeValue === null || commandBusy ? "disabled" : ""}></div></section><section class="card"><div class="section-title"><div><span class="eyebrow">Поведение</span><h2>Автоматизация</h2></div></div><button class="toggle-row" type="button" data-toggle="do_not_disturb" ${dndUsable ? "" : "disabled"}><span><strong>Не беспокоить</strong><small>Без звука, расписания и возобновления уборки; период задаётся в приложении.</small></span><span class="toggle ${dndUsable && dnd?.state === "on" ? "on" : ""}"></span></button></section>`;
+    const hasDraft = this._hasCleaningDraft();
+    return `${this._trustBanner(snap)}<section class="card"><div class="mode-readout" data-more="work_mode"><span>Режим уборки</span><strong>${escapeHtml(workMode)}</strong></div>${this._segmentControl("suction",SUCTION_LABELS,"three","Мощность всасывания",this._label(SUCTION_LABELS,snap.connected ? this._stateValue("suction") : null,"Нет данных"))}${this._segmentControl("water",WATER_LABELS,"four","Подача воды",this._label(WATER_LABELS,snap.connected ? this._stateValue("water") : null,"Нет данных"))}</section><section class="card"><div class="section-title"><div><span class="eyebrow">Звук</span><h2>Громкость</h2></div></div><div class="slider-row"><div class="slider-head"><span><strong>Голосовые уведомления</strong></span><strong data-volume-label>${volumeValue === null ? "—" : `${Math.round(volumeValue)}%`}</strong></div><input type="range" min="0" max="100" step="1" value="${volumeValue === null ? 0 : volumeValue}" data-volume ${volumeValue === null || commandBusy ? "disabled" : ""}></div></section><section class="card"><div class="section-title"><div><span class="eyebrow">Поведение</span><h2>Автоматизация</h2></div></div><button class="toggle-row" type="button" data-toggle="do_not_disturb" ${dndUsable ? "" : "disabled"}><span><strong>Не беспокоить</strong><small>Без звука, расписания и возобновления уборки; период задаётся в приложении.</small></span><span class="toggle ${dndValue === true ? "on" : ""}"></span></button></section><section class="card apply-card"><div><strong>${hasDraft ? "Изменения готовы" : "Настройки без изменений"}</strong><small>${hasDraft ? "Параметры будут записаны после подтверждения и проверены по данным устройства." : "Сначала измените один или несколько параметров."}</small></div><button class="apply-button" type="button" data-apply-cleaning ${hasDraft && !commandBusy ? "" : "disabled"}>Применить</button></section>`;
   }
 
   _operation(key, label, icon, connected) {
@@ -1301,6 +1356,8 @@ class S8OmniPanel extends HTMLElement {
         const action = button.dataset.action;
         const service = action === "start" ? "start" : action === "pause" ? "pause" : action === "stop" ? "stop" : action === "home" ? "return_to_base" : null;
         if (!service) return;
+        const confirmation = action === "start" ? "Запустить уборку?" : action === "home" ? "Отправить пылесос на базу?" : null;
+        if (confirmation && !window.confirm(confirmation)) return;
         button.disabled = true;
         try { await this._call("vacuum", service, "vacuum"); }
         finally { setTimeout(() => this._queueLivePatch(), 650); }
@@ -1308,17 +1365,35 @@ class S8OmniPanel extends HTMLElement {
       }
       if (button.matches("[data-select-key]")) {
         const key = button.dataset.selectKey; const value = button.dataset.selectValue;
-        if (value === this._stateValue(key)) delete this._cleaningDraft[key];
-        else this._cleaningDraft[key] = value;
+        this._setCleaningDraft(key, value);
         this._queueLivePatch();
         return;
       }
       if (button.matches("[data-apply-cleaning]")) {
         const draft = { ...this._cleaningDraft };
-        for (const key of ["suction", "water"]) {
-          if (!Object.prototype.hasOwnProperty.call(draft, key) || draft[key] === this._stateValue(key)) continue;
-          const applied = await this._call("select", "select_option", key, { option: draft[key] });
+        const changes = ["suction", "water", "volume", "do_not_disturb"].filter(
+          (key) => Object.prototype.hasOwnProperty.call(draft, key)
+            && !this._controlValuesEqual(key, draft[key], this._controlValue(key)),
+        );
+        if (!changes.length) return;
+        const summary = changes.map((key) => {
+          if (key === "suction") return `Всасывание: ${SUCTION_LABELS[draft[key]] || draft[key]}`;
+          if (key === "water") return `Подача воды: ${WATER_LABELS[draft[key]] || draft[key]}`;
+          if (key === "volume") return `Громкость: ${Math.round(Number(draft[key]))}%`;
+          return `Не беспокоить: ${draft[key] ? "Вкл" : "Выкл"}`;
+        }).join("\n");
+        if (!window.confirm(`Применить параметры уборки?\n\n${summary}`)) return;
+        for (const key of changes) {
+          let applied = false;
+          if (["suction", "water"].includes(key)) {
+            applied = await this._callConfirmed("select", "select_option", key, { option: draft[key] }, draft[key]);
+          } else if (key === "volume") {
+            applied = await this._callConfirmed("number", "set_value", key, { value: Number(draft[key]) }, Number(draft[key]));
+          } else {
+            applied = await this._callConfirmed("switch", draft[key] ? "turn_on" : "turn_off", key, {}, Boolean(draft[key]));
+          }
           if (!applied) return;
+          delete this._cleaningDraft[key];
         }
         this._cleaningDraft = {};
         this._queueLivePatch();
@@ -1326,16 +1401,29 @@ class S8OmniPanel extends HTMLElement {
       }
       if (button.matches("[data-toggle]")) {
         const key = button.dataset.toggle;
-        await this._call("switch", this._state(key)?.state === "on" ? "turn_off" : "turn_on", key);
+        if (key === "do_not_disturb") {
+          const current = Object.prototype.hasOwnProperty.call(this._cleaningDraft, key)
+            ? Boolean(this._cleaningDraft[key])
+            : Boolean(this._controlValue(key));
+          this._setCleaningDraft(key, !current);
+          this._queueLivePatch();
+          return;
+        }
+        const next = !Boolean(this._controlValue(key));
+        if (!window.confirm(`${next ? "Включить" : "Выключить"} блокировку от детей?`)) return;
+        await this._callConfirmed("switch", next ? "turn_on" : "turn_off", key, {}, next);
       }
     });
     const volume = root.querySelector("[data-volume]");
     volume?.addEventListener("input", () => {
       const label = root.querySelector("[data-volume-label]");
       if (label) label.textContent = `${volume.value}%`;
+      this._setCleaningDraft("volume", Number(volume.value));
+      const apply = root.querySelector("[data-apply-cleaning]");
+      if (apply) apply.disabled = !this._hasCleaningDraft() || this._busyCommands.size > 0;
     });
     volume?.addEventListener("change", () => {
-      if (this._snapshot().connected) this._call("number", "set_value", "volume", { value: Number(volume.value) });
+      this._queueLivePatch();
     });
     root.querySelectorAll("[data-more]").forEach((node) => {
       let timer = null;
