@@ -27,3 +27,14 @@ This repository follows the canonical v1.7 standard. The canonical document supe
 The shell migration must not change verified device semantics. DP5 remains report-only. Station telemetry/actions remain DP134 dust collection, DP135 roller washing and DP136 roller drying. Active station operations own the action row and expose their verified Stop entities. Unknown, unavailable or stale data never appears healthy and device actions remain blocked without trusted local telemetry.
 
 > Update this synchronized profile only together with the canonical v1.7 source and `docs/NIKAS_SPECIALIZED_PANEL_COMPLIANCE.md`.
+
+## LIDER central title plaque reference
+
+The centered two-line Header title plaque uses the LIDER reference geometry and tone:
+
+- `justify-self:center`; `min-width:min(290px,100%)`; `max-width:100%`; `min-height:44px`; `padding:5px 14px`;
+- on narrow phones: `min-width:0; width:100%; padding-inline:8px`;
+- `1px` border with primary-color mix `24%`; `16px` radius; primary-color background mix `5%`; `0 5px 16px rgba(23,45,76,.06)` shadow;
+- pressed: background mix `13%`, border mix `42%`, `0 2px 7px rgba(23,45,76,.05)`; focus-visible: `2px` primary outline and `2px` offset.
+
+A transparent/plain-text title, a white-only local variant, or an integration-specific color is not conforming.
