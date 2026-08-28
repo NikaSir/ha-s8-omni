@@ -1,10 +1,14 @@
-const UI_VERSION = "v0.7.29";
+const UI_VERSION = "v0.7.30";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.75;
 const VIEW_SCALE_MAX = 2.00;
 const VIEW_SCALE_SNAP_MIN = 0.97;
 const VIEW_SCALE_SNAP_MAX = 1.03;
 const VIEW_STATE_PREFIX = "s8_omni.view_transform.v2";
+const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
+const RETURN_ROUTE_KEY = "nikas.s8_omni.return_route.v1";
+const SAFE_DEFAULT_ROUTE = "/dashboard-actions";
+const SAFE_ROUTE_PREFIXES = ["/dashboard-house", "/dashboard-actions", "/dashboard-infrastructure"];
 const HERO_IMAGES = {
   base: `${ASSET_ROOT}/hero-base.webp?v=${encodeURIComponent(UI_VERSION)}`,
   charging: `${ASSET_ROOT}/hero-charging.webp?v=${encodeURIComponent(UI_VERSION)}`,
@@ -59,6 +63,45 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function s8SafeReturnRoute(value) {
+  if (!value) return null;
+  try {
+    const url = new URL(decodeURIComponent(String(value).trim()), window.location.origin);
+    if (url.origin !== window.location.origin) return null;
+    const accepted = SAFE_ROUTE_PREFIXES.some(
+      (prefix) => url.pathname === prefix || url.pathname.startsWith(`${prefix}/`),
+    );
+    return accepted ? `${url.pathname}${url.search}${url.hash}` : null;
+  } catch (_err) {
+    return null;
+  }
+}
+
+function s8ResolveReturnRoute(panel) {
+  const current = new URL(window.location.href);
+  const explicit = ["return_to", "from"]
+    .map((key) => s8SafeReturnRoute(current.searchParams.get(key)))
+    .find(Boolean) || null;
+  let handedOff = null;
+  let saved = null;
+  try {
+    handedOff = s8SafeReturnRoute(sessionStorage.getItem(SOURCE_ROUTE_KEY));
+    sessionStorage.removeItem(SOURCE_ROUTE_KEY);
+    saved = s8SafeReturnRoute(sessionStorage.getItem(RETURN_ROUTE_KEY));
+  } catch (_err) {}
+  const configured = s8SafeReturnRoute(
+    panel?._panel?.config?.parent_route || panel?._panel?.config?.parent_path,
+  );
+  const route = explicit
+    || handedOff
+    || saved
+    || s8SafeReturnRoute(document.referrer)
+    || configured
+    || SAFE_DEFAULT_ROUTE;
+  try { sessionStorage.setItem(RETURN_ROUTE_KEY, route); } catch (_err) {}
+  return route;
 }
 
 function s8SameTreeShape(current, desired) {
@@ -188,14 +231,16 @@ class S8OmniPanel extends HTMLElement {
     this._stablePatchQueued = false;
     this._stableStructureCache = null;
     this._boundStableViews = new WeakSet();
+    this._returnRoute = null;
     this._onRealViewportResize = () => requestAnimationFrame(() => this._clampAndApplyTransform(false));
   }
 
   set hass(value) { this._hass = value; this._ensureRegistry(); this._queueLivePatch(); }
   get hass() { return this._hass; }
-  set panel(value) { this._panel = value; if (!this._gesturePointers?.size) this._restoreTransform(true); else this._renderDeferred = true; this._ensureRegistry(); this._queueRender(); }
+  set panel(value) { this._panel = value; if (!this._returnRoute) this._returnRoute = s8ResolveReturnRoute(this); if (!this._gesturePointers?.size) this._restoreTransform(true); else this._renderDeferred = true; this._ensureRegistry(); this._queueRender(); }
   set narrow(_value) {}
   connectedCallback() {
+    if (this._panel && !this._returnRoute) this._returnRoute = s8ResolveReturnRoute(this);
     if (!this._resizeBound) {
       window.addEventListener("resize", this._onRealViewportResize, { passive: true });
       window.visualViewport?.addEventListener("resize", this._onRealViewportResize, { passive: true });
@@ -700,10 +745,10 @@ class S8OmniPanel extends HTMLElement {
   }
   _toggleMenu() { this.dispatchEvent(new CustomEvent("hass-toggle-menu", { bubbles: true, composed: true })); }
   _navigateParent() {
-    const path = this._panel?.config?.parent_path;
+    const path = s8SafeReturnRoute(this._returnRoute) || SAFE_DEFAULT_ROUTE;
     if (!path || window.location.pathname === path) return;
     window.history.pushState(null, "", path);
-    window.dispatchEvent(new CustomEvent("location-changed", { bubbles: true, composed: true }));
+    window.dispatchEvent(new Event("location-changed"));
   }
 
   _styles() {
@@ -824,7 +869,7 @@ class S8OmniPanel extends HTMLElement {
       @media(max-width:430px){.service-toggle-row{column-gap:14px;min-height:72px}.service-toggle-row .toggle-copy strong{font-size:14.5px}.service-toggle-row .toggle-copy small{font-size:12px}}
       /* v0.7.17: NIKAS Specialized Panel UI Standard v1.5 shell. */
       .app-header{grid-template-columns:52px minmax(0,1fr) 52px;gap:8px;min-height:calc(62px + env(safe-area-inset-top));padding:env(safe-area-inset-top) max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left))}
-      .header-action{width:44px;height:44px;justify-self:center;border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:16px;background:var(--card-background-color);box-shadow:0 3px 12px rgba(0,0,0,.07);color:var(--primary-text-color)}
+      .header-action{width:44px;height:44px;justify-self:center;border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:16px;background:var(--card-background-color);box-shadow:0 7px 20px rgba(23,45,76,.08);color:var(--primary-text-color)}
       .header-action.refresh{color:var(--primary-color)}.header-action ha-icon{--mdc-icon-size:25px}
       .header-title strong{font-size:21px;font-weight:800}.header-title span{font-size:12px;font-weight:560;color:var(--secondary-text-color)}
       .work-viewport.is-native{overflow-x:hidden;overflow-y:auto;overscroll-behavior-x:none;overscroll-behavior-y:none;touch-action:pan-y;-webkit-overflow-scrolling:touch}
@@ -883,9 +928,10 @@ class S8OmniPanel extends HTMLElement {
       .action.ready .action-icon{background:color-mix(in srgb,var(--primary-color) 10%,transparent)}
       .action:disabled{opacity:.32}
       @media(max-width:430px){.action{min-height:82px}.state-hero .hero-hint{font-size:13px}}
-      /* v0.7.29: audited mobile composition and current shell contract. */
-      .header-title{width:100%;padding:4px 8px;border:0;border-radius:14px;background:transparent;color:var(--primary-text-color);cursor:pointer;-webkit-appearance:none;appearance:none}
-      .header-title:active{background:color-mix(in srgb,var(--primary-color) 7%,transparent)}
+      /* v0.7.30: NikaS Specialized Panel UI Standard v1.7 source-aware shell. */
+      .header-title{width:100%;min-height:44px;padding:4px 8px;border:1px solid color-mix(in srgb,var(--divider-color) 60%,transparent);border-radius:16px;background:var(--card-background-color);box-shadow:0 7px 20px rgba(23,45,76,.055);color:var(--primary-text-color);cursor:pointer;-webkit-appearance:none;appearance:none}
+      .header-title:focus-visible{outline:3px solid color-mix(in srgb,var(--primary-color) 42%,transparent);outline-offset:2px}
+      .header-title:active{transform:translateY(1px);background:color-mix(in srgb,var(--primary-color) 9%,var(--card-background-color))}
       .state-hero{grid-template-rows:auto auto auto;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;overflow:visible;margin-bottom:10px}
       .state-hero::after{display:none}
       .state-hero>.hero-primary,.state-hero>.resource-strip,.state-hero>.hero-metrics{grid-column:1;justify-self:stretch;width:100%;min-width:0;max-width:100%}
@@ -904,7 +950,7 @@ class S8OmniPanel extends HTMLElement {
       .state-hero .hero-metrics strong{font-size:17px;white-space:normal;overflow-wrap:normal}
       .state-hero .hero-metrics small{font-size:12px}
       .state-hero .battery-bar i{background:#079fd1}
-      @media(max-width:520px){.state-hero .state-scene{height:264px}.state-hero .hero-top{grid-template-columns:minmax(0,1fr) minmax(168px,44%)}.state-hero>.hero-primary{padding:13px}.state-hero .hero-metrics strong{font-size:16px}}
+      @media(max-width:520px){.header-title strong{font-size:21px}.header-title span{font-size:13px}.state-hero .state-scene{height:264px}.state-hero .hero-top{grid-template-columns:minmax(0,1fr) minmax(168px,44%)}.state-hero>.hero-primary{padding:13px}.state-hero .hero-metrics strong{font-size:16px}}
       @keyframes spin{to{transform:rotate(360deg)}}
       @media(max-width:360px){.hero-top,.state-hero .hero-top{grid-template-columns:1fr}.connection-indicator{justify-self:start}.status-grid{grid-template-columns:repeat(2,1fr)}.segments.four{grid-template-columns:repeat(2,1fr)}.diagnostic-strip{grid-template-columns:1fr}.omni-legend{width:30%}.omni-art{width:69%}}
       @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
@@ -912,7 +958,7 @@ class S8OmniPanel extends HTMLElement {
   }
 
   _header() {
-    return `<header class="app-header"><button class="header-action" type="button" data-header-primary aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button><button class="header-title" type="button" data-header-home aria-label="Вернуться на основную панель"><strong>S8 OMNI</strong><span>UI ${UI_VERSION}</span></button><button class="header-action refresh" type="button" data-refresh aria-label="Обновить" ${this._entityId("refresh") ? "" : "disabled"}><ha-icon icon="mdi:refresh"></ha-icon></button></header>`;
+    return `<header class="app-header"><button class="header-action" type="button" data-header-primary aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button><button class="header-title" type="button" data-header-home aria-label="Вернуться в исходную базовую панель NikaS"><strong>S8 OMNI</strong><span>UI ${UI_VERSION}</span></button><button class="header-action refresh" type="button" data-refresh aria-label="Обновить" ${this._entityId("refresh") ? "" : "disabled"}><ha-icon icon="mdi:refresh"></ha-icon></button></header>`;
   }
 
   _trustBanner(snap) {

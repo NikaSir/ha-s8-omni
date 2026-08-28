@@ -1,3 +1,10 @@
+## v1.00_b066 / UI v0.7.30
+
+- Rebuilt the S8 OMNI application shell against NIKAS Specialized Panel UI Standard v1.7 while preserving the verified robot and station DP semantics.
+- Made the persistent Header title plaque capture and validate its source base panel once, using `return_to` / `from`, the common session hand-off, saved route, referrer, configured route and `/dashboard-actions` fallback precedence.
+- Added a visible 44 px center plaque with keyboard focus and pressed states, plus the required UPS-reference shadow on both Header actions.
+- Added machine-readable v1.7 navigation metadata, compliance documentation and regression guards without changing the confirmed DP134/135/136 Stop actions.
+
 ## v1.00_b065 / UI v0.7.29
 
 - Restored the approved mobile Overview composition as four independent surfaces: state/photo, unchanged resource strip, three-section KPI strip and quick actions.

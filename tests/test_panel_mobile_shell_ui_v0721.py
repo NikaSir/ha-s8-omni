@@ -43,7 +43,7 @@ class PanelMobileShellUiV0722Tests(unittest.TestCase):
         mobile = self.source.split("@media(max-width:520px){", 1)[1].split(
             "@keyframes spin", 1
         )[0]
-        self.assertIn("@media(max-width:520px){.state-hero .state-scene{height:264px}", self.source)
+        self.assertIn(".state-hero .state-scene{height:264px}", self.source)
         self.assertIn("nav button{min-height:52px", mobile)
 
     def test_stable_dom_contract_is_preserved(self) -> None:

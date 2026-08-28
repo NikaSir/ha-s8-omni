@@ -63,6 +63,7 @@ async def _async_register_panel(hass: HomeAssistant, entry: ConfigEntry) -> bool
             "integration_version": VERSION,
             "dashboard_version": DASHBOARD_VERSION,
             "parent_path": PANEL_PARENT_PATH,
+            "parent_route": PANEL_PARENT_PATH,
             "preferred_view": "overview",
             "expose_in_generated_ui": True,
         },
