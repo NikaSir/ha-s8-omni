@@ -3,14 +3,14 @@
     "id": "s8_omni",
     "title": "Пылесос",
     "path": "/dashboard-s8-omni",
-    "parent_path": "/dashboard-actions",
-    "parent_route": "/dashboard-actions",
+    "parent_path": "/dashboard-actions/home",
+    "parent_route": "/dashboard-actions/home",
     "icon": "mdi:robot-vacuum",
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.7.30",
-    "template": "NikaS Integration Panel Template v1.7",
+    "dashboard_version": "v0.7.31",
+    "template": "NikaS Integration Panel Template v1.9",
     "frontend": {
       "module": "s8-omni-panel.js",
       "bundle": "self_contained",
@@ -101,17 +101,17 @@
       "header_return_route_storage": "nikas.s8_omni.return_route.v1",
       "header_source_route_capture": "once_per_panel_instance",
       "header_allowed_source_roots": [
-        "/dashboard-house",
-        "/dashboard-actions",
-        "/dashboard-infrastructure"
+        "/dashboard-house-v11/home",
+        "/dashboard-actions/home",
+        "/dashboard-infrastructure/overview"
       ],
-      "header_safe_fallback": "/dashboard-actions",
+      "header_safe_fallback": "/dashboard-actions/home",
       "header_title_touch_height_px": 44,
       "header_title_visible_surface": true,
       "header_title_focus_visible": true,
       "header_center_lines": [
         "S8 OMNI",
-        "UI v0.7.30"
+        "UI v0.7.31"
       ],
       "primary_navigation": "full_width_fixed_bottom_tab_bar",
       "bottom_tab_min_height_px": 52,
@@ -241,7 +241,7 @@
       "two_finger_reset_guarded": true,
       "pinch_blocks_more_info": true
     },
-    "standard": "NIKAS Specialized Panel UI Standard v1.7"
+    "standard": "NIKAS Specialized Panel UI Standard v1.9"
   },
   "generated_ui": {
     "summary_entity_unique_id_suffix": "composite_status",

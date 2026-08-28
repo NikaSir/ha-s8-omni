@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.30";
+const UI_VERSION = "v0.7.31";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.75;
 const VIEW_SCALE_MAX = 2.00;
@@ -6,9 +6,10 @@ const VIEW_SCALE_SNAP_MIN = 0.97;
 const VIEW_SCALE_SNAP_MAX = 1.03;
 const VIEW_STATE_PREFIX = "s8_omni.view_transform.v2";
 const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1";
+const SOURCE_ROUTE_AT_KEY = "nikas.specialized.source_route_at.v1";
 const RETURN_ROUTE_KEY = "nikas.s8_omni.return_route.v1";
-const SAFE_DEFAULT_ROUTE = "/dashboard-actions";
-const SAFE_ROUTE_PREFIXES = ["/dashboard-house", "/dashboard-actions", "/dashboard-infrastructure"];
+const SAFE_DEFAULT_ROUTE = "/dashboard-actions/home";
+const SOURCE_ROUTE_TTL_MS = 30_000;
 const HERO_IMAGES = {
   base: `${ASSET_ROOT}/hero-base.webp?v=${encodeURIComponent(UI_VERSION)}`,
   charging: `${ASSET_ROOT}/hero-charging.webp?v=${encodeURIComponent(UI_VERSION)}`,
@@ -70,10 +71,16 @@ function s8SafeReturnRoute(value) {
   try {
     const url = new URL(decodeURIComponent(String(value).trim()), window.location.origin);
     if (url.origin !== window.location.origin) return null;
-    const accepted = SAFE_ROUTE_PREFIXES.some(
-      (prefix) => url.pathname === prefix || url.pathname.startsWith(`${prefix}/`),
-    );
-    return accepted ? `${url.pathname}${url.search}${url.hash}` : null;
+    if (url.pathname === "/dashboard-house-v11" || url.pathname.startsWith("/dashboard-house-v11/")) {
+      return "/dashboard-house-v11/home";
+    }
+    if (url.pathname === "/dashboard-actions" || url.pathname.startsWith("/dashboard-actions/")) {
+      return "/dashboard-actions/home";
+    }
+    if (url.pathname === "/dashboard-infrastructure" || url.pathname.startsWith("/dashboard-infrastructure/")) {
+      return "/dashboard-infrastructure/overview";
+    }
+    return null;
   } catch (_err) {
     return null;
   }
@@ -87,8 +94,18 @@ function s8ResolveReturnRoute(panel) {
   let handedOff = null;
   let saved = null;
   try {
-    handedOff = s8SafeReturnRoute(sessionStorage.getItem(SOURCE_ROUTE_KEY));
+    const handedOffRaw = sessionStorage.getItem(SOURCE_ROUTE_KEY);
+    const handedOffAtRaw = sessionStorage.getItem(SOURCE_ROUTE_AT_KEY);
+    const handedOffAt = Number(handedOffAtRaw);
+    const handedOffAge = Date.now() - handedOffAt;
+    const handoffIsFresh = handedOffRaw !== null
+      && handedOffAtRaw !== null
+      && Number.isFinite(handedOffAt)
+      && handedOffAge >= 0
+      && handedOffAge <= SOURCE_ROUTE_TTL_MS;
+    handedOff = handoffIsFresh ? s8SafeReturnRoute(handedOffRaw) : null;
     sessionStorage.removeItem(SOURCE_ROUTE_KEY);
+    sessionStorage.removeItem(SOURCE_ROUTE_AT_KEY);
     saved = s8SafeReturnRoute(sessionStorage.getItem(RETURN_ROUTE_KEY));
   } catch (_err) {}
   const configured = s8SafeReturnRoute(
@@ -232,6 +249,8 @@ class S8OmniPanel extends HTMLElement {
     this._stableStructureCache = null;
     this._boundStableViews = new WeakSet();
     this._returnRoute = null;
+    this._busyCommands = new Set();
+    this._commandError = null;
     this._onRealViewportResize = () => requestAnimationFrame(() => this._clampAndApplyTransform(false));
   }
 
@@ -735,8 +754,29 @@ class S8OmniPanel extends HTMLElement {
 
   async _call(domain, service, key, extra = {}) {
     const entityId = this._entityId(key);
-    if (!entityId || !this._hass) return;
-    await this._hass.callService(domain, service, { entity_id: entityId, ...extra });
+    const state = entityId ? this._hass?.states?.[entityId] : null;
+    const targetState = String(state?.state || "").toLowerCase();
+    const targetAvailable = state && !["unknown", "unavailable"].includes(targetState);
+    if (!entityId || !this._hass || !targetAvailable) {
+      this._commandError = "Цель команды недоступна или не подтверждена Home Assistant.";
+      this._queueLivePatch();
+      return false;
+    }
+    const commandKey = `${domain}.${service}:${entityId}`;
+    if (this._busyCommands.has(commandKey) || this._busyCommands.size > 0) return false;
+    this._busyCommands.add(commandKey);
+    this._commandError = null;
+    this._queueLivePatch();
+    try {
+      await this._hass.callService(domain, service, { entity_id: entityId, ...extra });
+      return true;
+    } catch (error) {
+      this._commandError = error instanceof Error ? error.message : String(error || "Команда не выполнена.");
+      return false;
+    } finally {
+      this._busyCommands.delete(commandKey);
+      this._queueLivePatch();
+    }
   }
   _showMoreInfo(key) {
     const entityId = this._entityId(key);
@@ -763,7 +803,7 @@ class S8OmniPanel extends HTMLElement {
       .hero{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--card-background-color) 62%,color-mix(in srgb,var(--primary-color) 7%,var(--card-background-color)) 100%)}.hero::after{content:"";position:absolute;width:205px;height:205px;right:-70px;top:-92px;border-radius:50%;background:color-mix(in srgb,var(--primary-color) 7%,transparent);pointer-events:none}.hero-top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:10px;position:relative;z-index:2}.hero h1{margin-top:5px;font-size:25px;line-height:1.02;letter-spacing:-.035em}.hero-hint{margin-top:6px;color:var(--secondary-text-color);font-size:13px;line-height:1.28}.connection-indicator{justify-self:end;display:grid;grid-template-columns:10px minmax(0,1fr);align-items:center;column-gap:11px;min-height:58px;padding:12px 14px;border-radius:18px;background:var(--card-background-color);border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);box-shadow:0 4px 14px rgba(0,0,0,.055);white-space:nowrap}.connection-lamp{display:block;width:10px;height:10px;border-radius:50%;background:var(--disabled-text-color)}.connection-copy{display:flex;flex-direction:column;gap:3px;min-width:0}.connection-copy strong{font-size:15.5px;line-height:1.05;font-weight:700;color:var(--disabled-text-color)}.connection-copy small{font-size:12.5px;line-height:1.05;font-weight:550;color:var(--secondary-text-color)}.connection-indicator.local .connection-lamp{background:var(--success-color,#43a047)}.connection-indicator.local .connection-copy strong{color:var(--success-color,#43a047)}.connection-indicator.offline .connection-lamp{background:var(--error-color,#db4437)}.connection-indicator.offline .connection-copy strong{color:var(--error-color,#db4437)}.connection-indicator.unknown .connection-lamp{background:var(--disabled-text-color)}.connection-copy small.stale{color:var(--warning-color,#f6a623);font-weight:600}.connection-copy small.no-data{color:var(--secondary-text-color)}
       .omni-scene{position:relative;z-index:1;height:210px;margin-top:12px;border-radius:22px;border:1px solid color-mix(in srgb,var(--divider-color) 64%,transparent);background:linear-gradient(145deg,#ffffff 0%,#f7fbfd 56%,#edf8fc 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.98),0 8px 24px rgba(18,56,72,.035);overflow:hidden}.omni-scene::before{content:"";position:absolute;left:12px;right:102px;bottom:8px;height:42px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(161,177,186,.26) 0%,rgba(161,177,186,.06) 58%,rgba(161,177,186,0) 78%)}.omni-scene::after{content:"";position:absolute;right:-16px;top:-24px;width:184px;height:184px;border-radius:50%;background:radial-gradient(circle,rgba(211,243,255,.78) 0%,rgba(223,244,253,0) 68%)}.omni-art{position:absolute;left:4px;top:7px;bottom:7px;width:73%;display:grid;place-items:center;z-index:2}.product-art{display:block;width:100%;height:100%;max-height:100%;object-fit:cover;object-position:center;border-radius:18px;filter:drop-shadow(0 9px 13px rgba(43,62,70,.11));transition:opacity .2s ease,filter .2s ease}.omni-art.muted .product-art{opacity:.52;filter:grayscale(.3) drop-shadow(0 8px 11px rgba(43,62,70,.08))}.omni-legend{position:absolute;right:8px;top:10px;bottom:10px;width:26%;z-index:5;display:flex;flex-direction:column;justify-content:center;gap:7px;padding:9px 8px;border-radius:19px;background:rgba(255,255,255,.98);border:1px solid rgba(101,112,118,.11);box-shadow:0 10px 26px rgba(0,0,0,.075);backdrop-filter:blur(14px) saturate(115%)}.legend-row{display:grid;grid-template-columns:21px minmax(0,1fr);gap:6px;align-items:center;min-height:31px;padding:5px 4px;color:#4b5359;font-size:12px;font-weight:800;line-height:1.12;border-radius:11px;background:rgba(248,250,251,.96);border:1px solid rgba(91,101,107,.065)}.legend-row ha-icon{--mdc-icon-size:19px;color:#667078}.legend-row.active{color:#20272c;background:#ffffff;border-color:rgba(72,82,88,.10);box-shadow:0 2px 7px rgba(0,0,0,.045)}.legend-row.water.active{background:#edf8ff;color:#166d96;border-color:#c8e9f7}.legend-row.water.active ha-icon{color:#16a9e5}.legend-row.dust.active{background:#f1f3f4;color:#454d53;border-color:#d8dde0}.legend-row.dust.active ha-icon{color:#626c74}.legend-row.dry.active{background:#fff3e9;color:#a85d22;border-color:#f5d7bd}.legend-row.dry.active ha-icon{color:#ee914c}.legend-row.charge.active{background:#edf9f0;color:#2e914b;border-color:#bfe3c8}.legend-row.charge.active ha-icon{color:#32aa56}
       .hero-metrics{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.hero-metrics>div{min-height:68px;border-radius:18px;padding:10px;background:rgba(255,255,255,.90);border:1px solid rgba(92,108,116,.10);box-shadow:0 4px 12px rgba(20,52,66,.045);overflow:hidden}.hero-metrics span{display:block;color:var(--secondary-text-color);font-size:12px;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}.hero-metrics strong{display:block;margin-top:4px;font-size:19px;line-height:1.05;white-space:nowrap}.battery-bar{height:4px;border-radius:999px;background:var(--divider-color);margin-top:8px;overflow:hidden}.battery-bar i{display:block;height:100%;border-radius:inherit;background:var(--primary-color)}
-      .trust-banner{display:flex;gap:10px;padding:11px 13px;margin:0 0 10px;border-radius:17px;background:color-mix(in srgb,var(--error-color,#db4437) 9%,var(--card-background-color));border:1px solid color-mix(in srgb,var(--error-color,#db4437) 32%,transparent)}.trust-banner ha-icon{color:var(--error-color,#db4437);--mdc-icon-size:22px}.trust-banner strong{display:block;font-size:14px}.trust-banner span{display:block;color:var(--secondary-text-color);font-size:12px;margin-top:2px}
+      .trust-banner{display:flex;gap:10px;padding:11px 13px;margin:0 0 10px;border-radius:17px;background:color-mix(in srgb,var(--error-color,#db4437) 9%,var(--card-background-color));border:1px solid color-mix(in srgb,var(--error-color,#db4437) 32%,transparent)}.trust-banner ha-icon{color:var(--error-color,#db4437);--mdc-icon-size:22px}.trust-banner strong{display:block;font-size:14px}.trust-banner span{display:block;color:var(--secondary-text-color);font-size:12px;margin-top:2px}.command-feedback.is-hidden{display:none!important}.command-feedback.busy{background:color-mix(in srgb,var(--primary-color) 9%,var(--card-background-color));border-color:color-mix(in srgb,var(--primary-color) 32%,transparent)}.command-feedback.busy ha-icon{color:var(--primary-color)}
       .quick-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:11px}.action{min-height:90px;border:1px solid color-mix(in srgb,var(--divider-color) 68%,transparent);border-radius:21px;padding:8px 5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:linear-gradient(180deg,var(--card-background-color),color-mix(in srgb,var(--primary-color) 2%,var(--card-background-color)));color:var(--primary-text-color);box-shadow:0 5px 15px rgba(20,52,66,.045);text-align:center}.action.primary{background:linear-gradient(145deg,color-mix(in srgb,var(--primary-color) 92%,white),var(--primary-color));color:var(--text-primary-color,white);border-color:transparent;box-shadow:0 9px 20px color-mix(in srgb,var(--primary-color) 22%,transparent)}.action:disabled{opacity:.34}.action.running{background:color-mix(in srgb,var(--primary-color) 15%,var(--card-background-color));color:var(--primary-color)}.action.running:disabled{opacity:1}.action-icon{width:50px;height:50px;border-radius:16px;display:grid;place-items:center;background:rgba(0,0,0,.09)}.action.primary .action-icon{background:rgba(0,0,0,.15)}.action-icon ha-icon{--mdc-icon-size:34px}.action strong{font-size:14px;line-height:1}.action .action-sub{font-size:12px;opacity:.72;white-space:nowrap}
       .statuses-card{padding:14px}.statuses-card>h2{font-size:24px;line-height:1;margin-bottom:12px;letter-spacing:-.02em}.status-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.status-card{min-height:96px;border:1px solid rgba(91,108,118,.09);border-radius:18px;padding:9px 7px;background:linear-gradient(180deg,var(--card-background-color),color-mix(in srgb,var(--primary-color) 2%,var(--card-background-color)));box-shadow:0 4px 12px rgba(20,52,66,.04);color:var(--primary-text-color);text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}.status-icon{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:color-mix(in srgb,var(--primary-color) 6%,var(--card-background-color));color:var(--primary-color);margin-bottom:7px;box-shadow:inset 0 0 0 1px rgba(92,108,116,.06)}.status-icon ha-icon{--mdc-icon-size:25px}.status-card strong{font-size:12px}.status-card b{display:block;margin-top:3px;font-size:14px;line-height:1.05;white-space:nowrap}.status-card span.meta{display:block;margin-top:3px;color:var(--secondary-text-color);font-size:12px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}.status-card.good b,.status-card.good .status-icon{color:var(--success-color,#43a047)}.status-card.warn b,.status-card.warn .status-icon{color:var(--error-color,#db4437)}
       .section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.section-title h2{font-size:24px}.metric-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.metric{min-height:108px;border-radius:20px;padding:14px;background:var(--secondary-background-color);display:grid;grid-template-columns:40px minmax(0,1fr);grid-template-rows:auto auto;align-content:center;column-gap:10px}.metric ha-icon{grid-row:1/span 2;align-self:center;color:var(--primary-color);--mdc-icon-size:28px}.metric span{color:var(--secondary-text-color);font-size:13px;align-self:end}.metric strong{font-size:21px;align-self:start}.profile-metric strong{font-size:19px;white-space:nowrap}
@@ -928,10 +968,10 @@ class S8OmniPanel extends HTMLElement {
       .action.ready .action-icon{background:color-mix(in srgb,var(--primary-color) 10%,transparent)}
       .action:disabled{opacity:.32}
       @media(max-width:430px){.action{min-height:82px}.state-hero .hero-hint{font-size:13px}}
-      /* v0.7.30: NikaS Specialized Panel UI Standard v1.7 source-aware shell. */
-      .header-title{width:100%;min-height:44px;padding:4px 8px;border:1px solid color-mix(in srgb,var(--divider-color) 60%,transparent);border-radius:16px;background:var(--card-background-color);box-shadow:0 7px 20px rgba(23,45,76,.055);color:var(--primary-text-color);cursor:pointer;-webkit-appearance:none;appearance:none}
-      .header-title:focus-visible{outline:3px solid color-mix(in srgb,var(--primary-color) 42%,transparent);outline-offset:2px}
-      .header-title:active{transform:translateY(1px);background:color-mix(in srgb,var(--primary-color) 9%,var(--card-background-color))}
+      /* v0.7.31: NikaS Specialized Panel UI Standard v1.9 source-aware shell. */
+      .header-title{justify-self:center;min-width:min(290px,100%);max-width:100%;min-height:44px;padding:5px 14px;border:1px solid color-mix(in srgb,var(--primary-color,#03a9d9) 24%,var(--divider-color,#dfe3e8));border-radius:16px;background:color-mix(in srgb,var(--primary-color,#03a9d9) 5%,var(--card-background-color,#fff));box-shadow:0 5px 16px rgba(23,45,76,.06);color:var(--primary-text-color);cursor:pointer;-webkit-appearance:none;appearance:none}
+      .header-title:focus-visible{outline:2px solid var(--primary-color,#03a9d9);outline-offset:2px}
+      .header-title:active{transform:scale(.985);background:color-mix(in srgb,var(--primary-color,#03a9d9) 13%,var(--card-background-color,#fff));border-color:color-mix(in srgb,var(--primary-color,#03a9d9) 42%,var(--divider-color,#dfe3e8));box-shadow:0 2px 7px rgba(23,45,76,.05)}
       .state-hero{grid-template-rows:auto auto auto;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;overflow:visible;margin-bottom:10px}
       .state-hero::after{display:none}
       .state-hero>.hero-primary,.state-hero>.resource-strip,.state-hero>.hero-metrics{grid-column:1;justify-self:stretch;width:100%;min-width:0;max-width:100%}
@@ -950,7 +990,7 @@ class S8OmniPanel extends HTMLElement {
       .state-hero .hero-metrics strong{font-size:17px;white-space:normal;overflow-wrap:normal}
       .state-hero .hero-metrics small{font-size:12px}
       .state-hero .battery-bar i{background:#079fd1}
-      @media(max-width:520px){.header-title strong{font-size:21px}.header-title span{font-size:13px}.state-hero .state-scene{height:264px}.state-hero .hero-top{grid-template-columns:minmax(0,1fr) minmax(168px,44%)}.state-hero>.hero-primary{padding:13px}.state-hero .hero-metrics strong{font-size:16px}}
+      @media(max-width:520px){.header-title{min-width:0;width:100%;padding-inline:8px}.header-title strong{font-size:21px}.header-title span{font-size:13px}.state-hero .state-scene{height:264px}.state-hero .hero-top{grid-template-columns:minmax(0,1fr) minmax(168px,44%)}.state-hero>.hero-primary{padding:13px}.state-hero .hero-metrics strong{font-size:16px}}
       @keyframes spin{to{transform:rotate(360deg)}}
       @media(max-width:360px){.hero-top,.state-hero .hero-top{grid-template-columns:1fr}.connection-indicator{justify-self:start}.status-grid{grid-template-columns:repeat(2,1fr)}.segments.four{grid-template-columns:repeat(2,1fr)}.diagnostic-strip{grid-template-columns:1fr}.omni-legend{width:30%}.omni-art{width:69%}}
       @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
@@ -958,7 +998,7 @@ class S8OmniPanel extends HTMLElement {
   }
 
   _header() {
-    return `<header class="app-header"><button class="header-action" type="button" data-header-primary aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button><button class="header-title" type="button" data-header-home aria-label="Вернуться в исходную базовую панель NikaS"><strong>S8 OMNI</strong><span>UI ${UI_VERSION}</span></button><button class="header-action refresh" type="button" data-refresh aria-label="Обновить" ${this._entityId("refresh") ? "" : "disabled"}><ha-icon icon="mdi:refresh"></ha-icon></button></header>`;
+    return `<header class="app-header"><button class="header-action" type="button" data-header-primary aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button><button class="header-title" type="button" data-header-home aria-label="Вернуться в исходную базовую панель NikaS"><strong>S8 OMNI</strong><span>UI v${UI_VERSION.replace(/^v/, "")}</span></button><button class="header-action refresh" type="button" data-refresh aria-label="Обновить" ${this._entityId("refresh") && this._busyCommands.size === 0 ? "" : "disabled"}><ha-icon icon="mdi:refresh"></ha-icon></button></header>`;
   }
 
   _trustBanner(snap) {
@@ -1054,7 +1094,8 @@ class S8OmniPanel extends HTMLElement {
 
   _quickActions() {
     const snap = this._snapshot();
-    const vacuum = snap.vacuum, available = snap.connected && this._available(vacuum);
+    const commandBusy = this._busyCommands.size > 0;
+    const vacuum = snap.vacuum, available = snap.connected && this._available(vacuum) && !commandBusy;
     const cleaning = vacuum?.state === "cleaning" || ["cleaning", "zone_cleaning", "room_cleaning"].includes(snap.robot);
     const paused = vacuum?.state === "paused" || snap.robot === "paused";
     const returning = snap.robot === "returning_to_dock" || snap.composite === "returning_to_dock";
@@ -1068,7 +1109,7 @@ class S8OmniPanel extends HTMLElement {
     const actionButton = (label, icon, action = null, enabled = false, ready = false, extra = "") => `<button class="action${ready ? " ready" : ""}${extra ? ` ${extra}` : ""}" type="button"${action ? ` data-action="${action}"` : ""}${enabled ? "" : " disabled"}><span class="action-icon"><ha-icon icon="${icon}"></ha-icon></span><strong>${label}</strong></button>`;
 
     if (stationActive) {
-      return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", null, false)}${actionButton("Пауза", "mdi:pause", null, false)}<button class="action stop" type="button" data-station-stop="${stopKeys}"${stationStops.length ? "" : " disabled"}><span class="action-icon"><ha-icon icon="mdi:stop"></ha-icon></span><strong>Стоп</strong></button></div>`;
+      return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", null, false)}${actionButton("Пауза", "mdi:pause", null, false)}<button class="action stop" type="button" data-station-stop="${stopKeys}"${stationStops.length && !commandBusy ? "" : " disabled"}><span class="action-icon"><ha-icon icon="mdi:stop"></ha-icon></span><strong>Стоп</strong></button></div>`;
     }
     if (attention) {
       return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", null, false)}${actionButton("Пауза", "mdi:pause", null, false)}${actionButton("Домой", "mdi:home", null, false)}</div>`;
@@ -1101,13 +1142,14 @@ class S8OmniPanel extends HTMLElement {
 
   _segmentControl(key, labels, columns, title, hint) {
     const snap = this._snapshot(); const obj = this._state(key); const value = snap.connected && this._available(obj) ? obj.state : null;
-    return `<div class="segment-group" data-more="${key}"><div class="segment-label"><strong>${title}</strong><span>${hint}</span></div><div class="segments ${columns}">${Object.entries(labels).map(([raw,label]) => `<button class="segment ${value === raw ? "active" : ""}" type="button" data-select-key="${key}" data-select-value="${raw}" ${value === null ? "disabled" : ""}>${label}</button>`).join("")}</div></div>`;
+    return `<div class="segment-group" data-more="${key}"><div class="segment-label"><strong>${title}</strong><span>${hint}</span></div><div class="segments ${columns}">${Object.entries(labels).map(([raw,label]) => `<button class="segment ${value === raw ? "active" : ""}" type="button" data-select-key="${key}" data-select-value="${raw}" ${value === null || this._busyCommands.size > 0 ? "disabled" : ""}>${label}</button>`).join("")}</div></div>`;
   }
 
   _cleaningSettings() {
     const snap = this._snapshot(); const volume = this._state("volume"); const dnd = this._state("do_not_disturb");
-    const volumeValue = snap.connected && this._available(volume) ? Number(volume.state) : null; const dndUsable = snap.connected && this._available(dnd);
-    return `${this._trustBanner(snap)}<section class="card"><div class="section-title"><div><span class="eyebrow">Уборка</span><h2>Параметры</h2></div></div>${this._segmentControl("suction",SUCTION_LABELS,"three","Мощность всасывания",this._label(SUCTION_LABELS,snap.connected ? this._stateValue("suction") : null,"Нет данных"))}${this._segmentControl("water",WATER_LABELS,"four","Количество воды",this._label(WATER_LABELS,snap.connected ? this._stateValue("water") : null,"Нет данных"))}</section><section class="card"><div class="section-title"><div><span class="eyebrow">Звук</span><h2>Громкость</h2></div></div><div class="slider-row"><div class="slider-head"><span><strong>Голосовые уведомления</strong></span><strong data-volume-label>${volumeValue === null ? "—" : `${Math.round(volumeValue)}%`}</strong></div><input type="range" min="0" max="100" step="1" value="${volumeValue === null ? 0 : volumeValue}" data-volume ${volumeValue === null ? "disabled" : ""}></div></section><section class="card"><div class="section-title"><div><span class="eyebrow">Поведение</span><h2>Автоматизация</h2></div></div><button class="toggle-row" type="button" data-toggle="do_not_disturb" ${dndUsable ? "" : "disabled"}><span><strong>Не беспокоить</strong><small>Переключатель режима без расписания.</small></span><span class="toggle ${dndUsable && dnd?.state === "on" ? "on" : ""}"></span></button></section>`;
+    const commandBusy = this._busyCommands.size > 0;
+    const volumeValue = snap.connected && this._available(volume) ? Number(volume.state) : null; const dndUsable = snap.connected && this._available(dnd) && !commandBusy;
+    return `${this._trustBanner(snap)}<section class="card"><div class="section-title"><div><span class="eyebrow">Уборка</span><h2>Параметры</h2></div></div>${this._segmentControl("suction",SUCTION_LABELS,"three","Мощность всасывания",this._label(SUCTION_LABELS,snap.connected ? this._stateValue("suction") : null,"Нет данных"))}${this._segmentControl("water",WATER_LABELS,"four","Количество воды",this._label(WATER_LABELS,snap.connected ? this._stateValue("water") : null,"Нет данных"))}</section><section class="card"><div class="section-title"><div><span class="eyebrow">Звук</span><h2>Громкость</h2></div></div><div class="slider-row"><div class="slider-head"><span><strong>Голосовые уведомления</strong></span><strong data-volume-label>${volumeValue === null ? "—" : `${Math.round(volumeValue)}%`}</strong></div><input type="range" min="0" max="100" step="1" value="${volumeValue === null ? 0 : volumeValue}" data-volume ${volumeValue === null || commandBusy ? "disabled" : ""}></div></section><section class="card"><div class="section-title"><div><span class="eyebrow">Поведение</span><h2>Автоматизация</h2></div></div><button class="toggle-row" type="button" data-toggle="do_not_disturb" ${dndUsable ? "" : "disabled"}><span><strong>Не беспокоить</strong><small>Переключатель режима без расписания.</small></span><span class="toggle ${dndUsable && dnd?.state === "on" ? "on" : ""}"></span></button></section>`;
   }
 
   _operation(key, label, icon, connected) {
@@ -1127,7 +1169,7 @@ class S8OmniPanel extends HTMLElement {
     return `<div class="resource" data-more="${key}"><span class="icon"><ha-icon icon="${icon}"></ha-icon></span><span><strong>${title}</strong><span>Остаточный ресурс от устройства</span></span><b>${escapeHtml(connected ? this._formatEntity(key,"—") : "—")}</b></div>`;
   }
   _maintenance() {
-    const snap = this._snapshot(); const child = this._state("child_lock"); const childUsable = snap.connected && this._available(child);
+    const snap = this._snapshot(); const child = this._state("child_lock"); const childUsable = snap.connected && this._available(child) && this._busyCommands.size === 0;
     return `${this._trustBanner(snap)}<section class="view-heading"><span class="eyebrow">S8 OMNI</span><h2>Обслуживание</h2><p>Остаточный ресурс расходников.</p></section>${this._resource("filter_life","Фильтр","mdi:air-filter",snap.connected)}${this._resource("side_brush_life","Боковая щётка","mdi:fan",snap.connected)}${this._resource("main_brush_life","Основная щётка","mdi:brush",snap.connected)}<section class="card"><div class="section-title"><div><span class="eyebrow">Система</span><h2>Защита и ошибки</h2></div></div><div class="info-row" data-more="fault"><span>Состояние</span><strong>${escapeHtml(snap.connected ? (String(this._stateValue("fault","—")) === "0" ? "Ошибок нет" : `Ошибка ${this._formatEntity("fault","—")}`) : "—")}</strong></div><button class="toggle-row service-toggle-row" type="button" data-toggle="child_lock" ${childUsable ? "" : "disabled"}><span class="toggle-copy"><strong>Блокировка от детей</strong><small>Защита кнопок робота</small></span><span class="toggle ${childUsable && child?.state === "on" ? "on" : ""}"></span></button></section>`;
   }
 
@@ -1185,7 +1227,9 @@ class S8OmniPanel extends HTMLElement {
     if (this._registryError) {
       return `<div class="trust-banner"><ha-icon icon="mdi:alert-circle-outline"></ha-icon><div><strong>Не удалось загрузить реестр сущностей</strong><span>${escapeHtml(this._registryError)}</span></div></div>`;
     }
-    return this._body();
+    const commandBusy = this._busyCommands.size > 0;
+    const commandFeedback = `<div class="trust-banner command-feedback${commandBusy ? " busy" : this._commandError ? " error" : " is-hidden"}" aria-live="polite"><ha-icon icon="${commandBusy ? "mdi:progress-clock" : "mdi:alert-circle-outline"}"></ha-icon><div><strong>${commandBusy ? "Команда выполняется" : "Команда не выполнена"}</strong><span>${escapeHtml(commandBusy ? "Ожидаем ответ Home Assistant." : this._commandError || "")}</span></div></div>`;
+    return `${commandFeedback}${this._body()}`;
   }
 
   _stableStructureKey() {

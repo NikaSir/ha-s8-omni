@@ -39,7 +39,7 @@ class PanelMobileAuditUiV0729Tests(unittest.TestCase):
 
     def test_active_station_work_always_owns_action_row(self) -> None:
         self.assertIn("const stationActive = activeStationStops.length > 0", self.actions)
-        self.assertIn('data-station-stop="${stopKeys}"${stationStops.length ? "" : " disabled"}', self.actions)
+        self.assertIn('data-station-stop="${stopKeys}"${stationStops.length && !commandBusy ? "" : " disabled"}', self.actions)
         attention = self.actions.split("if (attention) {", 1)[1].split("if (cleaning)", 1)[0]
         self.assertNotIn('data-action="start"', attention)
 

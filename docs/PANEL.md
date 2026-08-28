@@ -6,7 +6,7 @@ The S8 OMNI integration owns and ships its canonical Home Assistant UI.
 
 - Panel: `/dashboard-s8-omni`
 
-Dashboard version: `v0.7.30`.
+Dashboard version: `v0.7.31`.
 
 The panel is registered through Home Assistant's custom-panel API. No Lovelace YAML, LocalTuya command, cloud request or direct Tuya DP write is required by the frontend.
 
@@ -14,7 +14,7 @@ The panel is registered through Home Assistant's custom-panel API. No Lovelace Y
 
 Primary viewport: **iPhone Pro Max, portrait**.
 
-The panel follows **NIKAS Specialized Panel UI Standard v1.7** and **NikaS Integration Panel Template v1.7**:
+The panel follows **NIKAS Specialized Panel UI Standard v1.9**, **Navigation Contract v1.1** and **NikaS Integration Panel Template v1.9**:
 
 1. **Header** — compact persistent application header with the Home Assistant system Menu on the left, geometrically centered title and one global Refresh action on the right.
 2. **Content** — current system state or selected workflow.
@@ -49,7 +49,7 @@ The hero card does not repeat S8 OMNI as another large title. The Header identif
 
 At the primary iPhone Pro Max portrait width, the panel must not depend on horizontal overflow or clipped labels.
 
-Dashboard `v0.7.30` applies these mobile rules:
+Dashboard `v0.7.31` applies these mobile rules:
 
 - Header side controls reduce from 52 px to 48 px while preserving symmetric geometry;
 - the three frequent actions remain **three equal columns**;

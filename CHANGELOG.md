@@ -1,3 +1,9 @@
+## v1.00_b066 / UI v0.7.31
+
+- Requires both source-route hand-off values, rejects missing, invalid, stale and future timestamps, and consumes the pair before applying Header return-route precedence.
+- Adopts NIKAS Specialized Panel UI Standard v1.9, Navigation Contract v1.1, explicit integration/registry data truth and autonomous single-entrypoint guards.
+- Preserves the verified integration-owned entity-service command path; the frontend still never constructs raw Tuya DP payloads.
+
 ## v1.00_b066 / UI v0.7.30
 
 - Rebuilt the S8 OMNI application shell against NIKAS Specialized Panel UI Standard v1.7 while preserving the verified robot and station DP semantics.
