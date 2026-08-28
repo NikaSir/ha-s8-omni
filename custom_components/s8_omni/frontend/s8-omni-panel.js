@@ -950,7 +950,7 @@ class S8OmniPanel extends HTMLElement {
       .state-hero .hero-metrics strong{font-size:17px;white-space:normal;overflow-wrap:normal}
       .state-hero .hero-metrics small{font-size:12px}
       .state-hero .battery-bar i{background:#079fd1}
-      @media(max-width:520px){.header-title strong{font-size:21px}.header-title span{font-size:13px}.state-hero .state-scene{height:264px}.state-hero .hero-top{grid-template-columns:minmax(0,1fr) minmax(168px,44%)}.state-hero>.hero-primary{padding:13px}.state-hero .hero-metrics strong{font-size:16px}}
+      @media(max-width:520px){.header-title{min-width:0;width:100%;padding-inline:8px}.header-title strong{font-size:21px}.header-title span{font-size:13px}.state-hero .state-scene{height:264px}.state-hero .hero-top{grid-template-columns:minmax(0,1fr) minmax(168px,44%)}.state-hero>.hero-primary{padding:13px}.state-hero .hero-metrics strong{font-size:16px}}
       @keyframes spin{to{transform:rotate(360deg)}}
       @media(max-width:360px){.hero-top,.state-hero .hero-top{grid-template-columns:1fr}.connection-indicator{justify-self:start}.status-grid{grid-template-columns:repeat(2,1fr)}.segments.four{grid-template-columns:repeat(2,1fr)}.diagnostic-strip{grid-template-columns:1fr}.omni-legend{width:30%}.omni-art{width:69%}}
       @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
