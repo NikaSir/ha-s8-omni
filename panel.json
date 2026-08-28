@@ -3,7 +3,7 @@
     "id": "s8_omni",
     "title": "Пылесос",
     "path": "/dashboard-s8-omni",
-    "parent_path": "/dashboard-actions",
+    "parent_path": "/dashboard-actions/home",
     "icon": "mdi:robot-vacuum",
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
@@ -97,7 +97,7 @@
       "header_title_px": 21,
       "header_center_action": "return_to_source_base_panel",
       "source_route_handoff_key": "nikas.specialized.source_route.v1",
-      "allowed_source_roots": ["/dashboard-house", "/dashboard-actions", "/dashboard-infrastructure"],
+      "allowed_source_roots": ["/dashboard-house-v11", "/dashboard-actions", "/dashboard-infrastructure"],
       "header_center_lines": [
         "S8 OMNI",
         "UI v0.7.30"
@@ -230,7 +230,7 @@
       "two_finger_reset_guarded": true,
       "pinch_blocks_more_info": true
     },
-    "standard": "NIKAS Specialized Panel UI Standard v1.7"
+    "standard": "NIKAS Specialized Panel UI Standard v1.8"
   },
   "generated_ui": {
     "summary_entity_unique_id_suffix": "composite_status",
