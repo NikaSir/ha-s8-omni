@@ -925,6 +925,7 @@ class S8OmniPanel extends HTMLElement {
       @media(max-width:430px){.action{min-height:82px}.state-hero .hero-hint{font-size:13px}}
       /* v0.7.30: audited mobile composition and NikaS v1.7 source return. */
       .header-title{width:100%;min-height:44px;padding:4px 8px;border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:16px;background:var(--card-background-color);color:var(--primary-text-color);cursor:pointer;box-shadow:0 4px 14px rgba(23,45,76,.06);-webkit-appearance:none;appearance:none}
+      .header-title:focus-visible{outline:2px solid var(--primary-color);outline-offset:2px}
       .header-title:active{transform:scale(.985);background:color-mix(in srgb,var(--primary-color) 7%,var(--card-background-color))}
       .state-hero{grid-template-rows:auto auto auto;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;overflow:visible;margin-bottom:10px}
       .state-hero::after{display:none}
