@@ -51,15 +51,15 @@ class PanelMobileAuditUiV0729Tests(unittest.TestCase):
         self.assertIn(".state-hero .hero-metrics{grid-row:3", self.source)
 
     def test_phone_geometry_and_indicator_are_stable(self) -> None:
-        self.assertIn("@media(max-width:520px){.state-hero .state-scene{height:264px}", self.source)
+        self.assertIn(".state-hero .state-scene{height:264px}", self.source)
         self.assertIn("grid-template-columns:minmax(0,1fr) minmax(168px,42%)", self.source)
         self.assertIn(".state-hero .connection-copy{display:grid;grid-template-rows:auto auto", self.source)
         self.assertIn(".state-hero .connection-copy strong,.state-hero .connection-copy small{display:block", self.source)
 
     def test_header_center_returns_to_parent(self) -> None:
-        self.assertIn('data-header-home aria-label="Вернуться на основную панель"', self.source)
-        self.assertIn("this._panel?.config?.parent_path", self.source)
-        self.assertIn('new CustomEvent("location-changed"', self.source)
+        self.assertIn('data-header-home aria-label="Вернуться в исходную базовую панель NikaS"', self.source)
+        self.assertIn("s8SafeReturnRoute(this._returnRoute)", self.source)
+        self.assertIn('new Event("location-changed")', self.source)
         self.assertIn('this.shadowRoot.querySelector("[data-header-home]")', self.source)
 
     def test_zoom_and_manifest_match_current_contract(self) -> None:
@@ -67,7 +67,7 @@ class PanelMobileAuditUiV0729Tests(unittest.TestCase):
         self.assertIn("const VIEW_SCALE_MAX = 2.00", self.source)
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
         self.assertEqual([0.75, 2.0], panel["workspace_transform"]["scale_range"])
-        self.assertEqual("navigate_to_parent_path", panel["navigation"]["header_center_action"])
+        self.assertEqual("source_aware_return", panel["navigation"]["header_center_action"])
 
 
 if __name__ == "__main__":

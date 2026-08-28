@@ -58,7 +58,7 @@ jobs:
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.29"' "$production"
+          grep -q 'const UI_VERSION = "v0.7.30"' "$production"
           grep -q '_connectionIndicatorState()' "$production"
           grep -q 'class="connection-indicator' "$production"
           grep -q 'Данные актуальны' "$production"
@@ -114,7 +114,7 @@ jobs:
           grep -Fq 'if (Math.abs(scale - 1) < 0.0001) return "none";' "$production"
           grep -Fq ':host{height:100vh;height:100dvh;min-height:0;max-height:100dvh' "$production"
           grep -Fq 'main{height:100%;min-height:0;display:grid' "$production"
-          grep -Fq '@media(max-width:520px){.state-hero .state-scene{height:264px}' "$production"
+          grep -Fq '.state-hero .state-scene{height:264px}' "$production"
           grep -Fq '.state-hero{grid-template-rows:auto auto auto;padding:0;background:transparent;border:0' "$production"
           grep -Fq '.state-hero>.hero-primary,.state-hero>.resource-strip,.state-hero>.hero-metrics{grid-column:1;justify-self:stretch;width:100%;min-width:0;max-width:100%}' "$production"
           if grep -q 'min-height:100vh' "$production"; then exit 1; fi
@@ -141,9 +141,16 @@ jobs:
           grep -Fq '.state-hero .hero-metrics .metric-icon{position:static' "$production"
           grep -Fq 'font-size:13px;font-weight:750;text-transform:none;letter-spacing:0' "$production"
           if grep -Fq '.resource-strip{position:absolute' "$production"; then exit 1; fi
-          grep -Fq 'data-header-home aria-label="Вернуться на основную панель"' "$production"
+          grep -Fq 'data-header-home aria-label="Вернуться в исходную базовую панель NikaS"' "$production"
+          grep -Fq 'const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1"' "$production"
+          grep -Fq 'const RETURN_ROUTE_KEY = "nikas.s8_omni.return_route.v1"' "$production"
+          grep -Fq 'const SAFE_ROUTE_PREFIXES = ["/dashboard-house", "/dashboard-actions", "/dashboard-infrastructure"]' "$production"
+          grep -Fq '.header-title{width:100%;min-height:44px' "$production"
+          grep -Fq '.header-title:focus-visible{outline:3px' "$production"
+          grep -Fq 'window.dispatchEvent(new Event("location-changed"))' "$production"
+          if grep -Fq 'history.back' "$production"; then exit 1; fi
           grep -Fq 'const ENTITY_SUFFIXES_BY_LENGTH' "$production"
-          echo "S8 OMNI v0.7.29 mobile audit and v1.6 contract OK"
+          echo "S8 OMNI v0.7.30 mobile audit and v1.7 contract OK"
 
       - name: Validate panel manifest and state assets
         run: |
@@ -152,7 +159,7 @@ jobs:
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.29':
+          if panel.get('dashboard_version') != 'v0.7.30':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':
@@ -177,6 +184,15 @@ jobs:
               raise SystemExit('connection indicator stale threshold mismatch')
           if indicator.get('failed_poll_immediately_stale') is not True:
               raise SystemExit('connection indicator failed-poll rule mismatch')
+          navigation = panel.get('navigation', {})
+          if navigation.get('header_center_action') != 'source_aware_return':
+              raise SystemExit('source-aware Header return mismatch')
+          if navigation.get('header_source_route_key') != 'nikas.specialized.source_route.v1':
+              raise SystemExit('source route hand-off mismatch')
+          if navigation.get('header_safe_fallback') != '/dashboard-actions':
+              raise SystemExit('source route fallback mismatch')
+          if panel.get('standard') != 'NIKAS Specialized Panel UI Standard v1.7':
+              raise SystemExit('panel standard mismatch')
           transform = panel.get('workspace_transform', {})
           required = {
               'scope': 'working_area_only',

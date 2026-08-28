@@ -6,7 +6,7 @@ The S8 OMNI integration owns and ships its canonical Home Assistant UI.
 
 - Panel: `/dashboard-s8-omni`
 
-Dashboard version: `v0.7.29`.
+Dashboard version: `v0.7.30`.
 
 The panel is registered through Home Assistant's custom-panel API. No Lovelace YAML, LocalTuya command, cloud request or direct Tuya DP write is required by the frontend.
 
@@ -14,7 +14,7 @@ The panel is registered through Home Assistant's custom-panel API. No Lovelace Y
 
 Primary viewport: **iPhone Pro Max, portrait**.
 
-The panel follows **NIKAS Specialized Panel UI Standard v1.5** and **NikaS Integration Panel Template v1.0**:
+The panel follows **NIKAS Specialized Panel UI Standard v1.7** and **NikaS Integration Panel Template v1.7**:
 
 1. **Header** — compact persistent application header with the Home Assistant system Menu on the left, geometrically centered title and one global Refresh action on the right.
 2. **Content** — current system state or selected workflow.
@@ -34,14 +34,14 @@ On mobile widths up to 480 CSS px:
 48 px | minmax(0, 1fr) | 48 px
 ```
 
-The two side slots remain symmetric, so `S8 OMNI` stays centered against the viewport rather than the free space between controls. Menu and Refresh remain at least 44×44 px touch targets and use matching plaques. The subtitle is a single secondary line with ellipsis protection.
+The two side slots remain symmetric, so `S8 OMNI` stays centered against the viewport rather than the free space between controls. Menu and Refresh remain at least 44×44 px touch targets and use matching plaques. The center title is also a visible semantic 44 px button with `S8 OMNI` and the exact version-only second line. It captures the validated source base-panel route once and returns through explicit Home Assistant navigation.
 
 On the five root views:
 
 - Header Menu emits the native composed/bubbling `hass-toggle-menu` event.
 - Header Refresh requests an immediate local coordinator refresh through the public `button` entity owned by `ha-s8-omni`.
 - Bottom Tab Bar switches root sections inside S8 OMNI.
-- any parent/detail Back action belongs inside the working area and never replaces the system Menu.
+- the center title returns to the originating Дом, Действия or Инфраструктура base panel; any detail Back action remains inside the working area and never replaces the system Menu.
 
 The hero card does not repeat S8 OMNI as another large title. The Header identifies the application; the hero identifies **current state**.
 
@@ -49,7 +49,7 @@ The hero card does not repeat S8 OMNI as another large title. The Header identif
 
 At the primary iPhone Pro Max portrait width, the panel must not depend on horizontal overflow or clipped labels.
 
-Dashboard `v0.5.4` applies these mobile rules:
+Dashboard `v0.7.30` applies these mobile rules:
 
 - Header side controls reduce from 52 px to 48 px while preserving symmetric geometry;
 - the three frequent actions remain **three equal columns**;

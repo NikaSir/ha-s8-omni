@@ -12,7 +12,7 @@ Before device-side testing, back up Home Assistant and disable **only S8 OMNI** 
 - [x] Start cleaning and Return to base are confirmed on the physical robot.
 - [x] Station dust collection, roller/mop cleaning and drying have been observed.
 - [x] Dashboard renders on iPhone Pro Max portrait across all five main views.
-- [x] Explicit root Back route is `/dashboard-actions`.
+- [x] Safe direct-open fallback is `/dashboard-actions`; source-aware Header return accepts only Дом, Действия and Инфраструктура roots.
 - [x] Header Refresh uses an integration-owned Home Assistant button entity.
 - [x] Sanitized Home Assistant Download diagnostics is implemented.
 - [x] Production frontend is one self-contained `s8-omni-panel.js` bundle.
@@ -42,6 +42,8 @@ Control viewport: **iPhone Pro Max · portrait**. Also inspect a narrow viewport
 - [ ] Mobile Header grid is symmetric `48 px | minmax(0,1fr) | 48 px`.
 - [ ] Menu and Refresh use matching plaques and remain at least 44×44 px touch targets.
 - [ ] Title stays visually centered relative to the viewport.
+- [ ] Center title is a visible 44 px+ plaque with keyboard focus and pressed feedback.
+- [ ] Open from Дом, Действия and Инфраструктура separately; the same mounted title returns to the actual source each time.
 - [ ] Header respects iOS top/left/right Safe Area.
 - [ ] Header contains no device action or integration-specific navigation.
 - [ ] Hold/double tap on Header performs no robot/station action.
@@ -198,7 +200,7 @@ Runtime acceptance:
 2. [ ] Load `/dashboard-s8-omni` through Home Assistant Cloud / Nabu Casa with a cold client cache.
 3. [ ] Fully restart Home Assistant and open S8 OMNI before any previous S8 panel resource is cached.
 4. [ ] Open and close the panel repeatedly from the parent dashboard.
-5. [ ] Verify Back returns to `/dashboard-actions`.
+5. [ ] Verify the Header title returns to the originating base panel, with `/dashboard-actions` used only as the safe direct-open fallback.
 6. [ ] Verify Refresh still requests coordinator refresh.
 7. [ ] Verify no `Unable to load custom panel` message appears.
 8. [ ] Verify no `Configuration error` appears.
@@ -221,7 +223,7 @@ A warmed browser cache is not sufficient evidence. At least one cold-cache local
 From **Settings → Devices & services → S8 OMNI → Download diagnostics**:
 
 - [ ] Diagnostics download is available for the S8 OMNI config entry.
-- [ ] Integration version is `v1.00_b065`; dashboard version is `v0.7.29`.
+- [ ] Integration version is `v1.00_b066`; dashboard version is `v0.7.30`.
 - [ ] Host/IP is replaced by a redaction marker.
 - [ ] Device ID is replaced by a redaction marker.
 - [ ] Local Key is replaced by a redaction marker.
