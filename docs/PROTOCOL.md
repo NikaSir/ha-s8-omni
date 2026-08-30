@@ -31,7 +31,7 @@ This document records datapoints verified through Tuya Developer Platform, Local
 
 - **Start / continue:** `mode=smart` → `pause=false` → `power_go=true`.
 - **Pause:** `power_go=false` → `pause=true`.
-- **Return home:** write `mode=chargego`, then poll the device and require either `mode=chargego` or return/dock DP5 state. Only a confirmed `chargego` prerequisite may continue with `pause=false` → `power_go=true`; if DP5 already reports return/charging/charged, no further trigger write is required. An unconfirmed first step fails closed and never writes `power_go=true`.
+- **Return home:** write only `mode=chargego`, then poll the device and require factual DP5 `goto_charge`, `charging` or `charge_done`. Real-device testing proved that a later `power_go=true` resumes Smart cleaning even after a transient `chargego` readback, so return-to-base never writes DP1 or DP2. An unconfirmed return fails closed.
 - **Stop station dust collection:** `dp_dust=false` (stop-only public button).
 - **Stop mop self-cleaning:** `dp_roll_clean=false` (stop-only public button).
 - **Stop mop drying:** `dp_roll_hot=false` (stop-only public button).

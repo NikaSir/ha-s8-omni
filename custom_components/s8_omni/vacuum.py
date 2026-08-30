@@ -89,13 +89,11 @@ class S8OmniVacuum(S8OmniEntity, StateVacuumEntity):
         return_states = {"goto_charge", "charging", "charge_done"}
         await self.coordinator.async_set_sequence_after_confirmation(
             (DP_MODE, "chargego"),
-            [(DP_PAUSE, False), (DP_POWER_GO, True)],
-            lambda data: str(data.get(DP_MODE)) == "chargego"
-            or str(data.get(DP_STATUS)) in return_states,
-            skip_remaining=lambda data: str(data.get(DP_STATUS)) in return_states,
+            [],
+            lambda data: str(data.get(DP_STATUS)) in return_states,
             failure_message=(
-                "Режим возврата на базу не подтверждён устройством. "
-                "Команда запуска уборки не отправлена."
+                "Устройство не подтвердило фактический возврат на базу. "
+                "Команды продолжения уборки не отправлялись."
             ),
         )
 

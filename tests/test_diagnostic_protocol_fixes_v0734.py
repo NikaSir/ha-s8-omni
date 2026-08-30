@@ -26,9 +26,11 @@ class DiagnosticProtocolFixesV0734Tests(unittest.TestCase):
         )[0]
         self.assertIn("async_set_sequence_after_confirmation", return_home)
         self.assertIn('(DP_MODE, "chargego")', return_home)
-        self.assertIn('str(data.get(DP_MODE)) == "chargego"', return_home)
         self.assertIn("DP_STATUS", return_home)
-        self.assertIn("Команда запуска уборки не отправлена", return_home)
+        self.assertIn("Команды продолжения уборки не отправлялись", return_home)
+        self.assertIn("(DP_MODE, \"chargego\"),\n            [],", return_home)
+        self.assertNotIn("DP_POWER_GO", return_home)
+        self.assertNotIn("DP_PAUSE", return_home)
         self.assertNotIn("await self.coordinator.async_set_sequence(", return_home)
 
     def test_guarded_sequence_reads_before_sending_trigger_values(self) -> None:

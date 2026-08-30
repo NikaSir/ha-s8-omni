@@ -1,3 +1,9 @@
+## v1.00_b070 / UI v0.7.35
+
+- Removed `pause=false` and `power_go=true` from Return to base after real-device testing showed that the trigger resumes Smart cleaning even after a transient `chargego` readback.
+- Return to base now writes only `mode=chargego` and succeeds only after DP5 factually reports return, charging or charged.
+- Extended safe DP5 readback to 3.5 seconds; timeout fails closed without sending any cleaning continuation command.
+
 ## v1.00_b069 / UI v0.7.34
 
 - Corrected the verified DP10 Medium water value from the assumed `normal` to the real-device diagnostic value `middle`.

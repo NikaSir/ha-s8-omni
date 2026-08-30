@@ -61,7 +61,7 @@ jobs:
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.34"' "$production"
+          grep -q 'const UI_VERSION = "v0.7.35"' "$production"
           grep -q '_connectionIndicatorState()' "$production"
           grep -q 'class="connection-indicator' "$production"
           grep -q 'Данные актуальны' "$production"
@@ -170,7 +170,7 @@ jobs:
           grep -Fq 'window.dispatchEvent(new Event("location-changed"))' "$production"
           if grep -Fq 'history.back' "$production"; then exit 1; fi
           grep -Fq 'const ENTITY_SUFFIXES_BY_LENGTH' "$production"
-          echo "S8 OMNI v0.7.34 mobile audit and v1.9 contract OK"
+          echo "S8 OMNI v0.7.35 mobile audit and v1.9 contract OK"
 
       - name: Validate panel manifest and state assets
         run: |
@@ -179,7 +179,7 @@ jobs:
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.34':
+          if panel.get('dashboard_version') != 'v0.7.35':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':
@@ -260,7 +260,7 @@ jobs:
           if ownership.get('profile_writes_require_confirmation_and_readback') is not True:
               raise SystemExit('profile write safety mismatch')
           metadata = json.loads(Path('.nikas-ui-standard.json').read_text(encoding='utf-8'))
-          if metadata.get('ui_version') != '0.7.34':
+          if metadata.get('ui_version') != '0.7.35':
               raise SystemExit('NikaS UI metadata version mismatch')
           print('Panel manifest OK')
           PY
