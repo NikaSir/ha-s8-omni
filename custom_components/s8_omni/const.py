@@ -1,6 +1,6 @@
 DOMAIN = "s8_omni"
-VERSION = "v1.00_b068"
-DASHBOARD_VERSION = "v0.7.33"
+VERSION = "v1.00_b069"
+DASHBOARD_VERSION = "v0.7.34"
 
 PANEL_ID = "s8_omni"
 PANEL_PATH = "dashboard-s8-omni"
@@ -42,8 +42,9 @@ DP_ROLL_DRY = 136
 
 SUCTION_OPTIONS = ["gentle", "normal", "strong"]
 # DP10 / Tuya code `cistern` is verified to expose four levels.
-# `closed` was captured from Get Status Reporting Log on 2026-08-21.
-WATER_OPTIONS = ["closed", "low", "normal", "high"]
+# `closed` was captured on 2026-08-21 and `middle` was confirmed by the
+# 2026-08-30 Home Assistant config-entry diagnostics from the real device.
+WATER_OPTIONS = ["closed", "low", "middle", "high"]
 CLEAN_MODE_OPTIONS = ["smart", "selectroom", "zone", "pose", "part"]
 DEFAULT_CLEAN_MODE = "smart"
 MODE_OPTIONS = ["smart", "zone", "pose", "part", "chargego", "wallfollow", "selectroom"]

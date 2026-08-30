@@ -59,11 +59,11 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         constants = (ROOT / "custom_components" / "s8_omni" / "const.py").read_text(encoding="utf-8")
         manifest = json.loads((ROOT / "custom_components" / "s8_omni" / "manifest.json").read_text(encoding="utf-8"))
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
-        self.assertEqual("0.7.33", standard["ui_version"])
-        self.assertIn('const UI_VERSION = "v0.7.33"', self.source)
-        self.assertIn('VERSION = "v1.00_b068"', constants)
-        self.assertEqual("1.0.0b68", manifest["version"])
-        self.assertEqual("v0.7.33", panel["dashboard_version"])
+        self.assertEqual("0.7.34", standard["ui_version"])
+        self.assertIn('const UI_VERSION = "v0.7.34"', self.source)
+        self.assertIn('VERSION = "v1.00_b069"', constants)
+        self.assertEqual("1.0.0b69", manifest["version"])
+        self.assertEqual("v0.7.34", panel["dashboard_version"])
         self.assertNotIn("v0.7.31:", self.source)
 
 

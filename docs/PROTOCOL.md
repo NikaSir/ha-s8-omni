@@ -12,7 +12,7 @@ This document records datapoints verified through Tuya Developer Platform, Local
 | 7 | `clean_area` | value | square metres in current HA presentation |
 | 8 | `battery_percentage` | value | 0–100 % |
 | 9 | `suction` | enum | `gentle`, `normal`, `strong`; official app labels are Quiet, Normal, Strong |
-| 10 | `cistern` | enum | water delivery level; live Tuya status log captured `closed`, `low`, `high`; official app exposes Closed, Low, Medium, High. `normal` is the current middle option and still requires one explicit live-log confirmation as Medium |
+| 10 | `cistern` | enum | water delivery level; verified values are `closed`, `low`, `middle`, `high`. The real-device Home Assistant diagnostics captured `middle` on 2026-08-30; official app labels it Medium |
 | 17 | `edge_brush_life` | value | remaining side-brush resource, minutes |
 | 19 | `roll_brush_life` | value | remaining main/roller-brush resource, minutes |
 | 21 | `filter_life` | value | remaining filter resource, minutes |
@@ -31,7 +31,7 @@ This document records datapoints verified through Tuya Developer Platform, Local
 
 - **Start / continue:** `mode=smart` → `pause=false` → `power_go=true`.
 - **Pause:** `power_go=false` → `pause=true`.
-- **Return home:** `mode=chargego` → `pause=false` → `power_go=true`.
+- **Return home:** write `mode=chargego`, then poll the device and require either `mode=chargego` or return/dock DP5 state. Only a confirmed `chargego` prerequisite may continue with `pause=false` → `power_go=true`; if DP5 already reports return/charging/charged, no further trigger write is required. An unconfirmed first step fails closed and never writes `power_go=true`.
 - **Stop station dust collection:** `dp_dust=false` (stop-only public button).
 - **Stop mop self-cleaning:** `dp_roll_clean=false` (stop-only public button).
 - **Stop mop drying:** `dp_roll_hot=false` (stop-only public button).
