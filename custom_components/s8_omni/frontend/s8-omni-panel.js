@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.33";
+const UI_VERSION = "v0.7.34";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.75;
 const VIEW_SCALE_MAX = 2.00;
@@ -47,7 +47,7 @@ const COMPOSITE_LABELS = {
 };
 const MODE_LABELS = { smart: "Smart", zone: "Зона", pose: "Точка", part: "Частичная", chargego: "Возврат", wallfollow: "Вдоль стен", selectroom: "Комнаты" };
 const SUCTION_LABELS = { gentle: "Тихий", normal: "Нормальный", strong: "Сильный" };
-const WATER_LABELS = { closed: "Выкл.", low: "Низкий", normal: "Средний", high: "Высокий" };
+const WATER_LABELS = { closed: "Выкл.", low: "Низкий", middle: "Средний", high: "Высокий" };
 const WORK_MODE_LABELS = { both_work: "Сухая и влажная", sweep: "Сухая", sweep_work: "Сухая", mop: "Влажная", mop_work: "Влажная" };
 const RESOURCE_LIFE_MINUTES = { filter_life: 9000, side_brush_life: 12000, main_brush_life: 18000 };
 const STATION_OPERATION_LABELS = { dust_collection: "Сбор пыли", roller_cleaning: "Промывка", drying: "Сушка" };
@@ -1134,10 +1134,10 @@ class S8OmniPanel extends HTMLElement {
     const batteryTone = snap.battery !== null && snap.battery < 15 ? " low" : "";
     const image = HERO_IMAGES[state.image] || HERO_IMAGES.base;
     const ops = new Set(snap.stationOperations || []);
-    let stationLabel = "Ожидает";
+    let stationLabel = snap.station === "unknown" ? "Нет данных" : "Ожидает";
     let stationTone = "";
     let stationIcon = "mdi:home";
-    if (snap.unreliable) {
+    if (snap.unreliable || snap.station === "unknown") {
       stationLabel = "Нет данных";
       stationIcon = "mdi:home-question";
     } else if (state.tone === "error") {

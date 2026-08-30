@@ -19,7 +19,7 @@ Before device-side testing, back up Home Assistant and disable **only S8 OMNI** 
 
 ## Remaining protocol acceptance
 
-1. Set water to **Medium** in the official application and capture `cistern`; confirm whether raw value is `normal`.
+1. Set water to **Medium** in the official application and verify that Home Assistant reads and writes the confirmed raw value `middle`.
 2. Change suction `normal → strong → normal` from Home Assistant and confirm physical/application state and local reflection.
 3. Verify Pause from Home Assistant on the physical robot.
 4. Verify Start after Pause resumes cleaning rather than starting an unrelated mode.
@@ -229,7 +229,7 @@ A warmed browser cache is not sufficient evidence. At least one cold-cache local
 From **Settings → Devices & services → S8 OMNI → Download diagnostics**:
 
 - [ ] Diagnostics download is available for the S8 OMNI config entry.
-- [ ] Integration version is `v1.00_b068`; dashboard version is `v0.7.33`.
+- [ ] Integration version is `v1.00_b069`; dashboard version is `v0.7.34`.
 - [ ] Host/IP is replaced by a redaction marker.
 - [ ] Device ID is replaced by a redaction marker.
 - [ ] Local Key is replaced by a redaction marker.

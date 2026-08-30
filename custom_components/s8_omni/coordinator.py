@@ -4,6 +4,7 @@ import logging
 
 import tinytuya
 
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -81,6 +82,11 @@ class S8OmniCoordinator(DataUpdateCoordinator):
             self.last_poll_success = False
             raise UpdateFailed(f"S8 OMNI local read failed: {err}") from err
 
+        await self._async_accept_successful_data(data)
+        return data
+
+    async def _async_accept_successful_data(self, data):
+        """Record one factual Tuya response without inventing missing datapoints."""
         # Connectivity describes the Tuya LAN transaction itself. Auxiliary local
         # bookkeeping must never turn a successful device response into "Нет связи".
         self.last_poll_success = True
@@ -89,7 +95,6 @@ class S8OmniCoordinator(DataUpdateCoordinator):
             await self._async_update_clean_mode(data)
         except Exception as err:
             _LOGGER.warning("S8 OMNI clean-mode bookkeeping failed after a successful local poll: %s", err)
-        return data
 
     @property
     def stale_after_seconds(self):
@@ -168,4 +173,45 @@ class S8OmniCoordinator(DataUpdateCoordinator):
                 await asyncio.sleep(0.15)
         if remembered_mode is not None:
             await self._async_remember_clean_mode(remembered_mode)
+        await self.async_request_refresh()
+
+    async def async_set_sequence_after_confirmation(
+        self,
+        first,
+        values,
+        confirmation,
+        *,
+        skip_remaining=None,
+        failure_message="Устройство не подтвердило первый шаг команды.",
+    ):
+        """Continue a multi-DP command only after factual device readback.
+
+        This is intentionally fail-closed. A Tuya write acknowledgement alone is
+        not proof that the device changed mode, so later trigger DPs are never
+        sent until a fresh status response confirms the safe prerequisite.
+        """
+        confirmed_data = None
+        async with self._command_lock:
+            await self.hass.async_add_executor_job(self._set_sync, *first)
+            for delay in (0.25, 0.35, 0.50):
+                await asyncio.sleep(delay)
+                try:
+                    data = await self.hass.async_add_executor_job(self._read_sync)
+                except Exception as err:
+                    _LOGGER.debug("S8 OMNI command readback failed: %s", err)
+                    continue
+                await self._async_accept_successful_data(data)
+                self.async_set_updated_data(data)
+                if confirmation(data):
+                    confirmed_data = data
+                    break
+
+            if confirmed_data is None:
+                raise HomeAssistantError(failure_message)
+
+            if not (skip_remaining and skip_remaining(confirmed_data)):
+                for dp, value in values:
+                    await self.hass.async_add_executor_job(self._set_sync, dp, value)
+                    await asyncio.sleep(0.15)
+
         await self.async_request_refresh()

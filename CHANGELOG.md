@@ -1,3 +1,11 @@
+## v1.00_b069 / UI v0.7.34
+
+- Corrected the verified DP10 Medium water value from the assumed `normal` to the real-device diagnostic value `middle`.
+- Made return-to-base fail closed: `chargego` is now read back before any trigger DP can be sent, and no cleaning trigger is written when return mode is unconfirmed.
+- Skips remaining return writes when the robot already reports returning, charging or charged after the first step.
+- Shows missing DP134/135/136 station telemetry consistently as `Нет данных` on Overview instead of the false `Ожидает / На связи` state.
+- Added regression guards for the diagnostic findings and synchronized all integration, panel and cache-busting versions.
+
 ## v1.00_b068 / UI v0.7.33
 
 - Rebuilt the cleaning-profile write path as one durable draft for suction, water, volume and Do Not Disturb, with a single explicit Apply action.
