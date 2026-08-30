@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.34";
+const UI_VERSION = "v0.7.35";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.75;
 const VIEW_SCALE_MAX = 2.00;

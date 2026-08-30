@@ -193,7 +193,7 @@ class S8OmniCoordinator(DataUpdateCoordinator):
         confirmed_data = None
         async with self._command_lock:
             await self.hass.async_add_executor_job(self._set_sync, *first)
-            for delay in (0.25, 0.35, 0.50):
+            for delay in (0.35, 0.65, 1.00, 1.50):
                 await asyncio.sleep(delay)
                 try:
                     data = await self.hass.async_add_executor_job(self._read_sync)

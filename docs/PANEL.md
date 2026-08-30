@@ -6,7 +6,7 @@ The S8 OMNI integration owns and ships its canonical Home Assistant UI.
 
 - Panel: `/dashboard-s8-omni`
 
-Dashboard version: `v0.7.34`.
+Dashboard version: `v0.7.35`.
 
 The panel is registered through Home Assistant's custom-panel API. No Lovelace YAML, LocalTuya command, cloud request or direct Tuya DP write is required by the frontend.
 
@@ -49,7 +49,7 @@ The hero card does not repeat S8 OMNI as another large title. The Header identif
 
 At the primary iPhone Pro Max portrait width, the panel must not depend on horizontal overflow or clipped labels.
 
-Dashboard `v0.7.34` applies these mobile rules:
+Dashboard `v0.7.35` applies these mobile rules:
 
 - Header side controls reduce from 52 px to 48 px while preserving symmetric geometry;
 - the three frequent actions remain **three equal columns**;
