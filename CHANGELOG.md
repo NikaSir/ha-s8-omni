@@ -1,3 +1,10 @@
+## v1.00_b071 / UI v0.7.36
+
+- Kept the real-device-confirmed Pause command unchanged.
+- Resume from `paused` now clears only DP2 and no longer sends the extra DP1 transport command that made the robot pause again.
+- Return to base now preserves the verified paused state, confirms `mode=chargego`, and only then sends the DP1 execution trigger.
+- Added regression guards that prevent resume and return-to-base from reintroducing `pause=false`/DP1 ordering mistakes.
+
 ## v1.00_b070 / UI v0.7.35
 
 - Removed `pause=false` and `power_go=true` from Return to base after real-device testing showed that the trigger resumes Smart cleaning even after a transient `chargego` readback.

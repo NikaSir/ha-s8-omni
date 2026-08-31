@@ -2,9 +2,9 @@
 
 **Audit target:** NIKAS Specialized Panel UI Standard v1.9 and Navigation Contract v1.1
 
-**Runtime:** `custom_components/s8_omni/frontend/s8-omni-panel.js` v0.7.35
+**Runtime:** `custom_components/s8_omni/frontend/s8-omni-panel.js` v0.7.36
 
-**Manifest:** integration `1.0.0b70`
+**Manifest:** integration `1.0.0b71`
 
 ## Compliance
 

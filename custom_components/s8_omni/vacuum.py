@@ -76,6 +76,13 @@ class S8OmniVacuum(S8OmniEntity, StateVacuumEntity):
         return str(value) if value is not None else None
 
     async def async_start(self):
+        # On this firmware DP2 is the pause/resume latch.  When the robot is
+        # already paused, clearing that latch resumes the existing job by
+        # itself.  Sending DP1 afterwards acts like a second transport command
+        # and the robot falls back to pause again.
+        if str(self.dp(DP_STATUS)) == "paused":
+            await self.coordinator.async_set_dp(DP_PAUSE, False)
+            return
         await self.coordinator.async_set_sequence(
             [(DP_MODE, "smart"), (DP_PAUSE, False), (DP_POWER_GO, True)]
         )
@@ -86,14 +93,23 @@ class S8OmniVacuum(S8OmniEntity, StateVacuumEntity):
         )
 
     async def async_return_to_base(self, **kwargs):
-        return_states = {"goto_charge", "charging", "charge_done"}
+        # Real-device testing established DP2=true as the working pause state.
+        # Put the active job into that safe state before selecting chargego.
+        # The Tuya vacuum family then requires DP1=true to execute the selected
+        # transport mode; unlike the previous sequence, DP2 must not be cleared.
+        await self.coordinator.async_set_sequence(
+            [(DP_POWER_GO, False), (DP_PAUSE, True)]
+        )
         await self.coordinator.async_set_sequence_after_confirmation(
             (DP_MODE, "chargego"),
-            [],
-            lambda data: str(data.get(DP_STATUS)) in return_states,
+            [(DP_POWER_GO, True)],
+            lambda data: (
+                data.get(DP_PAUSE) is True
+                and str(data.get(DP_MODE)) == "chargego"
+            ),
             failure_message=(
-                "Устройство не подтвердило фактический возврат на базу. "
-                "Команды продолжения уборки не отправлялись."
+                "Устройство не подтвердило паузу и режим возврата на базу. "
+                "Запуск режима не выполнялся."
             ),
         )
 
