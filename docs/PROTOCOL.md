@@ -29,9 +29,10 @@ This document records datapoints verified through Tuya Developer Platform, Local
 
 ## Command sequences used in current builds
 
-- **Start / continue:** `mode=smart` → `pause=false` → `power_go=true`.
+- **Fresh start:** `mode=smart` → `pause=false` → `power_go=true`.
+- **Continue a paused job:** write only `pause=false`. Real-device testing showed that this resumes the existing job immediately; a following `power_go=true` makes the robot pause again.
 - **Pause:** `power_go=false` → `pause=true`.
-- **Return home:** write only `mode=chargego`, then poll the device and require factual DP5 `goto_charge`, `charging` or `charge_done`. Real-device testing proved that a later `power_go=true` resumes Smart cleaning even after a transient `chargego` readback, so return-to-base never writes DP1 or DP2. An unconfirmed return fails closed.
+- **Return home:** first use the verified Pause sequence `power_go=false` → `pause=true`, then select `mode=chargego`. Execute the selected transport mode with `power_go=true` only when a fresh readback simultaneously retains `pause=true` and confirms `mode=chargego`. The earlier `pause=false` sequence was rejected because it resumed Smart cleaning before the transport trigger.
 - **Stop station dust collection:** `dp_dust=false` (stop-only public button).
 - **Stop mop self-cleaning:** `dp_roll_clean=false` (stop-only public button).
 - **Stop mop drying:** `dp_roll_hot=false` (stop-only public button).

@@ -20,18 +20,30 @@ class DiagnosticProtocolFixesV0734Tests(unittest.TestCase):
         self.assertIn('middle: "Средний"', self.frontend)
         self.assertNotIn('normal: "Средний"', self.frontend)
 
-    def test_return_home_never_uses_the_unverified_legacy_sequence(self) -> None:
+    def test_paused_job_resumes_by_clearing_only_the_pause_latch(self) -> None:
+        start = self.vacuum.split("    async def async_start", 1)[1].split(
+            "    async def async_pause", 1
+        )[0]
+        paused_branch = start.split('if str(self.dp(DP_STATUS)) == "paused":', 1)[1].split(
+            "        await self.coordinator.async_set_sequence(", 1
+        )[0]
+        self.assertIn("async_set_dp(DP_PAUSE, False)", paused_branch)
+        self.assertIn("return", paused_branch)
+        self.assertNotIn("DP_POWER_GO", paused_branch)
+        self.assertNotIn("DP_MODE", paused_branch)
+
+    def test_return_home_preserves_verified_pause_while_triggering_chargego(self) -> None:
         return_home = self.vacuum.split("    async def async_return_to_base", 1)[1].split(
             "    async def async_set_fan_speed", 1
         )[0]
-        self.assertIn("async_set_sequence_after_confirmation", return_home)
+        self.assertEqual(1, return_home.count("async_set_sequence_after_confirmation"))
+        self.assertIn("[(DP_POWER_GO, False), (DP_PAUSE, True)]", return_home)
+        self.assertIn("data.get(DP_PAUSE) is True", return_home)
         self.assertIn('(DP_MODE, "chargego")', return_home)
-        self.assertIn("DP_STATUS", return_home)
-        self.assertIn("Команды продолжения уборки не отправлялись", return_home)
-        self.assertIn("(DP_MODE, \"chargego\"),\n            [],", return_home)
-        self.assertNotIn("DP_POWER_GO", return_home)
-        self.assertNotIn("DP_PAUSE", return_home)
-        self.assertNotIn("await self.coordinator.async_set_sequence(", return_home)
+        self.assertIn("[(DP_POWER_GO, True)]", return_home)
+        self.assertIn('str(data.get(DP_MODE)) == "chargego"', return_home)
+        self.assertNotIn("(DP_PAUSE, False)", return_home)
+        self.assertEqual(1, return_home.count("await self.coordinator.async_set_sequence("))
 
     def test_guarded_sequence_reads_before_sending_trigger_values(self) -> None:
         method = self.coordinator.split(
