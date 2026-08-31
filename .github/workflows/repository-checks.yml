@@ -260,7 +260,7 @@ jobs:
           if ownership.get('profile_writes_require_confirmation_and_readback') is not True:
               raise SystemExit('profile write safety mismatch')
           metadata = json.loads(Path('.nikas-ui-standard.json').read_text(encoding='utf-8'))
-          if metadata.get('ui_version') != '0.7.35':
+          if metadata.get('ui_version') != '0.7.36':
               raise SystemExit('NikaS UI metadata version mismatch')
           print('Panel manifest OK')
           PY
