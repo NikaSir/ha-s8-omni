@@ -139,9 +139,11 @@ jobs:
           grep -q 'StopDesc("stop_dust_collection", "Остановить сбор пыли", DP_DUST)' custom_components/s8_omni/button.py
           grep -q 'StopDesc("stop_roller_cleaning", "Остановить мойку швабры", DP_ROLL_CLEAN)' custom_components/s8_omni/button.py
           grep -q 'StopDesc("stop_roller_drying", "Остановить сушку швабры", DP_ROLL_DRY)' custom_components/s8_omni/button.py
-          grep -q 'async_set_dp(self.desc.dp, False)' custom_components/s8_omni/button.py
+          if grep -q 'async_set_dp(self.desc.dp,' custom_components/s8_omni/button.py; then exit 1; fi
+          grep -q 'disabled_in_protocol_capture_build' custom_components/s8_omni/button.py
+          grep -q 'raise HomeAssistantError(' custom_components/s8_omni/button.py
           if grep -q 'async_set_dp(self.desc.dp, True)' custom_components/s8_omni/button.py; then exit 1; fi
-          grep -q 'Stop station dust collection' docs/PROTOCOL.md
+          grep -q 'Station stop commands are disabled' docs/PROTOCOL.md
           grep -Fq 'root.addEventListener("click", async (event) =>' "$production"
           grep -Fq 'const action = button.dataset.action;' "$production"
           grep -Fq '.state-hero>.hero-primary{grid-row:1' "$production"
