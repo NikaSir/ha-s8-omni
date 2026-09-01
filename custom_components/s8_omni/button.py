@@ -3,21 +3,25 @@ from dataclasses import dataclass
 from homeassistant.components.button import ButtonEntity
 from homeassistant.exceptions import HomeAssistantError
 
-from .const import DOMAIN, DP_DUST, DP_ROLL_CLEAN, DP_ROLL_DRY
+from .const import DOMAIN, DP_DUST, DP_ROLL_CLEAN, DP_ROLL_DRY, DP_STATUS
 from .entity import S8OmniEntity
 
 
 @dataclass(frozen=True)
-class StopDesc:
+class OperationDesc:
     key: str
     name: str
     dp: int
+    value: bool
 
 
-STOP_DESCS = [
-    StopDesc("stop_dust_collection", "Остановить сбор пыли", DP_DUST),
-    StopDesc("stop_roller_cleaning", "Остановить мойку швабры", DP_ROLL_CLEAN),
-    StopDesc("stop_roller_drying", "Остановить сушку швабры", DP_ROLL_DRY),
+OPERATION_DESCS = [
+    OperationDesc("start_dust_collection", "Запустить сбор пыли", DP_DUST, True),
+    OperationDesc("stop_dust_collection", "Остановить сбор пыли", DP_DUST, False),
+    OperationDesc("start_roller_cleaning", "Запустить мойку швабры", DP_ROLL_CLEAN, True),
+    OperationDesc("stop_roller_cleaning", "Остановить мойку швабры", DP_ROLL_CLEAN, False),
+    OperationDesc("start_roller_drying", "Запустить сушку швабры", DP_ROLL_DRY, True),
+    OperationDesc("stop_roller_drying", "Остановить сушку швабры", DP_ROLL_DRY, False),
 ]
 
 
@@ -27,7 +31,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
         [
             S8OmniRefreshButton(coordinator),
             S8OmniDiagnosticCaptureButton(coordinator),
-            *[S8OmniStopOperationButton(coordinator, desc) for desc in STOP_DESCS],
+            *[S8OmniStationOperationButton(coordinator, desc) for desc in OPERATION_DESCS],
         ]
     )
 
@@ -63,31 +67,34 @@ class S8OmniDiagnosticCaptureButton(S8OmniEntity, ButtonEntity):
         await self.coordinator.async_start_diagnostic_capture(90)
 
 
-class S8OmniStopOperationButton(S8OmniEntity, ButtonEntity):
-    _attr_icon = "mdi:stop"
+class S8OmniStationOperationButton(S8OmniEntity, ButtonEntity):
 
-    def __init__(self, coordinator, desc: StopDesc):
+    def __init__(self, coordinator, desc: OperationDesc):
         super().__init__(coordinator, desc.key)
         self.desc = desc
         self._attr_name = desc.name
+        self._attr_icon = "mdi:play" if desc.value else "mdi:stop"
 
     @property
     def available(self):
         return super().available and self.coordinator.data is not None and self.desc.dp in self.coordinator.data
 
     async def async_press(self) -> None:
-        if self.desc.dp == DP_ROLL_DRY:
-            await self.coordinator.async_set_dp(
-                self.desc.dp,
-                False,
-                operation=self.desc.key,
+        if self.desc.value and str(self.dp(DP_STATUS)) not in {"charging", "charge_done"}:
+            raise HomeAssistantError(
+                "Операцию станции можно запустить только когда робот находится на базе."
             )
-            return
-        self.coordinator.trace_blocked_command(
-            self.desc.key,
-            "disabled_in_protocol_capture_build",
+        await self.coordinator.async_set_dp(
+            self.desc.dp,
+            self.desc.value,
+            operation=self.desc.key,
         )
-        raise HomeAssistantError(
-            "Остановка станции временно отключена в диагностической сборке. "
-            "Остановите операцию штатным приложением во время записи DP."
+        confirmed = await self.coordinator.async_wait_for_state(
+            lambda data: data.get(self.desc.dp) is self.desc.value,
+            operation=self.desc.key,
+            timeout=12.0,
         )
+        if confirmed is None:
+            raise HomeAssistantError(
+                "Станция не подтвердила изменение операции."
+            )

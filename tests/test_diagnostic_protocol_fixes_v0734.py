@@ -30,16 +30,19 @@ class DiagnosticProtocolFixesV0734Tests(unittest.TestCase):
         self.assertIn("DP_POWER_GO: True", start)
         self.assertNotIn("async_set_sequence", start)
 
-    def test_captured_return_only_selects_chargego(self) -> None:
+    def test_captured_return_pauses_active_cleaning_before_chargego(self) -> None:
         return_home = self.vacuum.split("    async def async_return_to_base", 1)[1].split(
             "    async def async_set_fan_speed", 1
         )[0]
         self.assertIn("async_set_dp", return_home)
         self.assertIn("DP_MODE", return_home)
         self.assertIn('"chargego"', return_home)
-        self.assertNotIn("async_set_sequence", return_home)
-        self.assertNotIn("DP_PAUSE", return_home)
-        self.assertNotIn("DP_POWER_GO", return_home)
+        self.assertIn("if actively_cleaning", return_home)
+        self.assertIn("async_set_sequence", return_home)
+        self.assertIn("[(DP_POWER_GO, False), (DP_PAUSE, True)]", return_home)
+        self.assertIn('in {"standby", "paused"}', return_home)
+        self.assertIn('in {"goto_charge", "repositing", "charging", "charge_done"}', return_home)
+        self.assertIn("async_wait_for_state", return_home)
 
     def test_guarded_sequence_reads_before_sending_trigger_values(self) -> None:
         method = self.coordinator.split(

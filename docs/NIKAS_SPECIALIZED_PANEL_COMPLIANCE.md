@@ -2,9 +2,9 @@
 
 **Audit target:** NIKAS Specialized Panel UI Standard v1.9 and Navigation Contract v1.1
 
-**Runtime:** `custom_components/s8_omni/frontend/s8-omni-panel.js` v0.7.39
+**Runtime:** `custom_components/s8_omni/frontend/s8-omni-panel.js` v0.7.40
 
-**Manifest:** integration `1.0.0b74`
+**Manifest:** integration `1.0.0b75`
 
 ## Compliance
 
@@ -23,11 +23,11 @@
 | Typography envelope | PASS | Meaningful content remains within 12–25 px. |
 | Trust semantics and command safety | PASS | Unknown/unavailable/stale data is non-normal; discovered entity targets are checked before service dispatch, duplicate in-flight calls are rejected and failures remain visible without optimistic success. |
 | Packaged brand and local artwork | PASS | Shipped 256/512 px integration icons and versioned local state assets are validated in CI. |
-| Verified station commands preserved | PASS | DP134/135/136 Stop buttons remain public integration entities; real-device washing and drying Stop were confirmed. |
+| Verified station commands preserved | PASS | DP134/135/136 Start/Stop buttons are public integration entities; both boolean transitions were captured from the official app. |
 | Automated v1.9 guards | PASS | Repository tests verify canonical source-route precedence/allowlist, timestamped one-shot hand-off, title plaque, stable DOM, zoom, Header, navigation, assets and versions. |
 | Strict source hand-off | PASS | Route and timestamp are a required pair; invalid, expired and future timestamps are consumed and rejected before safe fallbacks. |
 | Mandatory real-phone acceptance | GAP | The rebuilt version still requires Companion App verification after installation. |
 
 ## Required phone check
 
-Open S8 OMNI separately from Дом, Действия and Инфраструктура and verify that the center title returns to the same source. Then test Overview, Cleaning Settings and long Diagnostics at 100% and above 100%; perform ten tab switches, scroll across several telemetry polls, pinch/reset, and confirm that Header/Bottom Tab Bar never move or flash. Recheck dust collection, roller washing and drying Stop actions on the physical station.
+Open S8 OMNI separately from Дом, Действия and Инфраструктура and verify that the center title returns to the same source. Then test Overview, Cleaning Settings and long Diagnostics at 100% and above 100%; perform ten tab switches, scroll across several telemetry polls, pinch/reset, and confirm that Header/Bottom Tab Bar never move or flash. Recheck Return during active cleaning and every dust collection / mop washing / drying Start and Stop action on the physical station.

@@ -9,7 +9,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.7.39",
+    "dashboard_version": "v0.7.40",
     "template": "NikaS Integration Panel Template v1.9",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -111,7 +111,7 @@
       "header_title_focus_visible": true,
       "header_center_lines": [
         "S8 OMNI",
-        "UI v0.7.39"
+        "UI v0.7.40"
       ],
       "primary_navigation": "full_width_fixed_bottom_tab_bar",
       "bottom_tab_min_height_px": 52,
@@ -270,16 +270,27 @@
       "vacuum.start",
       "vacuum.pause",
       "vacuum.return_to_base",
+      "button.stop_dust_collection",
+      "button.stop_roller_cleaning",
+      "button.stop_roller_drying"
+    ],
+    "station_actions": [
+      "button.start_dust_collection",
+      "button.stop_dust_collection",
+      "button.start_roller_cleaning",
+      "button.stop_roller_cleaning",
+      "button.start_roller_drying",
       "button.stop_roller_drying"
     ],
     "details_path": "/dashboard-s8-omni"
   },
   "ownership": {
     "direct_tuya_dp_writes_from_ui": false,
-    "station_start_commands_exposed": false,
-    "station_stop_commands_public": false,
-    "station_stop_immediate": false,
-    "verified_station_stop_commands": ["stop_roller_drying"],
+    "station_start_commands_exposed": true,
+    "station_stop_commands_public": true,
+    "station_stop_immediate": true,
+    "verified_station_start_commands": ["start_dust_collection", "start_roller_cleaning", "start_roller_drying"],
+    "verified_station_stop_commands": ["stop_dust_collection", "stop_roller_cleaning", "stop_roller_drying"],
     "station_stop_requires_confirmation": true,
     "profile_writes_require_confirmation_and_readback": true,
     "start_and_return_require_confirmation": true,

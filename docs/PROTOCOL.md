@@ -23,20 +23,18 @@ This document records datapoints verified through Tuya Developer Platform, Local
 | 39 | `customize_mode_switch` | bool | custom-mode flag; diagnostic by default |
 | 41 | `work_mode` | enum | observed `both_work` |
 | 47 | `child_lock` | bool | child lock |
-| 134 | `dp_dust` | bool | station dust collection; Device Logs confirmed dust on/off |
-| 135 | `dp_roll_clean` | bool | station roller self-cleaning; Device Logs confirmed on/off |
-| 136 | `dp_roll_hot` | bool | station roller drying; `true` confirmed during drying |
+| 134 | `dp_dust` | bool | station dust collection; official-app capture confirmed `true` start / `false` stop |
+| 135 | `dp_roll_clean` | bool | station roller self-cleaning; official-app capture confirmed `true` start / `false` stop |
+| 136 | `dp_roll_hot` | bool | station roller drying; official-app capture confirmed `true` start / `false` stop |
 
 ## Command sequences used in current builds
 
 - **Fresh start:** one atomic Tuya request containing `mode=smart`, `pause=false` and `power_go=true`. The official application capture showed all three values change in the same polling interval; separate writes are not used because the robot can act on an intermediate transport state.
 - **Continue a paused job:** write only `pause=false`. Real-device testing showed that this resumes the existing job immediately; a following `power_go=true` makes the robot pause again.
 - **Pause:** `power_go=false` → `pause=true`.
-- **Return home:** write only `mode=chargego`. The official application capture proved that `power_go` remains `true` and `pause` remains `false` throughout the transition to `status=goto_charge`; the robot changes them to `false` / `true` itself only after docking. A pre-return Pause is therefore prohibited.
-- **Stop roller drying:** write only `DP136=false`. The 2026-09-01 official-application capture showed `station_roller_drying` change from `true` to `false` while DP1/2/4/5 remained unchanged.
-- **Dust collection and roller-cleaning Stop remain disabled.** Their assumed `false` writes are not sent until separate official-application traces confirm the device-specific command contract.
-- **Stop mop self-cleaning:** `dp_roll_clean=false` (stop-only public button).
-- **Stop mop drying:** `dp_roll_hot=false` (stop-only public button).
+- **Return home during active cleaning:** write `power_go=false` → `pause=true`, wait for factual `status=standby|paused`, then write `mode=chargego` and wait up to 30 seconds for `status=goto_charge|repositing|charging|charge_done`. The 2026-09-01 real-device trace showed direct `chargego` being acknowledged three times without movement; after Pause reached `standby`, `chargego` produced `goto_charge` after about 15 seconds and `charging` after another 25 seconds.
+- **Return home while not cleaning:** write `mode=chargego` directly and wait for the same factual return/dock states.
+- **Station operations:** DP134/135/136 use `true` to start and `false` to stop dust collection, mop washing and mop drying respectively. The official-app diagnostic capture recorded both transitions for all three controls. Start is guarded to docked states (`charging` / `charge_done`).
 
 DP4 also carries the user-selected Clean Mode. Because `chargego` is a temporary service value used by return-to-base, the integration remembers the last non-service Clean Mode (`smart`, `selectroom`, `zone`, `pose`, or observed `part`) and exposes that remembered value through the Home Assistant `mode` select while docked. DP41 `work_mode` is a separate device work-type signal and is not used as the Clean Mode selector.
 

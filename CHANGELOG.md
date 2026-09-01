@@ -1,8 +1,10 @@
-## v1.00_b074 / UI v0.7.39
+## v1.00_b075 / UI v0.7.40
 
-- Verified the official drying Stop transition from a real-device trace: `DP136` changes from `true` to `false` without any concurrent DP1/2/4/5 transport changes.
-- Enabled the red Overview `Стоп` action only while roller drying is active. It requires confirmation and presses the dedicated `stop_roller_drying` entity.
-- Kept dust-collection and roller-cleaning Stop commands fail-closed until separate captures verify their transitions.
+- Rebuilt Return to base from the latest real-device trace: during active cleaning it now sends the verified Pause pair, waits for `standby`, selects `chargego`, and waits up to 30 seconds for `goto_charge` or a docked state.
+- Kept idle/off-dock Return direct: no unnecessary Pause writes are sent when cleaning is not active.
+- Verified both directions of all station operation flags from the official app capture: DP134/135/136 `true` starts and `false` stops dust collection, mop washing and mop drying.
+- Added confirmed Start/Stop controls to the Station tab; station starts are guarded so they are available only while the robot is docked.
+- Enabled the Overview red `Стоп` for each single active verified station operation.
 
 ## v1.00_b073 / UI v0.7.38
 

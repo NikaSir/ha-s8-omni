@@ -1,4 +1,5 @@
 from homeassistant.components.vacuum import StateVacuumEntity, VacuumEntityFeature
+from homeassistant.exceptions import HomeAssistantError
 from .const import (
     DOMAIN,
     DP_BATTERY,
@@ -98,11 +99,51 @@ class S8OmniVacuum(S8OmniEntity, StateVacuumEntity):
         )
 
     async def async_return_to_base(self, **kwargs):
+        raw_status = str(self.dp(DP_STATUS) or "")
+        actively_cleaning = raw_status in {
+            "cleaning",
+            "smart",
+            "zone_clean",
+            "part_clean",
+            "select_room",
+            "wall_follow",
+            "direction_control",
+            "goto_pos",
+            "create_map",
+        } or (
+            self.dp(DP_POWER_GO) is True and self.dp(DP_PAUSE) is False
+        )
+        if actively_cleaning:
+            await self.coordinator.async_set_sequence(
+                [(DP_POWER_GO, False), (DP_PAUSE, True)],
+                operation="return_to_base_pause",
+            )
+            paused = await self.coordinator.async_wait_for_state(
+                lambda data: data.get(DP_POWER_GO) is False
+                and data.get(DP_PAUSE) is True
+                and str(data.get(DP_STATUS)) in {"standby", "paused"},
+                operation="return_to_base_pause",
+                timeout=12.0,
+            )
+            if paused is None:
+                raise HomeAssistantError(
+                    "Пылесос не подтвердил остановку уборки перед возвратом на базу."
+                )
         await self.coordinator.async_set_dp(
             DP_MODE,
             "chargego",
             operation="return_to_base",
         )
+        returning = await self.coordinator.async_wait_for_state(
+            lambda data: str(data.get(DP_STATUS))
+            in {"goto_charge", "repositing", "charging", "charge_done"},
+            operation="return_to_base",
+            timeout=30.0,
+        )
+        if returning is None:
+            raise HomeAssistantError(
+                "Пылесос принял режим возврата, но не подтвердил движение к базе."
+            )
 
     async def async_set_fan_speed(self, fan_speed, **kwargs):
         if fan_speed not in SUCTION_OPTIONS:

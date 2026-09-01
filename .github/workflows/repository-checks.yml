@@ -61,7 +61,7 @@ jobs:
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.39"' "$production"
+          grep -q 'const UI_VERSION = "v0.7.40"' "$production"
           grep -q '_connectionIndicatorState()' "$production"
           grep -q 'class="connection-indicator' "$production"
           grep -q 'Данные актуальны' "$production"
@@ -98,7 +98,8 @@ jobs:
           grep -q 'stop_roller_cleaning' "$production"
           grep -q 'stop_roller_drying' "$production"
           grep -q 'data-station-stop' "$production"
-          grep -Fq 'activeStationStops.includes("stop_roller_drying")' "$production"
+          grep -Fq 'activeStationStops.length === 1' "$production"
+          grep -Fq 'data-station-command' "$production"
           grep -Fq 'action === "start" ? "start"' "$production"
           grep -Fq 'action === "pause" ? "pause"' "$production"
           grep -Fq 'action === "home" ? "return_to_base"' "$production"
@@ -139,16 +140,16 @@ jobs:
           grep -q 'CLEAN_MODE_OPTIONS' custom_components/s8_omni/const.py
           grep -q 'effective_clean_mode' custom_components/s8_omni/coordinator.py
           grep -q 'raw_dp4_mode' custom_components/s8_omni/select.py
-          grep -q 'StopDesc("stop_dust_collection", "Остановить сбор пыли", DP_DUST)' custom_components/s8_omni/button.py
-          grep -q 'StopDesc("stop_roller_cleaning", "Остановить мойку швабры", DP_ROLL_CLEAN)' custom_components/s8_omni/button.py
-          grep -q 'StopDesc("stop_roller_drying", "Остановить сушку швабры", DP_ROLL_DRY)' custom_components/s8_omni/button.py
-          grep -q 'if self.desc.dp == DP_ROLL_DRY' custom_components/s8_omni/button.py
+          grep -q 'OperationDesc("start_dust_collection", "Запустить сбор пыли", DP_DUST, True)' custom_components/s8_omni/button.py
+          grep -q 'OperationDesc("stop_dust_collection", "Остановить сбор пыли", DP_DUST, False)' custom_components/s8_omni/button.py
+          grep -q 'OperationDesc("start_roller_cleaning", "Запустить мойку швабры", DP_ROLL_CLEAN, True)' custom_components/s8_omni/button.py
+          grep -q 'OperationDesc("stop_roller_cleaning", "Остановить мойку швабры", DP_ROLL_CLEAN, False)' custom_components/s8_omni/button.py
+          grep -q 'OperationDesc("start_roller_drying", "Запустить сушку швабры", DP_ROLL_DRY, True)' custom_components/s8_omni/button.py
+          grep -q 'OperationDesc("stop_roller_drying", "Остановить сушку швабры", DP_ROLL_DRY, False)' custom_components/s8_omni/button.py
           grep -q 'await self.coordinator.async_set_dp(' custom_components/s8_omni/button.py
-          grep -q 'disabled_in_protocol_capture_build' custom_components/s8_omni/button.py
+          grep -q 'async_wait_for_state' custom_components/s8_omni/button.py
           grep -q 'raise HomeAssistantError(' custom_components/s8_omni/button.py
-          if grep -q 'async_set_dp(self.desc.dp, True)' custom_components/s8_omni/button.py; then exit 1; fi
-          grep -q 'Stop roller drying' docs/PROTOCOL.md
-          grep -q 'Dust collection and roller-cleaning Stop remain disabled' docs/PROTOCOL.md
+          grep -q 'Station operations' docs/PROTOCOL.md
           grep -Fq 'root.addEventListener("click", async (event) =>' "$production"
           grep -Fq 'const action = button.dataset.action;' "$production"
           grep -Fq '.state-hero>.hero-primary{grid-row:1' "$production"
@@ -178,7 +179,7 @@ jobs:
           grep -Fq 'window.dispatchEvent(new Event("location-changed"))' "$production"
           if grep -Fq 'history.back' "$production"; then exit 1; fi
           grep -Fq 'const ENTITY_SUFFIXES_BY_LENGTH' "$production"
-          echo "S8 OMNI v0.7.39 mobile audit and v1.9 contract OK"
+          echo "S8 OMNI v0.7.40 mobile audit and v1.9 contract OK"
 
       - name: Validate panel manifest and state assets
         run: |
@@ -187,7 +188,7 @@ jobs:
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.39':
+          if panel.get('dashboard_version') != 'v0.7.40':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':
@@ -263,11 +264,15 @@ jobs:
           if first_paint.get('hero_image_loading') != 'eager' or first_paint.get('hero_image_fetch_priority') != 'high':
               raise SystemExit('first-paint image priority mismatch')
           ownership = json.loads(Path('panel.json').read_text(encoding='utf-8')).get('ownership', {})
-          if ownership.get('station_stop_commands_public') is not False:
+          if ownership.get('station_start_commands_exposed') is not True:
+              raise SystemExit('station start exposure mismatch')
+          if ownership.get('station_stop_commands_public') is not True:
               raise SystemExit('station stop exposure mismatch')
-          if ownership.get('station_stop_immediate') is not False:
-              raise SystemExit('station stop diagnostic lockout mismatch')
-          if ownership.get('verified_station_stop_commands') != ['stop_roller_drying']:
+          if ownership.get('station_stop_immediate') is not True:
+              raise SystemExit('station stop immediate mismatch')
+          if ownership.get('verified_station_start_commands') != ['start_dust_collection', 'start_roller_cleaning', 'start_roller_drying']:
+              raise SystemExit('verified station start command mismatch')
+          if ownership.get('verified_station_stop_commands') != ['stop_dust_collection', 'stop_roller_cleaning', 'stop_roller_drying']:
               raise SystemExit('verified station stop command mismatch')
           if ownership.get('station_stop_requires_confirmation') is not True:
               raise SystemExit('station stop confirmation mismatch')
@@ -280,7 +285,7 @@ jobs:
           if ownership.get('profile_writes_require_confirmation_and_readback') is not True:
               raise SystemExit('profile write safety mismatch')
           metadata = json.loads(Path('.nikas-ui-standard.json').read_text(encoding='utf-8'))
-          if metadata.get('ui_version') != '0.7.39':
+          if metadata.get('ui_version') != '0.7.40':
               raise SystemExit('NikaS UI metadata version mismatch')
           print('Panel manifest OK')
           PY
