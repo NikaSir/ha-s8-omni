@@ -273,6 +273,14 @@ class S8OmniCoordinator(DataUpdateCoordinator):
             raise RuntimeError(str(result))
         return result
 
+    def _set_multiple_sync(self, values):
+        result = self._device.set_multiple_values(
+            {str(dp): value for dp, value in values.items()}
+        )
+        if isinstance(result, dict) and ("Error" in result or "Err" in result):
+            raise RuntimeError(str(result))
+        return result
+
     async def async_set_dp(self, dp, value, refresh=True, *, operation=None):
         operation = operation or f"set_dp_{dp}"
         self._trace("write_requested", operation=operation, dp=dp, value=value)
@@ -293,6 +301,34 @@ class S8OmniCoordinator(DataUpdateCoordinator):
             await self._async_remember_clean_mode(value)
         if refresh:
             await self.async_request_refresh()
+
+    async def async_set_dps(self, values, *, operation=None):
+        """Write several DPs atomically in one Tuya LAN request."""
+        operation = operation or "set_dps"
+        for dp, value in values.items():
+            self._trace("write_requested", operation=operation, dp=dp, value=value)
+        try:
+            async with self._command_lock:
+                await self.hass.async_add_executor_job(
+                    self._set_multiple_sync,
+                    values,
+                )
+        except Exception as err:
+            for dp, value in values.items():
+                self._trace(
+                    "write_failed",
+                    operation=operation,
+                    dp=dp,
+                    value=value,
+                    outcome=type(err).__name__,
+                )
+            raise
+        for dp, value in values.items():
+            self._trace("write_acknowledged", operation=operation, dp=dp, value=value)
+        mode = values.get(DP_MODE)
+        if mode is not None and str(mode) in CLEAN_MODE_OPTIONS:
+            await self._async_remember_clean_mode(mode)
+        await self.async_request_refresh()
 
     async def async_set_sequence(self, values, *, operation=None):
         operation = operation or "set_sequence"

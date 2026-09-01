@@ -61,7 +61,7 @@ jobs:
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.37"' "$production"
+          grep -q 'const UI_VERSION = "v0.7.38"' "$production"
           grep -q '_connectionIndicatorState()' "$production"
           grep -q 'class="connection-indicator' "$production"
           grep -q 'Данные актуальны' "$production"
@@ -98,15 +98,17 @@ jobs:
           grep -q 'stop_roller_cleaning' "$production"
           grep -q 'stop_roller_drying' "$production"
           if grep -q 'data-station-stop' "$production"; then exit 1; fi
-          grep -Fq 'const service = action === "pause" ? "pause" : null' "$production"
+          grep -Fq 'action === "start" ? "start"' "$production"
+          grep -Fq 'action === "pause" ? "pause"' "$production"
+          grep -Fq 'action === "home" ? "return_to_base"' "$production"
           grep -Fq 'this._call("vacuum", service, "vacuum")' "$production"
           grep -Fq 'loading="eager" decoding="sync" fetchpriority="high"' "$production"
           grep -Fq '_setCleaningDraft(key, value)' "$production"
           grep -Fq '_waitForReadback(key, expected, timeoutMs' "$production"
           grep -Fq '_callConfirmed(domain, service, key, extra, expected)' "$production"
           grep -Fq 'window.confirm(`Применить параметры уборки?' "$production"
-          if grep -Fq 'action === "start"' "$production"; then exit 1; fi
-          if grep -Fq 'action === "home"' "$production"; then exit 1; fi
+          grep -Fq 'action === "start" ? "Запустить уборку?"' "$production"
+          grep -Fq 'action === "home" ? "Отправить пылесос на базу?"' "$production"
           grep -Fq 'блокировку от детей?' "$production"
           if grep -q 'data-zoom-out\|data-zoom-reset\|data-zoom-in\|zoom-controls' "$production"; then exit 1; fi
           grep -q '_bindWorkspaceGestures()' "$production"
@@ -173,7 +175,7 @@ jobs:
           grep -Fq 'window.dispatchEvent(new Event("location-changed"))' "$production"
           if grep -Fq 'history.back' "$production"; then exit 1; fi
           grep -Fq 'const ENTITY_SUFFIXES_BY_LENGTH' "$production"
-          echo "S8 OMNI v0.7.37 mobile audit and v1.9 contract OK"
+          echo "S8 OMNI v0.7.38 mobile audit and v1.9 contract OK"
 
       - name: Validate panel manifest and state assets
         run: |
@@ -182,7 +184,7 @@ jobs:
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.37':
+          if panel.get('dashboard_version') != 'v0.7.38':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':
@@ -262,14 +264,16 @@ jobs:
               raise SystemExit('station stop exposure mismatch')
           if ownership.get('station_stop_immediate') is not False:
               raise SystemExit('station stop diagnostic lockout mismatch')
-          if ownership.get('start_and_return_exposed') is not False:
-              raise SystemExit('start/return diagnostic lockout mismatch')
+          if ownership.get('start_and_return_exposed') is not True:
+              raise SystemExit('start/return exposure mismatch')
+          if ownership.get('start_and_return_require_confirmation') is not True:
+              raise SystemExit('start/return confirmation mismatch')
           if ownership.get('diagnostic_capture_read_only') is not True:
               raise SystemExit('diagnostic capture safety mismatch')
           if ownership.get('profile_writes_require_confirmation_and_readback') is not True:
               raise SystemExit('profile write safety mismatch')
           metadata = json.loads(Path('.nikas-ui-standard.json').read_text(encoding='utf-8'))
-          if metadata.get('ui_version') != '0.7.37':
+          if metadata.get('ui_version') != '0.7.38':
               raise SystemExit('NikaS UI metadata version mismatch')
           print('Panel manifest OK')
           PY

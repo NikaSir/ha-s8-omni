@@ -6,15 +6,16 @@
 
 Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum and OMNI station, built from verified Tuya LAN datapoints.
 
-> Current development line: **v1.00_b072** (`1.0.0b72`). This is an early test build.
+> Current development line: **v1.00_b073** (`1.0.0b73`). This is an early test build.
 
 ## Scope
 
 - Local Tuya LAN communication, protocol 3.3 by default.
 - Robot status, battery, cleaning metrics and consumable lifetimes.
-- Start, pause and return-to-base commands using experimentally verified DP sequences.
+- Atomic Start, verified Pause and direct `chargego` Return-to-base commands derived from real-device official-app captures.
 - Suction, water level, volume, Do Not Disturb and child lock controls.
 - Real OMNI station telemetry: dust collection, roller cleaning and roller drying.
+- Station operation Stop entities remain visible for diagnostics but fail closed until an official-app trace confirms their write contract.
 - Normalized robot, station and reusable composite status semantics.
 - Diagnostics including local connection health, telemetry age and raw Tuya context.
 - Sanitized Home Assistant **Download diagnostics** support that redacts Host, Device ID and Local Key and excludes raw map/path/command payloads.
@@ -27,7 +28,7 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 
 `ha-s8-omni` owns its full appliance UI instead of exposing a loose collection of Lovelace entities as the primary experience.
 
-Dashboard **v0.7.37** follows **NIKAS Specialized Panel UI Standard v1.9**, **Navigation Contract v1.1** and **NikaS Integration Panel Template v1.9**, with the primary acceptance viewport **iPhone Pro Max portrait**:
+Dashboard **v0.7.38** follows **NIKAS Specialized Panel UI Standard v1.9**, **Navigation Contract v1.1** and **NikaS Integration Panel Template v1.9**, with the primary acceptance viewport **iPhone Pro Max portrait**:
 
 - symmetric Header: 52 px side rails / centred title / matching 44 px Menu and Refresh plaques, reduced to 48 px rails on narrow mobile;
 - the visible center title plaque captures the validated source base panel once and returns to the same Дом / Действия / Инфраструктура route;

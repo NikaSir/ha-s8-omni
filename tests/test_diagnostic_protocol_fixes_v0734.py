@@ -20,26 +20,26 @@ class DiagnosticProtocolFixesV0734Tests(unittest.TestCase):
         self.assertIn('middle: "Средний"', self.frontend)
         self.assertNotIn('normal: "Средний"', self.frontend)
 
-    def test_unverified_start_is_blocked_in_capture_build(self) -> None:
+    def test_captured_start_is_sent_as_one_atomic_request(self) -> None:
         start = self.vacuum.split("    async def async_start", 1)[1].split(
             "    async def async_pause", 1
         )[0]
-        self.assertIn('trace_blocked_command(', start)
-        self.assertIn('"start"', start)
-        self.assertIn("raise HomeAssistantError", start)
-        self.assertNotIn("async_set_dp", start)
+        self.assertIn("async_set_dps", start)
+        self.assertIn('DP_MODE: "smart"', start)
+        self.assertIn("DP_PAUSE: False", start)
+        self.assertIn("DP_POWER_GO: True", start)
         self.assertNotIn("async_set_sequence", start)
 
-    def test_disproved_return_sequence_is_blocked(self) -> None:
+    def test_captured_return_only_selects_chargego(self) -> None:
         return_home = self.vacuum.split("    async def async_return_to_base", 1)[1].split(
             "    async def async_set_fan_speed", 1
         )[0]
-        self.assertIn('trace_blocked_command(', return_home)
-        self.assertIn('"return_to_base"', return_home)
-        self.assertIn("raise HomeAssistantError", return_home)
-        self.assertNotIn("async_set_dp", return_home)
+        self.assertIn("async_set_dp", return_home)
+        self.assertIn("DP_MODE", return_home)
+        self.assertIn('"chargego"', return_home)
         self.assertNotIn("async_set_sequence", return_home)
-        self.assertNotIn("DP_MODE", return_home)
+        self.assertNotIn("DP_PAUSE", return_home)
+        self.assertNotIn("DP_POWER_GO", return_home)
 
     def test_guarded_sequence_reads_before_sending_trigger_values(self) -> None:
         method = self.coordinator.split(

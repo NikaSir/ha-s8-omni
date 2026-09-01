@@ -1,9 +1,16 @@
+## v1.00_b073 / UI v0.7.38
+
+- Rebuilt Fresh Start from the official-app trace as one atomic Tuya LAN request containing `mode=smart`, `pause=false` and `power_go=true`; intermediate transport states can no longer pause the robot immediately after launch.
+- Rebuilt Return to base as the single verified `mode=chargego` write. It no longer sends Pause, Stop or an additional DP1 trigger before returning.
+- Restored confirmed Start and Home controls on Overview with explicit confirmation while keeping all unverified station Stop writes disabled.
+- Added regression guards for the captured 2026-09-01 protocol: DP1/DP2 remain in the running state until the robot docks and changes them autonomously.
+
 ## v1.00_b072 / UI v0.7.37
 
 - Added a bounded, secret-free protocol timeline for DP1/2/4/5/134/135/136 to both DEBUG logging and downloaded diagnostics.
 - Added the read-only `Записать команды штатного приложения` button: it samples the verified control datapoints once per second for 90 seconds while the official app performs the reference sequence.
 - Serialized normal polling, diagnostic capture and writes through one lock so the integration never opens overlapping LAN transactions to the vacuum.
-- Disabled the disproved Start, Return and station Stop paths in the diagnostic build; the real-device-confirmed Pause command remains available.
+- Disabled the disproved Start, Return and station Stop paths in the diagnostic build; the real-device-confirmed Pause command remained available.
 - Recorded the 2026-09-01 baseline: the official app successfully moved from cleaning to return, docked, charged and automatically started roller cleaning, while the integration's composed return sequence did not move the robot.
 
 ## v1.00_b071 / UI v0.7.36
