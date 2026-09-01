@@ -1,3 +1,9 @@
+## v1.00_b074 / UI v0.7.39
+
+- Verified the official drying Stop transition from a real-device trace: `DP136` changes from `true` to `false` without any concurrent DP1/2/4/5 transport changes.
+- Enabled the red Overview `Стоп` action only while roller drying is active. It requires confirmation and presses the dedicated `stop_roller_drying` entity.
+- Kept dust-collection and roller-cleaning Stop commands fail-closed until separate captures verify their transitions.
+
 ## v1.00_b073 / UI v0.7.38
 
 - Rebuilt Fresh Start from the official-app trace as one atomic Tuya LAN request containing `mode=smart`, `pause=false` and `power_go=true`; intermediate transport states can no longer pause the robot immediately after launch.

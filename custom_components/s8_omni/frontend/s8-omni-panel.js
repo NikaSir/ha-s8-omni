@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.38";
+const UI_VERSION = "v0.7.39";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.75;
 const VIEW_SCALE_MAX = 2.00;
@@ -1178,10 +1178,11 @@ class S8OmniPanel extends HTMLElement {
     const attention = snap.composite === "error" || (Number.isFinite(faultValue) && faultValue !== 0);
     const activeStationStops = this._activeStationStopKeys(snap);
     const stationActive = activeStationStops.length > 0;
-    const actionButton = (label, icon, action = null, enabled = false, ready = false, extra = "") => `<button class="action${ready ? " ready" : ""}${extra ? ` ${extra}` : ""}" type="button"${action ? ` data-action="${action}"` : ""}${enabled ? "" : " disabled"}><span class="action-icon"><ha-icon icon="${icon}"></ha-icon></span><strong>${label}</strong></button>`;
+    const verifiedStationStop = activeStationStops.includes("stop_roller_drying") ? "stop_roller_drying" : null;
+    const actionButton = (label, icon, action = null, enabled = false, ready = false, extra = "", stationStop = null) => `<button class="action${ready ? " ready" : ""}${extra ? ` ${extra}` : ""}" type="button"${action ? ` data-action="${action}"` : ""}${stationStop ? ` data-station-stop="${stationStop}"` : ""}${enabled ? "" : " disabled"}><span class="action-icon"><ha-icon icon="${icon}"></ha-icon></span><strong>${label}</strong></button>`;
 
     if (stationActive) {
-      return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", null, false)}${actionButton("Пауза", "mdi:pause", null, false)}${actionButton("Стоп", "mdi:stop", null, false, false, "stop")}</div>`;
+      return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", null, false)}${actionButton("Пауза", "mdi:pause", null, false)}${actionButton("Стоп", "mdi:stop", null, available && Boolean(verifiedStationStop), false, "stop", verifiedStationStop)}</div>`;
     }
     if (attention) {
       return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", null, false)}${actionButton("Пауза", "mdi:pause", null, false)}${actionButton("Домой", "mdi:home", null, false)}</div>`;
@@ -1342,6 +1343,13 @@ class S8OmniPanel extends HTMLElement {
         return;
       }
       if (!this._snapshot().connected) return;
+      if (button.matches("[data-station-stop]")) {
+        if (!window.confirm("Остановить сушку швабры?")) return;
+        button.disabled = true;
+        try { await this._call("button", "press", button.dataset.stationStop); }
+        finally { setTimeout(() => this._queueLivePatch(), 650); }
+        return;
+      }
       if (button.matches("[data-action]")) {
         const action = button.dataset.action;
         const service = action === "start" ? "start" : action === "pause" ? "pause" : action === "home" ? "return_to_base" : null;

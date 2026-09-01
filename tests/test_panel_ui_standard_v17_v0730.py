@@ -77,10 +77,11 @@ class PanelUiStandardV19V0731Tests(unittest.TestCase):
         registration = (ROOT / "custom_components" / "s8_omni" / "__init__.py").read_text(encoding="utf-8")
         self.assertIn('"parent_route": PANEL_PARENT_PATH', registration)
 
-    def test_station_stop_entities_are_retained_but_not_frontend_bound(self) -> None:
+    def test_only_verified_drying_stop_is_frontend_bound(self) -> None:
         for key in ("stop_dust_collection", "stop_roller_cleaning", "stop_roller_drying"):
             self.assertIn(key, self.source)
-        self.assertNotIn('this._call("button", "press", key)', self.source)
+        self.assertIn('data-station-stop="${stationStop}"', self.source)
+        self.assertIn('button.dataset.stationStop', self.source)
 
 
 if __name__ == "__main__":

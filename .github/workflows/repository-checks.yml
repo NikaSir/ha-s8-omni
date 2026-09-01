@@ -61,7 +61,7 @@ jobs:
           if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
           if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
           grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.38"' "$production"
+          grep -q 'const UI_VERSION = "v0.7.39"' "$production"
           grep -q '_connectionIndicatorState()' "$production"
           grep -q 'class="connection-indicator' "$production"
           grep -q 'Данные актуальны' "$production"
@@ -97,7 +97,8 @@ jobs:
           grep -q 'stop_dust_collection' "$production"
           grep -q 'stop_roller_cleaning' "$production"
           grep -q 'stop_roller_drying' "$production"
-          if grep -q 'data-station-stop' "$production"; then exit 1; fi
+          grep -q 'data-station-stop' "$production"
+          grep -Fq 'activeStationStops.includes("stop_roller_drying")' "$production"
           grep -Fq 'action === "start" ? "start"' "$production"
           grep -Fq 'action === "pause" ? "pause"' "$production"
           grep -Fq 'action === "home" ? "return_to_base"' "$production"
@@ -141,11 +142,13 @@ jobs:
           grep -q 'StopDesc("stop_dust_collection", "Остановить сбор пыли", DP_DUST)' custom_components/s8_omni/button.py
           grep -q 'StopDesc("stop_roller_cleaning", "Остановить мойку швабры", DP_ROLL_CLEAN)' custom_components/s8_omni/button.py
           grep -q 'StopDesc("stop_roller_drying", "Остановить сушку швабры", DP_ROLL_DRY)' custom_components/s8_omni/button.py
-          if grep -q 'async_set_dp(self.desc.dp,' custom_components/s8_omni/button.py; then exit 1; fi
+          grep -q 'if self.desc.dp == DP_ROLL_DRY' custom_components/s8_omni/button.py
+          grep -q 'await self.coordinator.async_set_dp(' custom_components/s8_omni/button.py
           grep -q 'disabled_in_protocol_capture_build' custom_components/s8_omni/button.py
           grep -q 'raise HomeAssistantError(' custom_components/s8_omni/button.py
           if grep -q 'async_set_dp(self.desc.dp, True)' custom_components/s8_omni/button.py; then exit 1; fi
-          grep -q 'Station stop commands are disabled' docs/PROTOCOL.md
+          grep -q 'Stop roller drying' docs/PROTOCOL.md
+          grep -q 'Dust collection and roller-cleaning Stop remain disabled' docs/PROTOCOL.md
           grep -Fq 'root.addEventListener("click", async (event) =>' "$production"
           grep -Fq 'const action = button.dataset.action;' "$production"
           grep -Fq '.state-hero>.hero-primary{grid-row:1' "$production"
@@ -175,7 +178,7 @@ jobs:
           grep -Fq 'window.dispatchEvent(new Event("location-changed"))' "$production"
           if grep -Fq 'history.back' "$production"; then exit 1; fi
           grep -Fq 'const ENTITY_SUFFIXES_BY_LENGTH' "$production"
-          echo "S8 OMNI v0.7.38 mobile audit and v1.9 contract OK"
+          echo "S8 OMNI v0.7.39 mobile audit and v1.9 contract OK"
 
       - name: Validate panel manifest and state assets
         run: |
@@ -184,7 +187,7 @@ jobs:
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.38':
+          if panel.get('dashboard_version') != 'v0.7.39':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':
@@ -264,6 +267,10 @@ jobs:
               raise SystemExit('station stop exposure mismatch')
           if ownership.get('station_stop_immediate') is not False:
               raise SystemExit('station stop diagnostic lockout mismatch')
+          if ownership.get('verified_station_stop_commands') != ['stop_roller_drying']:
+              raise SystemExit('verified station stop command mismatch')
+          if ownership.get('station_stop_requires_confirmation') is not True:
+              raise SystemExit('station stop confirmation mismatch')
           if ownership.get('start_and_return_exposed') is not True:
               raise SystemExit('start/return exposure mismatch')
           if ownership.get('start_and_return_require_confirmation') is not True:
@@ -273,7 +280,7 @@ jobs:
           if ownership.get('profile_writes_require_confirmation_and_readback') is not True:
               raise SystemExit('profile write safety mismatch')
           metadata = json.loads(Path('.nikas-ui-standard.json').read_text(encoding='utf-8'))
-          if metadata.get('ui_version') != '0.7.38':
+          if metadata.get('ui_version') != '0.7.39':
               raise SystemExit('NikaS UI metadata version mismatch')
           print('Panel manifest OK')
           PY

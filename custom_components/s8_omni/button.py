@@ -76,6 +76,13 @@ class S8OmniStopOperationButton(S8OmniEntity, ButtonEntity):
         return super().available and self.coordinator.data is not None and self.desc.dp in self.coordinator.data
 
     async def async_press(self) -> None:
+        if self.desc.dp == DP_ROLL_DRY:
+            await self.coordinator.async_set_dp(
+                self.desc.dp,
+                False,
+                operation=self.desc.key,
+            )
+            return
         self.coordinator.trace_blocked_command(
             self.desc.key,
             "disabled_in_protocol_capture_build",

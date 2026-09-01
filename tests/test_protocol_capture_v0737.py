@@ -83,11 +83,12 @@ class ProtocolCaptureV0737Tests(unittest.TestCase):
         self.assertNotIn("DP_PAUSE", return_home)
         self.assertNotIn("DP_POWER_GO", return_home)
 
-    def test_panel_exposes_verified_transport_without_station_stop(self) -> None:
+    def test_panel_exposes_verified_transport_and_drying_stop(self) -> None:
         actions = self.frontend.split("  _quickActions() {", 1)[1].split("  _overview() {", 1)[0]
         self.assertIn('"start", available', actions)
         self.assertIn('"home", available', actions)
-        self.assertNotIn("data-station-stop", actions)
+        self.assertIn("data-station-stop", actions)
+        self.assertIn('activeStationStops.includes("stop_roller_drying")', actions)
         self.assertIn('"pause", available', actions)
 
     def test_manifest_declares_verified_transport_and_station_lockout(self) -> None:
@@ -95,10 +96,19 @@ class ProtocolCaptureV0737Tests(unittest.TestCase):
         ownership = self.panel["ownership"]
         self.assertEqual(
             generated["quick_actions"],
-            ["vacuum.start", "vacuum.pause", "vacuum.return_to_base"],
+            [
+                "vacuum.start",
+                "vacuum.pause",
+                "vacuum.return_to_base",
+                "button.stop_roller_drying",
+            ],
         )
         self.assertFalse(ownership["station_stop_commands_public"])
         self.assertFalse(ownership["station_stop_immediate"])
+        self.assertEqual(
+            ["stop_roller_drying"], ownership["verified_station_stop_commands"]
+        )
+        self.assertTrue(ownership["station_stop_requires_confirmation"])
         self.assertTrue(ownership["start_and_return_exposed"])
         self.assertTrue(ownership["diagnostic_capture_read_only"])
 
