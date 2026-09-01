@@ -33,7 +33,8 @@ This document records datapoints verified through Tuya Developer Platform, Local
 - **Continue a paused job:** write only `pause=false`. Real-device testing showed that this resumes the existing job immediately; a following `power_go=true` makes the robot pause again.
 - **Pause:** `power_go=false` → `pause=true`.
 - **Return home:** write only `mode=chargego`. The official application capture proved that `power_go` remains `true` and `pause` remains `false` throughout the transition to `status=goto_charge`; the robot changes them to `false` / `true` itself only after docking. A pre-return Pause is therefore prohibited.
-- **Station stop commands are disabled in the protocol-capture build.** The previous assumed `false` writes for dust collection, roller cleaning and roller drying are not sent until the official application trace confirms the device-specific command contract.
+- **Stop roller drying:** write only `DP136=false`. The 2026-09-01 official-application capture showed `station_roller_drying` change from `true` to `false` while DP1/2/4/5 remained unchanged.
+- **Dust collection and roller-cleaning Stop remain disabled.** Their assumed `false` writes are not sent until separate official-application traces confirm the device-specific command contract.
 - **Stop mop self-cleaning:** `dp_roll_clean=false` (stop-only public button).
 - **Stop mop drying:** `dp_roll_hot=false` (stop-only public button).
 

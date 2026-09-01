@@ -36,6 +36,7 @@ class PanelDynamicActionsUiV0723Tests(unittest.TestCase):
     def test_live_button_role_is_resolved_when_clicked(self) -> None:
         for selector in (
             "[data-action]",
+            "[data-station-stop]",
             "[data-select-key]",
             "[data-toggle]",
         ):
@@ -45,19 +46,19 @@ class PanelDynamicActionsUiV0723Tests(unittest.TestCase):
         self.assertIn('action === "pause" ? "pause"', self.bind)
         self.assertIn('action === "home" ? "return_to_base"', self.bind)
         self.assertNotIn('action === "stop"', self.bind)
-        self.assertNotIn("[data-station-stop]", self.bind)
+        self.assertIn('this._call("button", "press", button.dataset.stationStop)', self.bind)
         self.assertIn("setTimeout(() => this._queueLivePatch(), 650)", self.bind)
         self.assertNotIn("button.disabled = false", self.bind)
 
     def test_runtime_and_manifest_versions_match(self) -> None:
-        self.assertIn('const UI_VERSION = "v0.7.38"', self.source)
+        self.assertIn('const UI_VERSION = "v0.7.39"', self.source)
         constants = (ROOT / "custom_components" / "s8_omni" / "const.py").read_text(encoding="utf-8")
         manifest = json.loads((ROOT / "custom_components" / "s8_omni" / "manifest.json").read_text(encoding="utf-8"))
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
-        self.assertIn('VERSION = "v1.00_b073"', constants)
-        self.assertIn('DASHBOARD_VERSION = "v0.7.38"', constants)
-        self.assertEqual("1.0.0b73", manifest["version"])
-        self.assertEqual("v0.7.38", panel["dashboard_version"])
+        self.assertIn('VERSION = "v1.00_b074"', constants)
+        self.assertIn('DASHBOARD_VERSION = "v0.7.39"', constants)
+        self.assertEqual("1.0.0b74", manifest["version"])
+        self.assertEqual("v0.7.39", panel["dashboard_version"])
 
     def test_commands_fail_closed_with_busy_and_visible_error_state(self) -> None:
         self.assertIn("this._busyCommands = new Set()", self.source)
