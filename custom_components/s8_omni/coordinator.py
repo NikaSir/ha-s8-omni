@@ -355,6 +355,35 @@ class S8OmniCoordinator(DataUpdateCoordinator):
             await self._async_remember_clean_mode(remembered_mode)
         await self.async_request_refresh()
 
+    async def async_wait_for_state(
+        self,
+        confirmation,
+        *,
+        operation,
+        timeout=30.0,
+        interval=1.0,
+    ):
+        """Poll until the device itself confirms a command transition."""
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + timeout
+        while True:
+            try:
+                async with self._command_lock:
+                    data = await self.hass.async_add_executor_job(self._read_sync)
+            except Exception as err:
+                _LOGGER.debug("S8 OMNI command confirmation read failed: %s", err)
+            else:
+                await self._async_accept_successful_data(data)
+                self.async_set_updated_data(data)
+                self._trace("confirmation_readback", operation=operation, data=data)
+                if confirmation(data):
+                    return data
+            remaining = deadline - loop.time()
+            if remaining <= 0:
+                self._trace("confirmation_failed", operation=operation)
+                return None
+            await asyncio.sleep(min(interval, remaining))
+
     async def async_set_sequence_after_confirmation(
         self,
         first,

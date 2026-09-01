@@ -78,17 +78,18 @@ class ProtocolCaptureV0737Tests(unittest.TestCase):
         self.assertIn("self._set_multiple_sync", atomic)
         self.assertNotIn("async_set_sequence", start)
         self.assertIn('operation="pause"', pause)
+        self.assertIn("async_set_sequence", return_home)
+        self.assertIn("[(DP_POWER_GO, False), (DP_PAUSE, True)]", return_home)
         self.assertIn("async_set_dp", return_home)
         self.assertIn('"chargego"', return_home)
-        self.assertNotIn("DP_PAUSE", return_home)
-        self.assertNotIn("DP_POWER_GO", return_home)
+        self.assertIn("async_wait_for_state", return_home)
 
     def test_panel_exposes_verified_transport_and_drying_stop(self) -> None:
         actions = self.frontend.split("  _quickActions() {", 1)[1].split("  _overview() {", 1)[0]
         self.assertIn('"start", available', actions)
         self.assertIn('"home", available', actions)
         self.assertIn("data-station-stop", actions)
-        self.assertIn('activeStationStops.includes("stop_roller_drying")', actions)
+        self.assertIn("activeStationStops.length === 1", actions)
         self.assertIn('"pause", available', actions)
 
     def test_manifest_declares_verified_transport_and_station_lockout(self) -> None:
@@ -100,14 +101,16 @@ class ProtocolCaptureV0737Tests(unittest.TestCase):
                 "vacuum.start",
                 "vacuum.pause",
                 "vacuum.return_to_base",
+                "button.stop_dust_collection",
+                "button.stop_roller_cleaning",
                 "button.stop_roller_drying",
             ],
         )
-        self.assertFalse(ownership["station_stop_commands_public"])
-        self.assertFalse(ownership["station_stop_immediate"])
-        self.assertEqual(
-            ["stop_roller_drying"], ownership["verified_station_stop_commands"]
-        )
+        self.assertTrue(ownership["station_start_commands_exposed"])
+        self.assertTrue(ownership["station_stop_commands_public"])
+        self.assertTrue(ownership["station_stop_immediate"])
+        self.assertEqual(3, len(ownership["verified_station_start_commands"]))
+        self.assertEqual(3, len(ownership["verified_station_stop_commands"]))
         self.assertTrue(ownership["station_stop_requires_confirmation"])
         self.assertTrue(ownership["start_and_return_exposed"])
         self.assertTrue(ownership["diagnostic_capture_read_only"])

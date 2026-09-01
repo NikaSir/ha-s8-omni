@@ -6,16 +6,16 @@
 
 Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum and OMNI station, built from verified Tuya LAN datapoints.
 
-> Current development line: **v1.00_b074** (`1.0.0b74`). This is an early test build.
+> Current development line: **v1.00_b075** (`1.0.0b75`). This is an early test build.
 
 ## Scope
 
 - Local Tuya LAN communication, protocol 3.3 by default.
 - Robot status, battery, cleaning metrics and consumable lifetimes.
-- Atomic Start, verified Pause and direct `chargego` Return-to-base commands derived from real-device official-app captures.
+- Atomic Start, verified Pause and state-confirmed Pause → `chargego` Return-to-base commands derived from real-device traces.
 - Suction, water level, volume, Do Not Disturb and child lock controls.
 - Real OMNI station telemetry: dust collection, roller cleaning and roller drying.
-- Station operation Stop entities remain visible for diagnostics but fail closed until an official-app trace confirms their write contract.
+- Confirmed station Start/Stop entities for dust collection, mop washing and mop drying; starts are allowed only while the robot is docked.
 - Normalized robot, station and reusable composite status semantics.
 - Diagnostics including local connection health, telemetry age and raw Tuya context.
 - Sanitized Home Assistant **Download diagnostics** support that redacts Host, Device ID and Local Key and excludes raw map/path/command payloads.
@@ -28,7 +28,7 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 
 `ha-s8-omni` owns its full appliance UI instead of exposing a loose collection of Lovelace entities as the primary experience.
 
-Dashboard **v0.7.39** follows **NIKAS Specialized Panel UI Standard v1.9**, **Navigation Contract v1.1** and **NikaS Integration Panel Template v1.9**, with the primary acceptance viewport **iPhone Pro Max portrait**:
+Dashboard **v0.7.40** follows **NIKAS Specialized Panel UI Standard v1.9**, **Navigation Contract v1.1** and **NikaS Integration Panel Template v1.9**, with the primary acceptance viewport **iPhone Pro Max portrait**:
 
 - symmetric Header: 52 px side rails / centred title / matching 44 px Menu and Refresh plaques, reduced to 48 px rails on narrow mobile;
 - the visible center title plaque captures the validated source base panel once and returns to the same Дом / Действия / Инфраструктура route;
@@ -51,7 +51,7 @@ Dashboard **v0.7.39** follows **NIKAS Specialized Panel UI Standard v1.9**, **Na
 - suction, water, volume and DND share one draft on the drill-down; **Применить** shows a confirmation summary and clears values only after the public Home Assistant entities read back the requested state;
 - drill-down Back returns to the Cleaning root view while the bottom Tab Bar remains available for switching root sections;
 - Station view uses a compact three-column summary (**Робот / Заряд / Операция**) instead of three tall rows, keeps the three OMNI operation rows compact, and targets a typical iPhone Pro Max state without required vertical scrolling;
-- Station view keeps independent dust collection / roller cleaning / drying state and uses a prominent active-operation indicator;
+- Station view keeps independent dust collection / roller cleaning / drying state, uses a prominent active-operation indicator and provides confirmed Start/Stop controls;
 - Maintenance view keeps exact remaining minutes, derives the matching manufacturer-life percentage and never exposes an unverified reset command;
 - Diagnostics keeps normalized and raw state context;
 - loading keeps Header and Bottom Tab Bar visible rather than rendering a blank page;
