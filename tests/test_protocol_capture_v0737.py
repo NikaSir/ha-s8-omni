@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import unittest
 from pathlib import Path
 
@@ -15,6 +16,7 @@ class ProtocolCaptureV0737Tests(unittest.TestCase):
         cls.buttons = (ROOT / "custom_components/s8_omni/button.py").read_text(encoding="utf-8")
         cls.vacuum = (ROOT / "custom_components/s8_omni/vacuum.py").read_text(encoding="utf-8")
         cls.frontend = (ROOT / "custom_components/s8_omni/frontend/s8-omni-panel.js").read_text(encoding="utf-8")
+        cls.panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))
 
     def test_trace_is_bounded_and_contains_only_named_control_dps(self) -> None:
         self.assertIn("self.command_trace = deque(maxlen=240)", self.coordinator)
@@ -64,6 +66,15 @@ class ProtocolCaptureV0737Tests(unittest.TestCase):
         self.assertNotIn('"home", available', actions)
         self.assertNotIn("data-station-stop", actions)
         self.assertIn('"pause", available', actions)
+
+    def test_manifest_declares_diagnostic_action_lockout(self) -> None:
+        generated = self.panel["generated_ui"]
+        ownership = self.panel["ownership"]
+        self.assertEqual(generated["quick_actions"], ["vacuum.pause"])
+        self.assertFalse(ownership["station_stop_commands_public"])
+        self.assertFalse(ownership["station_stop_immediate"])
+        self.assertFalse(ownership["start_and_return_exposed"])
+        self.assertTrue(ownership["diagnostic_capture_read_only"])
 
 
 if __name__ == "__main__":

@@ -258,12 +258,18 @@ jobs:
           if first_paint.get('hero_image_loading') != 'eager' or first_paint.get('hero_image_fetch_priority') != 'high':
               raise SystemExit('first-paint image priority mismatch')
           ownership = json.loads(Path('panel.json').read_text(encoding='utf-8')).get('ownership', {})
-          if ownership.get('station_stop_immediate') is not True:
-              raise SystemExit('station stop immediacy mismatch')
+          if ownership.get('station_stop_commands_public') is not False:
+              raise SystemExit('station stop exposure mismatch')
+          if ownership.get('station_stop_immediate') is not False:
+              raise SystemExit('station stop diagnostic lockout mismatch')
+          if ownership.get('start_and_return_exposed') is not False:
+              raise SystemExit('start/return diagnostic lockout mismatch')
+          if ownership.get('diagnostic_capture_read_only') is not True:
+              raise SystemExit('diagnostic capture safety mismatch')
           if ownership.get('profile_writes_require_confirmation_and_readback') is not True:
               raise SystemExit('profile write safety mismatch')
           metadata = json.loads(Path('.nikas-ui-standard.json').read_text(encoding='utf-8'))
-          if metadata.get('ui_version') != '0.7.36':
+          if metadata.get('ui_version') != '0.7.37':
               raise SystemExit('NikaS UI metadata version mismatch')
           print('Panel manifest OK')
           PY
