@@ -50,30 +50,56 @@ class ProtocolCaptureV0737Tests(unittest.TestCase):
         self.assertIn('result["protocol_trace"] = list(coordinator.command_trace)', self.diagnostics)
         self.assertIn('"diagnostic_capture_active": coordinator.diagnostic_capture_active', self.diagnostics)
 
-    def test_only_verified_pause_transport_remains_exposed(self) -> None:
+    def test_verified_transport_uses_captured_protocol(self) -> None:
         features = self.vacuum.split("_attr_supported_features", 1)[1].split("def __init__", 1)[0]
+        start = self.vacuum.split("    async def async_start", 1)[1].split(
+            "    async def async_pause", 1
+        )[0]
+        return_home = self.vacuum.split("    async def async_return_to_base", 1)[1].split(
+            "    async def async_set_fan_speed", 1
+        )[0]
+        transport = self.coordinator.split("    def _set_multiple_sync", 1)[1].split(
+            "    def _read_sync", 1
+        )[0]
+        atomic = self.coordinator.split("    async def async_set_dps", 1)[1].split(
+            "    async def async_set_sequence", 1
+        )[0]
         pause = self.vacuum.split("    async def async_pause", 1)[1].split(
             "    async def async_return_to_base", 1
         )[0]
+        self.assertIn("VacuumEntityFeature.START", features)
         self.assertIn("VacuumEntityFeature.PAUSE", features)
-        self.assertNotIn("VacuumEntityFeature.START", features)
-        self.assertNotIn("VacuumEntityFeature.RETURN_HOME", features)
+        self.assertIn("VacuumEntityFeature.RETURN_HOME", features)
+        self.assertIn("async_set_dps", start)
+        self.assertIn('DP_MODE: "smart"', start)
+        self.assertIn("DP_PAUSE: False", start)
+        self.assertIn("DP_POWER_GO: True", start)
+        self.assertIn("set_multiple_values", transport)
+        self.assertIn("self._set_multiple_sync", atomic)
+        self.assertNotIn("async_set_sequence", start)
         self.assertIn('operation="pause"', pause)
+        self.assertIn("async_set_dp", return_home)
+        self.assertIn('"chargego"', return_home)
+        self.assertNotIn("DP_PAUSE", return_home)
+        self.assertNotIn("DP_POWER_GO", return_home)
 
-    def test_panel_disables_unverified_quick_actions(self) -> None:
+    def test_panel_exposes_verified_transport_without_station_stop(self) -> None:
         actions = self.frontend.split("  _quickActions() {", 1)[1].split("  _overview() {", 1)[0]
-        self.assertNotIn('"start", available', actions)
-        self.assertNotIn('"home", available', actions)
+        self.assertIn('"start", available', actions)
+        self.assertIn('"home", available', actions)
         self.assertNotIn("data-station-stop", actions)
         self.assertIn('"pause", available', actions)
 
-    def test_manifest_declares_diagnostic_action_lockout(self) -> None:
+    def test_manifest_declares_verified_transport_and_station_lockout(self) -> None:
         generated = self.panel["generated_ui"]
         ownership = self.panel["ownership"]
-        self.assertEqual(generated["quick_actions"], ["vacuum.pause"])
+        self.assertEqual(
+            generated["quick_actions"],
+            ["vacuum.start", "vacuum.pause", "vacuum.return_to_base"],
+        )
         self.assertFalse(ownership["station_stop_commands_public"])
         self.assertFalse(ownership["station_stop_immediate"])
-        self.assertFalse(ownership["start_and_return_exposed"])
+        self.assertTrue(ownership["start_and_return_exposed"])
         self.assertTrue(ownership["diagnostic_capture_read_only"])
 
 

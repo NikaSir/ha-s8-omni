@@ -1,10 +1,9 @@
 from homeassistant.components.vacuum import StateVacuumEntity, VacuumEntityFeature
-from homeassistant.exceptions import HomeAssistantError
-
 from .const import (
     DOMAIN,
     DP_BATTERY,
     DP_FAULT,
+    DP_MODE,
     DP_PAUSE,
     DP_POWER_GO,
     DP_STATUS,
@@ -43,7 +42,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
 class S8OmniVacuum(S8OmniEntity, StateVacuumEntity):
     _attr_name = None
     _attr_supported_features = (
-        VacuumEntityFeature.PAUSE | VacuumEntityFeature.FAN_SPEED
+        VacuumEntityFeature.START
+        | VacuumEntityFeature.PAUSE
+        | VacuumEntityFeature.RETURN_HOME
+        | VacuumEntityFeature.FAN_SPEED
     )
     _attr_fan_speed_list = SUCTION_OPTIONS
 
@@ -73,13 +75,20 @@ class S8OmniVacuum(S8OmniEntity, StateVacuumEntity):
         return str(value) if value is not None else None
 
     async def async_start(self):
-        self.coordinator.trace_blocked_command(
-            "start",
-            "disabled_in_protocol_capture_build",
-        )
-        raise HomeAssistantError(
-            "Запуск временно отключён в диагностической сборке. "
-            "Используйте штатное приложение и запишите DP-переходы."
+        if str(self.dp(DP_STATUS)) == "paused":
+            await self.coordinator.async_set_dp(
+                DP_PAUSE,
+                False,
+                operation="resume",
+            )
+            return
+        await self.coordinator.async_set_dps(
+            {
+                DP_MODE: "smart",
+                DP_PAUSE: False,
+                DP_POWER_GO: True,
+            },
+            operation="start",
         )
 
     async def async_pause(self):
@@ -89,13 +98,10 @@ class S8OmniVacuum(S8OmniEntity, StateVacuumEntity):
         )
 
     async def async_return_to_base(self, **kwargs):
-        self.coordinator.trace_blocked_command(
-            "return_to_base",
-            "disabled_after_real_device_failure",
-        )
-        raise HomeAssistantError(
-            "Возврат временно отключён: проверенные последовательности этой модели "
-            "не выполняют команду. Запишите эталон через штатное приложение."
+        await self.coordinator.async_set_dp(
+            DP_MODE,
+            "chargego",
+            operation="return_to_base",
         )
 
     async def async_set_fan_speed(self, fan_speed, **kwargs):

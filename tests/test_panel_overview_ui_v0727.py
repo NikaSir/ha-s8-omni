@@ -27,7 +27,7 @@ class PanelOverviewUiV0727Tests(unittest.TestCase):
         )[0]
 
     def test_runtime_version_and_six_approved_state_images(self) -> None:
-        self.assertIn('const UI_VERSION = "v0.7.37"', self.source)
+        self.assertIn('const UI_VERSION = "v0.7.38"', self.source)
         for name in (
             "hero-base.webp",
             "hero-charging.webp",
@@ -61,17 +61,17 @@ class PanelOverviewUiV0727Tests(unittest.TestCase):
         for label in ("Готова", "Заряжает", "Ожидает", "Ошибка"):
             self.assertIn(label, self.hero)
 
-    def test_diagnostic_quick_actions_keep_only_verified_pause(self) -> None:
+    def test_verified_transport_actions_follow_live_state(self) -> None:
         for state in ("cleaning", "paused", "returning", "attention"):
             self.assertIn(state, self.actions)
         self.assertIn('actionButton("Пауза", "mdi:pause", "pause", available, true)', self.actions)
-        self.assertNotIn('actionButton("Домой", "mdi:home", "home"', self.actions)
-        self.assertNotIn('actionButton("Уборка", "mdi:play", "start"', self.actions)
+        self.assertIn('actionButton("Домой", "mdi:home", "home"', self.actions)
+        self.assertIn('actionButton("Уборка", "mdi:play", "start"', self.actions)
         self.assertIn('actionButton("Уборка", "mdi:play", null, false)', self.actions)
 
     def test_panel_manifest_tracks_v0727_artwork_contract(self) -> None:
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
-        self.assertEqual("v0.7.37", panel["dashboard_version"])
+        self.assertEqual("v0.7.38", panel["dashboard_version"])
         self.assertEqual(264, panel["workspace_transform"]["mobile_overview_scene_height_px"])
         states = set(panel["frontend"]["product_art_states"])
         self.assertTrue({"base", "charging", "cleaning", "paused", "returning", "error"} <= states)

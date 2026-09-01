@@ -37,10 +37,12 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         for domain in ("select", "number", "switch"):
             self.assertIn(f'await this._callConfirmed("{domain}"', self.bind)
 
-    def test_unverified_transport_and_station_commands_are_not_bound(self) -> None:
-        self.assertIn('const service = action === "pause" ? "pause" : null', self.bind)
-        self.assertNotIn('action === "start"', self.bind)
-        self.assertNotIn('action === "home"', self.bind)
+    def test_verified_transport_is_bound_but_station_stop_is_not(self) -> None:
+        self.assertIn('action === "start" ? "start"', self.bind)
+        self.assertIn('action === "pause" ? "pause"', self.bind)
+        self.assertIn('action === "home" ? "return_to_base"', self.bind)
+        self.assertIn('action === "start" ? "Запустить уборку?"', self.bind)
+        self.assertIn('action === "home" ? "Отправить пылесос на базу?"', self.bind)
         self.assertNotIn('button.matches("[data-station-stop]")', self.bind)
         self.assertNotIn('this._call("button", "press", key)', self.bind)
 
@@ -57,11 +59,11 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         constants = (ROOT / "custom_components" / "s8_omni" / "const.py").read_text(encoding="utf-8")
         manifest = json.loads((ROOT / "custom_components" / "s8_omni" / "manifest.json").read_text(encoding="utf-8"))
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
-        self.assertEqual("0.7.37", standard["ui_version"])
-        self.assertIn('const UI_VERSION = "v0.7.37"', self.source)
-        self.assertIn('VERSION = "v1.00_b072"', constants)
-        self.assertEqual("1.0.0b72", manifest["version"])
-        self.assertEqual("v0.7.37", panel["dashboard_version"])
+        self.assertEqual("0.7.38", standard["ui_version"])
+        self.assertIn('const UI_VERSION = "v0.7.38"', self.source)
+        self.assertIn('VERSION = "v1.00_b073"', constants)
+        self.assertEqual("1.0.0b73", manifest["version"])
+        self.assertEqual("v0.7.38", panel["dashboard_version"])
         self.assertNotIn("v0.7.31:", self.source)
 
 
