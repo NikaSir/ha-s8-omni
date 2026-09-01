@@ -184,7 +184,7 @@ jobs:
           from pathlib import Path
           root = Path('custom_components/s8_omni/frontend')
           panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.37':
+          if panel.get('dashboard_version') != 'v0.7.38':
               raise SystemExit('panel.json dashboard_version mismatch')
           frontend = panel['frontend']
           if frontend.get('asset_root') != 'frontend/assets':
@@ -273,7 +273,7 @@ jobs:
           if ownership.get('profile_writes_require_confirmation_and_readback') is not True:
               raise SystemExit('profile write safety mismatch')
           metadata = json.loads(Path('.nikas-ui-standard.json').read_text(encoding='utf-8'))
-          if metadata.get('ui_version') != '0.7.37':
+          if metadata.get('ui_version') != '0.7.38':
               raise SystemExit('NikaS UI metadata version mismatch')
           print('Panel manifest OK')
           PY
