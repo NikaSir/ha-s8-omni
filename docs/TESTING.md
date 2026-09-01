@@ -229,7 +229,18 @@ A warmed browser cache is not sufficient evidence. At least one cold-cache local
 From **Settings → Devices & services → S8 OMNI → Download diagnostics**:
 
 - [ ] Diagnostics download is available for the S8 OMNI config entry.
-- [ ] Integration version is `v1.00_b071`; dashboard version is `v0.7.36`.
+- [ ] Integration version is `v1.00_b072`; dashboard version is `v0.7.37`.
+
+### Diagnostic command capture (v1.00_b072)
+
+1. Ensure the duplicate S8 device has been removed from LocalTuya and restart Home Assistant.
+2. On the S8 OMNI device page press `Записать команды штатного приложения`.
+3. Within 10 seconds start cleaning in the official application, wait about 20 seconds, then request return to base there.
+4. Let the robot dock and let the station begin its automatic operation. If an official Stop control is available, use it once during the same 90-second window.
+5. Wait until the capture button attribute `capture_active` becomes false, then download S8 OMNI diagnostics.
+6. Verify `protocol_trace` contains `state_changed` events for DP1/2/4/5/134/135/136 and contains no host, device id or local key.
+
+Start, Return and station Stop are intentionally unavailable in the panel for this diagnostic build. Pause remains available because its real-device behaviour is confirmed.
 - [ ] Host/IP is replaced by a redaction marker.
 - [ ] Device ID is replaced by a redaction marker.
 - [ ] Local Key is replaced by a redaction marker.

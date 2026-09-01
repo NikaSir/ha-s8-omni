@@ -67,11 +67,12 @@ class PanelCleaningUiV0732Tests(unittest.TestCase):
         self.assertIn("Осталось ${life.minutes} мин", self.source)
         self.assertNotIn("data-reset-resource", self.source)
 
-    def test_station_remains_stop_only(self) -> None:
+    def test_station_stop_is_fail_closed_in_capture_build(self) -> None:
         self.assertIn("единая кнопка «Стоп»", self.source)
         button_source = (ROOT / "custom_components" / "s8_omni" / "button.py").read_text(encoding="utf-8")
-        self.assertIn("async_set_dp(self.desc.dp, False)", button_source)
-        self.assertNotIn("async_set_dp(self.desc.dp, True)", button_source)
+        self.assertIn("trace_blocked_command", button_source)
+        self.assertIn("raise HomeAssistantError", button_source)
+        self.assertNotIn("async_set_dp(self.desc.dp", button_source)
 
     def test_manifest_records_the_cleaning_contract(self) -> None:
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]

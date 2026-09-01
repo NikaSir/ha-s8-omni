@@ -33,7 +33,7 @@ This document records datapoints verified through Tuya Developer Platform, Local
 - **Continue a paused job:** write only `pause=false`. Real-device testing showed that this resumes the existing job immediately; a following `power_go=true` makes the robot pause again.
 - **Pause:** `power_go=false` → `pause=true`.
 - **Return home:** first use the verified Pause sequence `power_go=false` → `pause=true`, then select `mode=chargego`. Execute the selected transport mode with `power_go=true` only when a fresh readback simultaneously retains `pause=true` and confirms `mode=chargego`. The earlier `pause=false` sequence was rejected because it resumed Smart cleaning before the transport trigger.
-- **Stop station dust collection:** `dp_dust=false` (stop-only public button).
+- **Station stop commands are disabled in the protocol-capture build.** The previous assumed `false` writes for dust collection, roller cleaning and roller drying are not sent until the official application trace confirms the device-specific command contract.
 - **Stop mop self-cleaning:** `dp_roll_clean=false` (stop-only public button).
 - **Stop mop drying:** `dp_roll_hot=false` (stop-only public button).
 

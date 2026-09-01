@@ -37,14 +37,12 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         for domain in ("select", "number", "switch"):
             self.assertIn(f'await this._callConfirmed("{domain}"', self.bind)
 
-    def test_start_and_return_confirm_but_emergency_stop_stays_direct(self) -> None:
-        self.assertIn('action === "start" ? "Запустить уборку?"', self.bind)
-        self.assertIn('action === "home" ? "Отправить пылесос на базу?"', self.bind)
-        stop_branch = self.bind.split('if (button.matches("[data-station-stop]")) {', 1)[1].split(
-            'if (button.matches("[data-action]")) {', 1
-        )[0]
-        self.assertNotIn("window.confirm", stop_branch)
-        self.assertIn('await this._call("button", "press", key)', stop_branch)
+    def test_unverified_transport_and_station_commands_are_not_bound(self) -> None:
+        self.assertIn('const service = action === "pause" ? "pause" : null', self.bind)
+        self.assertNotIn('action === "start"', self.bind)
+        self.assertNotIn('action === "home"', self.bind)
+        self.assertNotIn('button.matches("[data-station-stop]")', self.bind)
+        self.assertNotIn('this._call("button", "press", key)', self.bind)
 
     def test_child_lock_is_confirmed_and_read_back(self) -> None:
         self.assertIn("блокировку от детей?", self.bind)
@@ -59,11 +57,11 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         constants = (ROOT / "custom_components" / "s8_omni" / "const.py").read_text(encoding="utf-8")
         manifest = json.loads((ROOT / "custom_components" / "s8_omni" / "manifest.json").read_text(encoding="utf-8"))
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
-        self.assertEqual("0.7.36", standard["ui_version"])
-        self.assertIn('const UI_VERSION = "v0.7.36"', self.source)
-        self.assertIn('VERSION = "v1.00_b071"', constants)
-        self.assertEqual("1.0.0b71", manifest["version"])
-        self.assertEqual("v0.7.36", panel["dashboard_version"])
+        self.assertEqual("0.7.37", standard["ui_version"])
+        self.assertIn('const UI_VERSION = "v0.7.37"', self.source)
+        self.assertIn('VERSION = "v1.00_b072"', constants)
+        self.assertEqual("1.0.0b72", manifest["version"])
+        self.assertEqual("v0.7.37", panel["dashboard_version"])
         self.assertNotIn("v0.7.31:", self.source)
 
 
