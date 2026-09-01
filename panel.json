@@ -1,0 +1,290 @@
+{
+  "panel": {
+    "id": "s8_omni",
+    "title": "Пылесос",
+    "path": "/dashboard-s8-omni",
+    "parent_path": "/dashboard-actions/home",
+    "parent_route": "/dashboard-actions/home",
+    "icon": "mdi:robot-vacuum",
+    "owner": "ha-s8-omni",
+    "expose_in_generated_ui": true,
+    "preferred_view": "overview",
+    "dashboard_version": "v0.7.39",
+    "template": "NikaS Integration Panel Template v1.9",
+    "frontend": {
+      "module": "s8-omni-panel.js",
+      "bundle": "self_contained",
+      "runtime_historical_imports": false,
+      "cache_busting": "query_string_dashboard_and_integration_version",
+      "asset_root": "frontend/assets",
+      "asset_url_root": "/s8_omni/frontend/assets",
+      "assets": [
+        "assets/product-clean.jpg",
+        "assets/product-dock.jpg",
+        "assets/status-robot.jpg",
+        "assets/status-station.jpg",
+        "assets/status-water.jpg",
+        "assets/status-dustbin.jpg",
+        "assets/hero-dock.webp",
+        "assets/hero-away.webp",
+        "assets/hero-dust.webp",
+        "assets/hero-wash.webp",
+        "assets/hero-dry.webp",
+        "assets/hero-base.webp",
+        "assets/hero-charging.webp",
+        "assets/hero-cleaning.webp",
+        "assets/hero-paused.webp",
+        "assets/hero-return.webp",
+        "assets/hero-error.webp"
+      ],
+      "product_art_delivery": "integration_local_static_assets",
+      "product_art_states": [
+        "base",
+        "charging",
+        "cleaning",
+        "paused",
+        "returning",
+        "error",
+        "dock",
+        "away",
+        "dust_collection",
+        "roller_cleaning",
+        "drying"
+      ],
+      "status_thumbnail_delivery": "integration_local_static_assets"
+    },
+    "availability": {
+      "current_truth": [
+        "local_connection",
+        "vacuum"
+      ],
+      "stale_values_are_current": false,
+      "disable_device_actions_when_disconnected": true,
+      "connection_indicator": {
+        "construction": "two_level_shared_indicator",
+        "scope": "robot_and_station_shared_tuya_lan",
+        "channel_states": [
+          "Локально",
+          "Нет связи",
+          "Нет данных"
+        ],
+        "telemetry_states": [
+          "Данные актуальны",
+          "Данные устарели",
+          "Нет данных"
+        ],
+        "scan_interval_seconds_default": 5,
+        "scan_interval_seconds_range": [
+          3,
+          60
+        ],
+        "stale_after_scan_periods": 3,
+        "failed_poll_immediately_stale": true,
+        "hold_action": "more_info_local_connection",
+        "update_strategy": "pointwise_semantic_category_only",
+        "primary_font_px": 16,
+        "secondary_font_px": 13,
+        "status_tinted_surface": true
+      }
+    },
+    "navigation": {
+      "header_root_primary": "home_assistant_sidebar_menu",
+      "header_detail_back": false,
+      "detail_back_location": "inside_work_area",
+      "header_action": "refresh",
+      "header_grid": "52px_minmax_52px_48px_narrow",
+      "header_button_px": 44,
+      "header_icon_px": 25,
+      "header_title_px": 21,
+      "header_center_action": "source_aware_return",
+      "header_source_route_key": "nikas.specialized.source_route.v1",
+      "header_return_route_storage": "nikas.s8_omni.return_route.v1",
+      "header_source_route_capture": "once_per_panel_instance",
+      "header_allowed_source_roots": [
+        "/dashboard-house-v11/home",
+        "/dashboard-actions/home",
+        "/dashboard-infrastructure/overview"
+      ],
+      "header_safe_fallback": "/dashboard-actions/home",
+      "header_title_touch_height_px": 44,
+      "header_title_visible_surface": true,
+      "header_title_focus_visible": true,
+      "header_center_lines": [
+        "S8 OMNI",
+        "UI v0.7.39"
+      ],
+      "primary_navigation": "full_width_fixed_bottom_tab_bar",
+      "bottom_tab_min_height_px": 52,
+      "bottom_tab_icon_px": 28,
+      "bottom_tab_label_px": 12,
+      "bottom_tab_label_weight": 700,
+      "bottom_tab_active_primary_percent": 11,
+      "active_tab": "inside_shared_bar",
+      "floating_tab_bar": false,
+      "browser_history_back": false,
+      "views": [
+        "overview",
+        "cleaning",
+        "station",
+        "maintenance",
+        "diagnostics"
+      ],
+      "view_responsibilities": {
+        "overview": "state_aware_photographic_hero_resource_strip_battery_mode_station_and_actions_without_duplicate_telemetry",
+        "cleaning": "current_cleaning_metrics_shared_profile_surface_and_separate_settings_drill_down",
+        "station": "compact_station_state_summary_operations_and_unified_stop_explanation",
+        "maintenance": "consumable_minutes_derived_percentages_and_service",
+        "diagnostics": "technical_state_and_raw_context"
+      },
+      "drill_down": {
+        "cleaning-settings": {
+          "parent_view": "cleaning",
+          "back_behavior": "return_to_parent_view",
+          "bottom_tab_bar": "preserved",
+          "content_scope": "verified_cleaning_profile_only",
+          "select_write_strategy": "draft_explicit_apply_confirmation_write_readback",
+          "draft_fields": [
+            "suction",
+            "water",
+            "volume",
+            "do_not_disturb"
+          ],
+          "single_apply": true,
+          "readback_required": true,
+          "dnd_period_source": "official_application_not_public_entity"
+        }
+      }
+    },
+    "mobile_fit": {
+      "primary_viewport": "iPhone Pro Max portrait",
+      "horizontal_scroll": false,
+      "quick_actions": "compact_state_aware_three_equal_columns",
+      "quick_action_icon_px": 34,
+      "card_proportions": "approved_reference_compact",
+      "typography_scale": "compact_balanced_mobile",
+      "overview_target": "approved_reference_separate_primary_resource_metrics_and_actions",
+      "overview_scene": "approved_state_specific_local_webp_background_plus_live_status_resource_strip_and_station_summary",
+      "overview_scene_sources": [
+        "robot_on_dock",
+        "robot_status",
+        "station_operations",
+        "dp134",
+        "dp135",
+        "dp136"
+      ],
+      "overview_scene_synthetic_levels": false,
+      "overview_scene_duplicate_operation_tiles": false,
+      "status_layout": "removed_from_overview_use_station_view_for_details",
+      "status_sources": [
+        "robot_status",
+        "station_status",
+        "water_level_not_exposed",
+        "dustbin_level_not_exposed"
+      ],
+      "station_target": "typical_state_without_required_vertical_scroll",
+      "station_summary_layout": "three_equal_compact_columns",
+      "station_operation_density": "compact_without_reducing_touch_readability",
+      "cleaning_root_actions": false,
+      "cleaning_key_profile_cards": [
+        "suction",
+        "water"
+      ],
+      "cleaning_key_profile_layout": "one_shared_two_section_surface",
+      "cleaning_zero_minute_active_label": "< 1 мин",
+      "cleaning_settings_secondary_summary": [
+        "volume",
+        "do_not_disturb"
+      ],
+      "compact_state_vocabulary": true,
+      "hero_station_text_safe_zone": true,
+      "split_words_inside_values": false,
+      "status_heading": null,
+      "touch_target_min_px": 44,
+      "safe_area": true,
+      "overview_scene_visual_depth": "approved_photographic_product_art",
+      "overview_scene_verified_only": true
+    },
+    "workspace_transform": {
+      "scope": "working_area_only",
+      "shell_excluded": [
+        "header",
+        "bottom_navigation"
+      ],
+      "implementation": "translate3d_scale",
+      "scale_range": [
+        0.75,
+        2.0
+      ],
+      "native_scroll_at_100": true,
+      "horizontal_scroll_at_100": false,
+      "origin_at_100": [
+        0,
+        0
+      ],
+      "css_zoom": false,
+      "pinch_midpoint": true,
+      "one_pointer_pan_above_100_only": true,
+      "pan_only_on_overflowing_axes": true,
+      "clamp_after_resize": true,
+      "tab_change_returns_to_top": true,
+      "two_finger_double_tap_reset": true,
+      "snap_to_100_percent": [
+        0.97,
+        1.03
+      ],
+      "persistent_per_entry_and_view": true,
+      "permanent_zoom_controls": false,
+      "identity_transform_at_100": "none",
+      "defer_rerender_during_native_scroll": true,
+      "viewport_height_owner": "host",
+      "mobile_overview_scene_height_px": 264,
+      "stable_dom_shell": true,
+      "hass_update_strategy": "in_place_text_class_and_attribute_sync",
+      "telemetry_age_in_structure_key": false,
+      "connection_indicator_update": "category_change_only",
+      "structural_updates_during_native_scroll": false,
+      "mobile_shell_position": "fixed_inset_zero",
+      "outer_home_assistant_scroll": false,
+      "tabs_mounted_once": true,
+      "inactive_views": "hidden_and_inert",
+      "whole_tree_replace_after_mount": false,
+      "meaningful_text_min_px": 12,
+      "meaningful_text_max_px": 25,
+      "two_finger_reset_guarded": true,
+      "pinch_blocks_more_info": true
+    },
+    "first_paint": {
+      "shell_mount": "immediate",
+      "hero_image_loading": "eager",
+      "hero_image_fetch_priority": "high"
+    },
+    "standard": "NIKAS Specialized Panel UI Standard v1.9"
+  },
+  "generated_ui": {
+    "summary_entity_unique_id_suffix": "composite_status",
+    "battery_entity_unique_id_suffix": "battery",
+    "vacuum_entity_unique_id_suffix": "vacuum",
+    "connection_entity_unique_id_suffix": "local_connection",
+    "refresh_entity_unique_id_suffix": "refresh",
+    "quick_actions": [
+      "vacuum.start",
+      "vacuum.pause",
+      "vacuum.return_to_base",
+      "button.stop_roller_drying"
+    ],
+    "details_path": "/dashboard-s8-omni"
+  },
+  "ownership": {
+    "direct_tuya_dp_writes_from_ui": false,
+    "station_start_commands_exposed": false,
+    "station_stop_commands_public": false,
+    "station_stop_immediate": false,
+    "verified_station_stop_commands": ["stop_roller_drying"],
+    "station_stop_requires_confirmation": true,
+    "profile_writes_require_confirmation_and_readback": true,
+    "start_and_return_require_confirmation": true,
+    "start_and_return_exposed": true,
+    "diagnostic_capture_read_only": true,
+    "map_requires_public_integration_api": true
+  }
+}
