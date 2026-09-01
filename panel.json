@@ -9,7 +9,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.7.36",
+    "dashboard_version": "v0.7.37",
     "template": "NikaS Integration Panel Template v1.9",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -111,7 +111,7 @@
       "header_title_focus_visible": true,
       "header_center_lines": [
         "S8 OMNI",
-        "UI v0.7.36"
+        "UI v0.7.37"
       ],
       "primary_navigation": "full_width_fixed_bottom_tab_bar",
       "bottom_tab_min_height_px": 52,

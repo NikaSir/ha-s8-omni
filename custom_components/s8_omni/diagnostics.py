@@ -127,6 +127,12 @@ async def async_get_config_entry_diagnostics(
             update_interval.total_seconds() if update_interval is not None else None
         ),
         "reported_dp_ids": sorted(data),
+        "diagnostic_capture_active": coordinator.diagnostic_capture_active,
+        "diagnostic_capture_until": (
+            coordinator.diagnostic_capture_until.isoformat()
+            if coordinator.diagnostic_capture_until is not None
+            else None
+        ),
     }
     result["normalized_status"] = {
         "robot": robot_status(data),
@@ -135,4 +141,5 @@ async def async_get_config_entry_diagnostics(
         "attributes": composite_attributes(data),
     }
     result["safe_datapoints"] = _safe_datapoints(data)
+    result["protocol_trace"] = list(coordinator.command_trace)
     return result

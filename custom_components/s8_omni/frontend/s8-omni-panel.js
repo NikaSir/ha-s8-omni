@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.36";
+const UI_VERSION = "v0.7.37";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.75;
 const VIEW_SCALE_MAX = 2.00;
@@ -1173,31 +1173,28 @@ class S8OmniPanel extends HTMLElement {
     const cleaning = vacuum?.state === "cleaning" || ["cleaning", "zone_cleaning", "room_cleaning"].includes(snap.robot);
     const paused = vacuum?.state === "paused" || snap.robot === "paused";
     const returning = snap.robot === "returning_to_dock" || snap.composite === "returning_to_dock";
-    const docked = snap.onDock === true || ["charging", "charged"].includes(snap.robot);
     const faultValue = Number(this._stateValue("fault", 0));
     const attention = snap.composite === "error" || (Number.isFinite(faultValue) && faultValue !== 0);
     const activeStationStops = this._activeStationStopKeys(snap);
-    const stationStops = activeStationStops.filter((key) => Boolean(this._entityId(key)));
     const stationActive = activeStationStops.length > 0;
-    const stopKeys = stationStops.join(",");
     const actionButton = (label, icon, action = null, enabled = false, ready = false, extra = "") => `<button class="action${ready ? " ready" : ""}${extra ? ` ${extra}` : ""}" type="button"${action ? ` data-action="${action}"` : ""}${enabled ? "" : " disabled"}><span class="action-icon"><ha-icon icon="${icon}"></ha-icon></span><strong>${label}</strong></button>`;
 
     if (stationActive) {
-      return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", null, false)}${actionButton("Пауза", "mdi:pause", null, false)}<button class="action stop" type="button" data-station-stop="${stopKeys}"${stationStops.length && !commandBusy ? "" : " disabled"}><span class="action-icon"><ha-icon icon="mdi:stop"></ha-icon></span><strong>Стоп</strong></button></div>`;
+      return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", null, false)}${actionButton("Пауза", "mdi:pause", null, false)}${actionButton("Стоп", "mdi:stop", null, false, false, "stop")}</div>`;
     }
     if (attention) {
       return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", null, false)}${actionButton("Пауза", "mdi:pause", null, false)}${actionButton("Домой", "mdi:home", null, false)}</div>`;
     }
     if (cleaning) {
-      return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", null, false)}${actionButton("Пауза", "mdi:pause", "pause", available, true)}${actionButton("Домой", "mdi:home", "home", available, true)}</div>`;
+      return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", null, false)}${actionButton("Пауза", "mdi:pause", "pause", available, true)}${actionButton("Домой", "mdi:home", null, false)}</div>`;
     }
     if (paused) {
-      return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", "start", available, true)}${actionButton("Пауза", "mdi:pause", null, false)}${actionButton("Домой", "mdi:home", "home", available, true)}</div>`;
+      return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", null, false)}${actionButton("Пауза", "mdi:pause", null, false)}${actionButton("Домой", "mdi:home", null, false)}</div>`;
     }
     if (returning) {
       return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", null, false)}${actionButton("Пауза", "mdi:pause", "pause", available, true)}${actionButton("Домой", "mdi:home", null, false)}</div>`;
     }
-    return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", "start", available, true)}${actionButton("Пауза", "mdi:pause", null, false)}${actionButton("Домой", "mdi:home", "home", available && !docked, !docked)}</div>`;
+    return `<div class="quick-actions">${actionButton("Уборка", "mdi:play", null, false)}${actionButton("Пауза", "mdi:pause", null, false)}${actionButton("Домой", "mdi:home", null, false)}</div>`;
   }
 
   _overview() {
@@ -1344,20 +1341,10 @@ class S8OmniPanel extends HTMLElement {
         return;
       }
       if (!this._snapshot().connected) return;
-      if (button.matches("[data-station-stop]")) {
-        const keys = String(button.dataset.stationStop || "").split(",").filter(Boolean);
-        if (!keys.length) return;
-        button.disabled = true;
-        try { for (const key of keys) await this._call("button", "press", key); }
-        finally { setTimeout(() => this._queueLivePatch(), 700); }
-        return;
-      }
       if (button.matches("[data-action]")) {
         const action = button.dataset.action;
-        const service = action === "start" ? "start" : action === "pause" ? "pause" : action === "stop" ? "stop" : action === "home" ? "return_to_base" : null;
+        const service = action === "pause" ? "pause" : null;
         if (!service) return;
-        const confirmation = action === "start" ? "Запустить уборку?" : action === "home" ? "Отправить пылесос на базу?" : null;
-        if (confirmation && !window.confirm(confirmation)) return;
         button.disabled = true;
         try { await this._call("vacuum", service, "vacuum"); }
         finally { setTimeout(() => this._queueLivePatch(), 650); }

@@ -97,15 +97,16 @@ jobs:
           grep -q 'stop_dust_collection' "$production"
           grep -q 'stop_roller_cleaning' "$production"
           grep -q 'stop_roller_drying' "$production"
-          grep -q 'data-station-stop' "$production"
-          grep -Fq 'action === "stop" ? "stop"' "$production"
+          if grep -q 'data-station-stop' "$production"; then exit 1; fi
+          grep -Fq 'const service = action === "pause" ? "pause" : null' "$production"
           grep -Fq 'this._call("vacuum", service, "vacuum")' "$production"
           grep -Fq 'loading="eager" decoding="sync" fetchpriority="high"' "$production"
           grep -Fq '_setCleaningDraft(key, value)' "$production"
           grep -Fq '_waitForReadback(key, expected, timeoutMs' "$production"
           grep -Fq '_callConfirmed(domain, service, key, extra, expected)' "$production"
           grep -Fq 'window.confirm(`Применить параметры уборки?' "$production"
-          grep -Fq 'action === "start" ? "Запустить уборку?" : action === "home" ? "Отправить пылесос на базу?" : null' "$production"
+          if grep -Fq 'action === "start"' "$production"; then exit 1; fi
+          if grep -Fq 'action === "home"' "$production"; then exit 1; fi
           grep -Fq 'блокировку от детей?' "$production"
           if grep -q 'data-zoom-out\|data-zoom-reset\|data-zoom-in\|zoom-controls' "$production"; then exit 1; fi
           grep -q '_bindWorkspaceGestures()' "$production"

@@ -1,10 +1,10 @@
 from homeassistant.components.vacuum import StateVacuumEntity, VacuumEntityFeature
+from homeassistant.exceptions import HomeAssistantError
 
 from .const import (
     DOMAIN,
     DP_BATTERY,
     DP_FAULT,
-    DP_MODE,
     DP_PAUSE,
     DP_POWER_GO,
     DP_STATUS,
@@ -43,10 +43,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
 class S8OmniVacuum(S8OmniEntity, StateVacuumEntity):
     _attr_name = None
     _attr_supported_features = (
-        VacuumEntityFeature.START
-        | VacuumEntityFeature.PAUSE
-        | VacuumEntityFeature.RETURN_HOME
-        | VacuumEntityFeature.FAN_SPEED
+        VacuumEntityFeature.PAUSE | VacuumEntityFeature.FAN_SPEED
     )
     _attr_fan_speed_list = SUCTION_OPTIONS
 
@@ -76,41 +73,29 @@ class S8OmniVacuum(S8OmniEntity, StateVacuumEntity):
         return str(value) if value is not None else None
 
     async def async_start(self):
-        # On this firmware DP2 is the pause/resume latch.  When the robot is
-        # already paused, clearing that latch resumes the existing job by
-        # itself.  Sending DP1 afterwards acts like a second transport command
-        # and the robot falls back to pause again.
-        if str(self.dp(DP_STATUS)) == "paused":
-            await self.coordinator.async_set_dp(DP_PAUSE, False)
-            return
-        await self.coordinator.async_set_sequence(
-            [(DP_MODE, "smart"), (DP_PAUSE, False), (DP_POWER_GO, True)]
+        self.coordinator.trace_blocked_command(
+            "start",
+            "disabled_in_protocol_capture_build",
+        )
+        raise HomeAssistantError(
+            "Запуск временно отключён в диагностической сборке. "
+            "Используйте штатное приложение и запишите DP-переходы."
         )
 
     async def async_pause(self):
         await self.coordinator.async_set_sequence(
-            [(DP_POWER_GO, False), (DP_PAUSE, True)]
+            [(DP_POWER_GO, False), (DP_PAUSE, True)],
+            operation="pause",
         )
 
     async def async_return_to_base(self, **kwargs):
-        # Real-device testing established DP2=true as the working pause state.
-        # Put the active job into that safe state before selecting chargego.
-        # The Tuya vacuum family then requires DP1=true to execute the selected
-        # transport mode; unlike the previous sequence, DP2 must not be cleared.
-        await self.coordinator.async_set_sequence(
-            [(DP_POWER_GO, False), (DP_PAUSE, True)]
+        self.coordinator.trace_blocked_command(
+            "return_to_base",
+            "disabled_after_real_device_failure",
         )
-        await self.coordinator.async_set_sequence_after_confirmation(
-            (DP_MODE, "chargego"),
-            [(DP_POWER_GO, True)],
-            lambda data: (
-                data.get(DP_PAUSE) is True
-                and str(data.get(DP_MODE)) == "chargego"
-            ),
-            failure_message=(
-                "Устройство не подтвердило паузу и режим возврата на базу. "
-                "Запуск режима не выполнялся."
-            ),
+        raise HomeAssistantError(
+            "Возврат временно отключён: проверенные последовательности этой модели "
+            "не выполняют команду. Запишите эталон через штатное приложение."
         )
 
     async def async_set_fan_speed(self, fan_speed, **kwargs):

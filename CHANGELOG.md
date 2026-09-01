@@ -1,3 +1,11 @@
+## v1.00_b072 / UI v0.7.37
+
+- Added a bounded, secret-free protocol timeline for DP1/2/4/5/134/135/136 to both DEBUG logging and downloaded diagnostics.
+- Added the read-only `Записать команды штатного приложения` button: it samples the verified control datapoints once per second for 90 seconds while the official app performs the reference sequence.
+- Serialized normal polling, diagnostic capture and writes through one lock so the integration never opens overlapping LAN transactions to the vacuum.
+- Disabled the disproved Start, Return and station Stop paths in the diagnostic build; the real-device-confirmed Pause command remains available.
+- Recorded the 2026-09-01 baseline: the official app successfully moved from cleaning to return, docked, charged and automatically started roller cleaning, while the integration's composed return sequence did not move the robot.
+
 ## v1.00_b071 / UI v0.7.36
 
 - Kept the real-device-confirmed Pause command unchanged.

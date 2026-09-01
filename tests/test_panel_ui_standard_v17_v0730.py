@@ -77,10 +77,10 @@ class PanelUiStandardV19V0731Tests(unittest.TestCase):
         registration = (ROOT / "custom_components" / "s8_omni" / "__init__.py").read_text(encoding="utf-8")
         self.assertIn('"parent_route": PANEL_PARENT_PATH', registration)
 
-    def test_verified_station_stop_contract_is_unchanged(self) -> None:
+    def test_station_stop_entities_are_retained_but_not_frontend_bound(self) -> None:
         for key in ("stop_dust_collection", "stop_roller_cleaning", "stop_roller_drying"):
             self.assertIn(key, self.source)
-        self.assertIn('this._call("button", "press", key)', self.source)
+        self.assertNotIn('this._call("button", "press", key)', self.source)
 
 
 if __name__ == "__main__":
