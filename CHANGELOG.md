@@ -1,3 +1,8 @@
+## v1.00_b076 / UI v0.7.40
+
+- Prefixes the Home Assistant and HACS integration name with `NikaS`.
+- Republishes the approved local S8 OMNI brand icon without changing panel behavior.
+
 ## v1.00_b075 / UI v0.7.40
 
 - Rebuilt Return to base from the latest real-device trace: during active cleaning it now sends the verified Pause pair, waits for `standby`, selects `chargego`, and waits up to 30 seconds for `goto_charge` or a docked state.
