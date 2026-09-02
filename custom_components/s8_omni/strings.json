@@ -1,8 +1,9 @@
 {
+  "title": "NikaS S8 OMNI",
   "config": {
     "step": {
       "user": {
-        "title": "S8 OMNI",
+        "title": "NikaS S8 OMNI",
         "description": "Local connection to S8 OMNI over Tuya LAN.",
         "data": {
           "host": "IP address",

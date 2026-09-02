@@ -1,6 +1,6 @@
 {
   "domain": "s8_omni",
-  "name": "S8 OMNI",
+  "name": "NikaS S8 OMNI",
   "codeowners": [],
   "config_flow": true,
   "dependencies": [
@@ -12,5 +12,5 @@
   "requirements": [
     "tinytuya>=1.17.0"
   ],
-  "version": "1.0.0b75"
+  "version": "1.0.0b76"
 }
