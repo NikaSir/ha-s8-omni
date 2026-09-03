@@ -53,7 +53,9 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         self.assertIn('await this._callConfirmed("switch"', self.bind)
 
     def test_shell_owns_viewport_and_hero_is_first_paint_priority(self) -> None:
-        self.assertIn("createNikasShellScrollBoundaryGuard", self.source)\n        self.assertIn("block-size:100%", self.source)\n        self.assertNotIn("100dvh", self.source)
+        self.assertIn("createNikasShellScrollBoundaryGuard", self.source)
+        self.assertIn("block-size:100%", self.source)
+        self.assertNotIn("100dvh", self.source)
         self.assertIn('loading="eager" decoding="sync" fetchpriority="high"', self.source)
 
     def test_version_metadata_cannot_drift_from_runtime(self) -> None:
