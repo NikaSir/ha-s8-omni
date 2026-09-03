@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "custom_components" / "s8_omni" / "frontend" / "s8-omni-panel.js"
 
 
-class PanelUiStandardV19V0731Tests(unittest.TestCase):
+class PanelUiStandardV22V0731Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.source = SOURCE.read_text(encoding="utf-8")
@@ -20,7 +20,8 @@ class PanelUiStandardV19V0731Tests(unittest.TestCase):
         self.assertIn('const RETURN_ROUTE_KEY = "nikas.s8_omni.return_route.v1"', self.source)
         self.assertIn('const SOURCE_ROUTE_AT_KEY = "nikas.specialized.source_route_at.v1"', self.source)
         self.assertIn('const SAFE_DEFAULT_ROUTE = "/dashboard-actions/home"', self.source)
-        self.assertIn('return "/dashboard-house-v11/home"', self.source)
+        self.assertIn('return "/dashboard-house-v13/home"', self.source)
+        self.assertIn('return "/dashboard-rooms-v11/rooms"', self.source)
         self.assertIn('return "/dashboard-actions/home"', self.source)
         self.assertIn('return "/dashboard-infrastructure/overview"', self.source)
         self.assertNotIn('"/dashboard-house"', self.source)
@@ -45,7 +46,7 @@ class PanelUiStandardV19V0731Tests(unittest.TestCase):
     def test_center_title_is_visible_semantic_plaque(self) -> None:
         self.assertIn('button class="header-title" type="button" data-header-home', self.source)
         self.assertIn(
-            ".header-title{justify-self:center;min-width:min(290px,100%);max-width:100%;min-height:44px;padding:5px 14px",
+            ".header-title{justify-self:center;width:min(360px,100%);min-width:0;height:52px;min-height:52px;padding:5px 14px",
             self.source,
         )
         self.assertIn(
@@ -63,15 +64,15 @@ class PanelUiStandardV19V0731Tests(unittest.TestCase):
             "@media(max-width:520px){.header-title{min-width:0;width:100%;padding-inline:8px}.header-title strong{font-size:21px}.header-title span{font-size:13px}",
             self.source,
         )
-        self.assertIn('<strong>S8 OMNI</strong><span>UI v${UI_VERSION.replace(/^v/, "")}</span>', self.source)
+        self.assertIn('<strong>Пылесос</strong><span>UI v${UI_VERSION.replace(/^v/, "")}</span>', self.source)
 
-    def test_manifest_declares_v19_contract(self) -> None:
+    def test_manifest_declares_v22_contract(self) -> None:
         navigation = self.panel["navigation"]
-        self.assertEqual("NIKAS Specialized Panel UI Standard v1.9", self.panel["standard"])
-        self.assertEqual("NikaS Integration Panel Template v1.9", self.panel["template"])
+        self.assertEqual("NIKAS Specialized Panel UI Standard v2.2", self.panel["standard"])
+        self.assertEqual("NikaS Integration Panel Template v2.2", self.panel["template"])
         self.assertEqual("source_aware_return", navigation["header_center_action"])
         self.assertEqual("nikas.specialized.source_route.v1", navigation["header_source_route_key"])
-        self.assertEqual(44, navigation["header_title_touch_height_px"])
+        self.assertEqual(52, navigation["header_title_touch_height_px"])
         self.assertTrue(navigation["header_title_visible_surface"])
         self.assertTrue(navigation["header_title_focus_visible"])
         registration = (ROOT / "custom_components" / "s8_omni" / "__init__.py").read_text(encoding="utf-8")

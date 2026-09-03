@@ -1,3 +1,10 @@
+## v1.00_b077 / UI v0.7.41
+
+- Migrates the «Пылесос» panel to NikaS Standard v2.2, Navigation Contract v1.2 and host-bound Shell v2.1.
+- Adds the capture-phase non-passive touch boundary guard so Home Assistant pull-to-refresh and outer form displacement cannot take over edge scrolling.
+- Aligns the 60/64px shell rows, 52px title plaque, 26px Bottom Tab Bar icons and full «Диагностика» label.
+- Adds canonical return routes for House v13 and Rooms v11 while preserving the verified S8 OMNI command protocol unchanged.
+
 ## v1.00_b076 / UI v0.7.40
 
 - Prefixes the Home Assistant and HACS integration name with `NikaS`.

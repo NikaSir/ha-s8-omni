@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.40";
+const UI_VERSION = "v0.7.41";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.75;
 const VIEW_SCALE_MAX = 2.00;
@@ -75,8 +75,11 @@ function s8SafeReturnRoute(value) {
   try {
     const url = new URL(decodeURIComponent(String(value).trim()), window.location.origin);
     if (url.origin !== window.location.origin) return null;
-    if (url.pathname === "/dashboard-house-v11" || url.pathname.startsWith("/dashboard-house-v11/")) {
-      return "/dashboard-house-v11/home";
+    if (url.pathname === "/dashboard-house-v13" || url.pathname.startsWith("/dashboard-house-v13/")) {
+      return "/dashboard-house-v13/home";
+    }
+    if (url.pathname === "/dashboard-rooms-v11" || url.pathname.startsWith("/dashboard-rooms-v11/")) {
+      return "/dashboard-rooms-v11/rooms";
     }
     if (url.pathname === "/dashboard-actions" || url.pathname.startsWith("/dashboard-actions/")) {
       return "/dashboard-actions/home";
@@ -88,6 +91,98 @@ function s8SafeReturnRoute(value) {
   } catch (_err) {
     return null;
   }
+}
+
+const NIKAS_SHELL_BOUNDARY_THRESHOLD_PX = 4;
+
+function shouldBlockNikasShellBoundaryMove({
+  deltaX,
+  deltaY,
+  inViewport,
+  scrollTop,
+  scrollHeight,
+  clientHeight,
+}) {
+  if (!Number.isFinite(deltaY) || Math.abs(deltaY) <= Math.abs(Number(deltaX) || 0)) return false;
+  if (!inViewport) return true;
+  const maximumScroll = Math.max(0, (Number(scrollHeight) || 0) - (Number(clientHeight) || 0));
+  if (maximumScroll <= 1) return true;
+  const currentScroll = Math.max(0, Number(scrollTop) || 0);
+  if (deltaY > 0 && currentScroll <= 1) return true;
+  return deltaY < 0 && currentScroll >= maximumScroll - 1;
+}
+
+function createNikasShellScrollBoundaryGuard({ host, viewport }) {
+  if (!host?.addEventListener || !viewport) return () => {};
+  let touch = null;
+
+  const eventStartedInViewport = (event) => {
+    const path = typeof event.composedPath === "function" ? event.composedPath() : [];
+    return path.includes(viewport) || Boolean(viewport.contains?.(event.target));
+  };
+  const rememberTouch = (event) => {
+    if (event.touches.length !== 1) {
+      touch = null;
+      return;
+    }
+    const current = event.touches[0];
+    touch = {
+      x: current.clientX,
+      y: current.clientY,
+      startX: current.clientX,
+      startY: current.clientY,
+      inViewport: eventStartedInViewport(event),
+      blocked: false,
+    };
+  };
+  const moveTouch = (event) => {
+    if (event.touches.length !== 1) {
+      touch = null;
+      return;
+    }
+    const current = event.touches[0];
+    if (!touch) {
+      rememberTouch(event);
+      return;
+    }
+    const deltaX = current.clientX - touch.x;
+    const deltaY = current.clientY - touch.y;
+    const travelX = current.clientX - touch.startX;
+    const travelY = current.clientY - touch.startY;
+    touch.x = current.clientX;
+    touch.y = current.clientY;
+    const verticalIntent = Math.abs(travelY) > NIKAS_SHELL_BOUNDARY_THRESHOLD_PX
+      && Math.abs(travelY) > Math.abs(travelX);
+    if (!touch.blocked && verticalIntent) {
+      touch.blocked = shouldBlockNikasShellBoundaryMove({
+        deltaX,
+        deltaY,
+        inViewport: touch.inViewport,
+        scrollTop: viewport.scrollTop,
+        scrollHeight: viewport.scrollHeight,
+        clientHeight: viewport.clientHeight,
+      });
+    }
+    if (touch.blocked && event.cancelable) event.preventDefault();
+  };
+  const endTouch = (event) => {
+    if (event.touches.length === 1) rememberTouch(event);
+    else touch = null;
+  };
+  const cancelTouch = () => { touch = null; };
+
+  host.addEventListener("touchstart", rememberTouch, { passive: false, capture: true });
+  host.addEventListener("touchmove", moveTouch, { passive: false, capture: true });
+  host.addEventListener("touchend", endTouch, { passive: true, capture: true });
+  host.addEventListener("touchcancel", cancelTouch, { passive: true, capture: true });
+
+  return () => {
+    host.removeEventListener("touchstart", rememberTouch, true);
+    host.removeEventListener("touchmove", moveTouch, true);
+    host.removeEventListener("touchend", endTouch, true);
+    host.removeEventListener("touchcancel", cancelTouch, true);
+    touch = null;
+  };
 }
 
 function s8ResolveReturnRoute(panel) {
@@ -253,6 +348,7 @@ class S8OmniPanel extends HTMLElement {
     this._stableStructureCache = null;
     this._boundStableViews = new WeakSet();
     this._returnRoute = null;
+    this._scrollBoundaryCleanup = null;
     this._busyCommands = new Set();
     this._commandError = null;
     this._cleaningDraft = {};
@@ -281,6 +377,8 @@ class S8OmniPanel extends HTMLElement {
     clearTimeout(this._nativeScrollIdleTimer);
     this._nativeScrollIdleTimer = null;
     this._nativeScrollActive = false;
+    this._scrollBoundaryCleanup?.();
+    this._scrollBoundaryCleanup = null;
   }
 
   _queueLivePatch() {
@@ -966,7 +1064,7 @@ class S8OmniPanel extends HTMLElement {
       .action.primary.running:disabled{opacity:1}.action.primary.running:disabled .action-icon{opacity:1}
       @media(max-width:430px){.state-scene{height:292px}.resource-chip{grid-template-columns:30px minmax(0,1fr);gap:4px;padding:7px 4px}.resource-chip ha-icon{--mdc-icon-size:23px}.resource-chip strong{font-size:12px;line-height:1.04}.resource-chip small{font-size:12px;line-height:1.04}.state-hero h1{font-size:25px}}
       /* Stable iOS gesture canvas; the host owns the visual viewport. */
-      :host{height:100vh;height:100dvh;min-height:0;max-height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;width:auto}
+      :host{height:100%;min-height:0;max-height:100%;overflow:hidden;overscroll-behavior:none;position:relative;width:100%}
       main{height:100%;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;overscroll-behavior:none;padding-bottom:0}
       .app-header{position:relative;top:auto;z-index:60}
       nav{position:relative;left:auto;right:auto;bottom:auto;z-index:70}
@@ -994,17 +1092,17 @@ class S8OmniPanel extends HTMLElement {
       .work-viewport.is-zoomed .work-canvas{position:absolute;left:0;top:0;touch-action:none;-webkit-user-select:none;user-select:none;will-change:transform}
       nav{background:color-mix(in srgb,var(--card-background-color) 97%,transparent);border-top:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);box-shadow:0 -3px 14px rgba(0,0,0,.05)}
       nav button{min-height:52px;border-radius:14px;color:var(--secondary-text-color)}
-      nav button ha-icon{--mdc-icon-size:28px}nav button span{font-size:12px;font-weight:700;white-space:nowrap}
+      nav button ha-icon{--mdc-icon-size:26px}nav button span{font-size:12px;font-weight:700;white-space:nowrap}
       nav button.active{background:color-mix(in srgb,var(--primary-color) 11%,transparent);color:var(--primary-color);box-shadow:none}
       .detail-heading{display:grid;grid-template-columns:44px minmax(0,1fr);gap:11px;align-items:center;margin-bottom:10px;padding:0 4px}.detail-heading .eyebrow{display:block}.detail-heading h2{font-size:24px;margin-top:2px}.inline-back{display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:14px;background:var(--card-background-color);color:var(--primary-color)}.inline-back ha-icon{--mdc-icon-size:22px}
       @media(max-width:520px){
-        :host{position:fixed;inset:0;width:auto;height:auto;min-height:0;max-height:none}
-        main{position:absolute;inset:0;width:auto;height:auto}
+        :host{position:relative;width:100%;height:100%;min-height:0;max-height:100%}
+        main{position:relative;width:100%;height:100%;min-height:0}
         .app-header{grid-template-columns:48px minmax(0,1fr) 48px;min-height:calc(60px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top)}
         .header-action{width:44px;height:44px;border-radius:16px}.header-action ha-icon{--mdc-icon-size:25px}
         .header-title strong{font-size:21px}.header-title span{font-size:13px}
         .state-scene{height:292px}
-        nav button{min-height:52px;border-radius:14px}nav button ha-icon{--mdc-icon-size:28px}
+        nav button{min-height:52px;border-radius:14px}nav button ha-icon{--mdc-icon-size:26px}
       }
       /* v0.7.22: NIKAS Specialized Panel UI Standard v1.6. */
       .stable-view[hidden],.trust-banner.is-hidden{display:none!important}
@@ -1043,7 +1141,7 @@ class S8OmniPanel extends HTMLElement {
       .action.ready .action-icon{background:color-mix(in srgb,var(--primary-color) 10%,transparent)}
       .action:disabled{opacity:.32}
       @media(max-width:430px){.action{min-height:82px}.state-hero .hero-hint{font-size:13px}}
-      /* NikaS Specialized Panel UI Standard v1.9 source-aware shell. */
+      /* NikaS Specialized Panel UI Standard v2.2 host-bound shell. */
       .header-title{justify-self:center;min-width:min(290px,100%);max-width:100%;min-height:44px;padding:5px 14px;border:1px solid color-mix(in srgb,var(--primary-color,#03a9d9) 24%,var(--divider-color,#dfe3e8));border-radius:16px;background:color-mix(in srgb,var(--primary-color,#03a9d9) 5%,var(--card-background-color,#fff));box-shadow:0 5px 16px rgba(23,45,76,.06);color:var(--primary-text-color);cursor:pointer;-webkit-appearance:none;appearance:none}
       .header-title:focus-visible{outline:2px solid var(--primary-color,#03a9d9);outline-offset:2px}
       .header-title:active{transform:scale(.985);background:color-mix(in srgb,var(--primary-color,#03a9d9) 13%,var(--card-background-color,#fff));border-color:color-mix(in srgb,var(--primary-color,#03a9d9) 42%,var(--divider-color,#dfe3e8));box-shadow:0 2px 7px rgba(23,45,76,.05)}
@@ -1066,6 +1164,22 @@ class S8OmniPanel extends HTMLElement {
       .state-hero .hero-metrics small{font-size:12px}
       .state-hero .battery-bar i{background:#079fd1}
       @media(max-width:520px){.header-title{min-width:0;width:100%;padding-inline:8px}.header-title strong{font-size:21px}.header-title span{font-size:13px}.state-hero .state-scene{height:264px}.state-hero .hero-top{grid-template-columns:minmax(0,1fr) minmax(168px,44%)}.state-hero>.hero-primary{padding:13px}.state-hero .hero-metrics strong{font-size:16px}}
+
+      /* NikaS Shell v2.1 authoritative host-bound geometry. */
+      :host{display:block;position:relative;inline-size:100%;block-size:100%;min-inline-size:0;min-block-size:0;max-height:100%;overflow:hidden;overscroll-behavior:none;container:nikas-panel / inline-size}
+      main{position:relative;inline-size:100%;block-size:100%;min-inline-size:0;min-block-size:0;display:grid;grid-template-rows:calc(60px + env(safe-area-inset-top,0px)) minmax(0,1fr) calc(64px + env(safe-area-inset-bottom,0px));overflow:hidden;overscroll-behavior:none;padding:0}
+      .app-header{position:relative;height:auto;min-height:0;padding:env(safe-area-inset-top,0px) calc(12px + env(safe-area-inset-right,0px)) 0 calc(12px + env(safe-area-inset-left,0px));grid-template-columns:52px minmax(0,1fr) 52px}
+      .header-title{justify-self:center;width:min(360px,100%);min-width:0;height:52px;min-height:52px;padding:5px 14px}
+      .header-title strong{font-size:23px}.header-title span{font-size:14px}
+      .work-viewport{min-width:0;min-height:0;overscroll-behavior-x:none;overscroll-behavior-y:none}
+      .content{width:100%;max-width:1280px;min-height:100%;margin:0 auto;padding:12px 12px 20px}
+      nav{position:relative;left:auto;right:auto;bottom:auto;height:auto;min-height:0;padding:6px calc(6px + env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) calc(6px + env(safe-area-inset-left,0px));grid-template-columns:repeat(5,minmax(0,1fr));gap:2px}
+      nav button{height:52px;min-height:52px;padding:2px 3px 6px;border-radius:16px;gap:1px;overflow:hidden}
+      nav button ha-icon{--mdc-icon-size:26px;display:block;flex:0 0 26px}
+      nav button span{display:block;flex:0 0 14px;max-width:100%;font-size:12px;font-weight:700;line-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      @container nikas-panel (min-width:600px){.content{padding-inline:16px}}
+      @container nikas-panel (min-width:1024px){.content{padding-inline:24px}}
+      @container nikas-panel (max-width:359px){.app-header{grid-template-columns:48px minmax(0,1fr) 48px;padding-inline:8px}.header-title strong{font-size:21px}.header-title span{font-size:13px}}
       @keyframes spin{to{transform:rotate(360deg)}}
       @media(max-width:360px){.hero-top,.state-hero .hero-top{grid-template-columns:1fr}.connection-indicator{justify-self:start}.status-grid{grid-template-columns:repeat(2,1fr)}.segments.four{grid-template-columns:repeat(2,1fr)}.diagnostic-strip{grid-template-columns:1fr}.omni-legend{width:30%}.omni-art{width:69%}}
       @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
@@ -1073,7 +1187,7 @@ class S8OmniPanel extends HTMLElement {
   }
 
   _header() {
-    return `<header class="app-header"><button class="header-action" type="button" data-header-primary aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button><button class="header-title" type="button" data-header-home aria-label="Вернуться в исходную базовую панель NikaS"><strong>S8 OMNI</strong><span>UI v${UI_VERSION.replace(/^v/, "")}</span></button><button class="header-action refresh" type="button" data-refresh aria-label="Обновить" ${this._entityId("refresh") && this._busyCommands.size === 0 ? "" : "disabled"}><ha-icon icon="mdi:refresh"></ha-icon></button></header>`;
+    return `<header class="app-header"><button class="header-action" type="button" data-header-primary aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button><button class="header-title" type="button" data-header-home aria-label="Вернуться в исходную базовую панель NikaS"><strong>Пылесос</strong><span>UI v${UI_VERSION.replace(/^v/, "")}</span></button><button class="header-action refresh" type="button" data-refresh aria-label="Обновить" ${this._entityId("refresh") && this._busyCommands.size === 0 ? "" : "disabled"}><ha-icon icon="mdi:refresh"></ha-icon></button></header>`;
   }
 
   _trustBanner(snap) {
@@ -1281,7 +1395,7 @@ class S8OmniPanel extends HTMLElement {
     return this._overview();
   }
   _nav() {
-    const items = [["overview","mdi:home-outline","Обзор"],["cleaning","mdi:robot-vacuum","Уборка"],["station","mdi:home-automation","Станция"],["maintenance","mdi:tools","Сервис"],["diagnostics","mdi:stethoscope","Диагн."]];
+    const items = [["overview","mdi:home-outline","Обзор"],["cleaning","mdi:robot-vacuum","Уборка"],["station","mdi:home-automation","Станция"],["maintenance","mdi:tools","Сервис"],["diagnostics","mdi:stethoscope","Диагностика"]];
     const active = this._detail ? "cleaning" : this._view;
     return `<nav aria-label="Основные разделы">${items.map(([view,icon,label]) => `<button type="button" data-view="${view}" class="${active === view ? "active" : ""}"><ha-icon icon="${icon}"></ha-icon><span>${label}</span></button>`).join("")}</nav>`;
   }
@@ -1295,8 +1409,16 @@ class S8OmniPanel extends HTMLElement {
     this._bindWorkspaceGestures();
   }
 
+  _ensureScrollBoundaryGuard() {
+    if (this._scrollBoundaryCleanup) return;
+    const viewport = this.shadowRoot?.querySelector("[data-work-viewport]");
+    if (!viewport) return;
+    this._scrollBoundaryCleanup = createNikasShellScrollBoundaryGuard({ host: this, viewport });
+  }
+
   _finishRender() {
     this._bind();
+    this._ensureScrollBoundaryGuard();
     requestAnimationFrame(() => {
       this._clampAndApplyTransform(false);
       this._restoreNativeScroll();

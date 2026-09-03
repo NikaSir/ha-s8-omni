@@ -9,8 +9,8 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.7.40",
-    "template": "NikaS Integration Panel Template v1.9",
+    "dashboard_version": "v0.7.41",
+    "template": "NikaS Integration Panel Template v2.2",
     "frontend": {
       "module": "s8-omni-panel.js",
       "bundle": "self_contained",
@@ -95,27 +95,28 @@
       "header_grid": "52px_minmax_52px_48px_narrow",
       "header_button_px": 44,
       "header_icon_px": 25,
-      "header_title_px": 21,
+      "header_title_px": 23,
       "header_center_action": "source_aware_return",
       "header_source_route_key": "nikas.specialized.source_route.v1",
       "header_return_route_storage": "nikas.s8_omni.return_route.v1",
       "header_source_route_capture": "once_per_panel_instance",
       "header_allowed_source_roots": [
-        "/dashboard-house-v11/home",
+        "/dashboard-house-v13/home",
+        "/dashboard-rooms-v11/rooms",
         "/dashboard-actions/home",
         "/dashboard-infrastructure/overview"
       ],
       "header_safe_fallback": "/dashboard-actions/home",
-      "header_title_touch_height_px": 44,
+      "header_title_touch_height_px": 52,
       "header_title_visible_surface": true,
       "header_title_focus_visible": true,
       "header_center_lines": [
-        "S8 OMNI",
-        "UI v0.7.40"
+        "Пылесос",
+        "UI v0.7.41"
       ],
       "primary_navigation": "full_width_fixed_bottom_tab_bar",
       "bottom_tab_min_height_px": 52,
-      "bottom_tab_icon_px": 28,
+      "bottom_tab_icon_px": 26,
       "bottom_tab_label_px": 12,
       "bottom_tab_label_weight": 700,
       "bottom_tab_active_primary_percent": 11,
@@ -153,7 +154,9 @@
           "readback_required": true,
           "dnd_period_source": "official_application_not_public_entity"
         }
-      }
+      },
+      "header_title_mobile_px": 21,
+      "bottom_nav_body_px": 64
     },
     "mobile_fit": {
       "primary_viewport": "iPhone Pro Max portrait",
@@ -213,7 +216,7 @@
       "implementation": "translate3d_scale",
       "scale_range": [
         0.75,
-        2.0
+        2
       ],
       "native_scroll_at_100": true,
       "horizontal_scroll_at_100": false,
@@ -243,7 +246,7 @@
       "telemetry_age_in_structure_key": false,
       "connection_indicator_update": "category_change_only",
       "structural_updates_during_native_scroll": false,
-      "mobile_shell_position": "fixed_inset_zero",
+      "mobile_shell_position": "host_bound",
       "outer_home_assistant_scroll": false,
       "tabs_mounted_once": true,
       "inactive_views": "hidden_and_inert",
@@ -258,7 +261,13 @@
       "hero_image_loading": "eager",
       "hero_image_fetch_priority": "high"
     },
-    "standard": "NIKAS Specialized Panel UI Standard v1.9"
+    "standard": "NIKAS Specialized Panel UI Standard v2.2",
+    "shell_scroll_guard": {
+      "implementation_version": "2.1",
+      "strategy": "capture_non_passive_host_boundary_guard",
+      "movement_threshold_px": 4,
+      "cleanup_on_disconnect": true
+    }
   },
   "generated_ui": {
     "summary_entity_unique_id_suffix": "composite_status",
@@ -289,8 +298,16 @@
     "station_start_commands_exposed": true,
     "station_stop_commands_public": true,
     "station_stop_immediate": true,
-    "verified_station_start_commands": ["start_dust_collection", "start_roller_cleaning", "start_roller_drying"],
-    "verified_station_stop_commands": ["stop_dust_collection", "stop_roller_cleaning", "stop_roller_drying"],
+    "verified_station_start_commands": [
+      "start_dust_collection",
+      "start_roller_cleaning",
+      "start_roller_drying"
+    ],
+    "verified_station_stop_commands": [
+      "stop_dust_collection",
+      "stop_roller_cleaning",
+      "stop_roller_drying"
+    ],
     "station_stop_requires_confirmation": true,
     "profile_writes_require_confirmation_and_readback": true,
     "start_and_return_require_confirmation": true,

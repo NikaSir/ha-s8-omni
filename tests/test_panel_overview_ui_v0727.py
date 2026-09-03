@@ -27,7 +27,7 @@ class PanelOverviewUiV0727Tests(unittest.TestCase):
         )[0]
 
     def test_runtime_version_and_six_approved_state_images(self) -> None:
-        self.assertIn('const UI_VERSION = "v0.7.40"', self.source)
+        self.assertIn('const UI_VERSION = "v0.7.41"', self.source)
         for name in (
             "hero-base.webp",
             "hero-charging.webp",
@@ -71,7 +71,7 @@ class PanelOverviewUiV0727Tests(unittest.TestCase):
 
     def test_panel_manifest_tracks_v0727_artwork_contract(self) -> None:
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
-        self.assertEqual("v0.7.40", panel["dashboard_version"])
+        self.assertEqual("v0.7.41", panel["dashboard_version"])
         self.assertEqual(264, panel["workspace_transform"]["mobile_overview_scene_height_px"])
         states = set(panel["frontend"]["product_art_states"])
         self.assertTrue({"base", "charging", "cleaning", "paused", "returning", "error"} <= states)

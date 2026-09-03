@@ -229,7 +229,7 @@ A warmed browser cache is not sufficient evidence. At least one cold-cache local
 From **Settings → Devices & services → S8 OMNI → Download diagnostics**:
 
 - [ ] Diagnostics download is available for the S8 OMNI config entry.
-- [ ] Integration version is `v1.00_b075`; dashboard version is `v0.7.40`.
+- [ ] Integration version is `v1.00_b077`; dashboard version is `v0.7.41`.
 
 ### Diagnostic command capture (introduced in v1.00_b072)
 
@@ -240,7 +240,7 @@ From **Settings → Devices & services → S8 OMNI → Download diagnostics**:
 5. Wait until the capture button attribute `capture_active` becomes false, then download S8 OMNI diagnostics.
 6. Verify `protocol_trace` contains `state_changed` events for DP1/2/4/5/134/135/136 and contains no host, device id or local key.
 
-In `v1.00_b075`, Return pauses active cleaning, waits for `standby`, writes `chargego`, and waits for factual return telemetry. The captured station controls expose DP134/135/136 `true` for Start and `false` for Stop; station Start remains disabled unless the robot is docked.
+In `v1.00_b077`, Return pauses active cleaning, waits for `standby`, writes `chargego`, and waits for factual return telemetry. The captured station controls expose DP134/135/136 `true` for Start and `false` for Stop; station Start remains disabled unless the robot is docked.
 - [ ] Host/IP is replaced by a redaction marker.
 - [ ] Device ID is replaced by a redaction marker.
 - [ ] Local Key is replaced by a redaction marker.
