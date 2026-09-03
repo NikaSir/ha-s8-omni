@@ -21,7 +21,8 @@ class PanelUiStandardV22V0731Tests(unittest.TestCase):
         self.assertIn('const SOURCE_ROUTE_AT_KEY = "nikas.specialized.source_route_at.v1"', self.source)
         self.assertIn('const SAFE_DEFAULT_ROUTE = "/dashboard-actions/home"', self.source)
         self.assertIn('return "/dashboard-house-v13/home"', self.source)
-        self.assertIn('return "/dashboard-rooms-v11/rooms"', self.source)\n        self.assertIn('return "/dashboard-actions/home"', self.source)
+        self.assertIn('return "/dashboard-rooms-v11/rooms"', self.source)
+        self.assertIn('return "/dashboard-actions/home"', self.source)
         self.assertIn('return "/dashboard-infrastructure/overview"', self.source)
         self.assertNotIn('"/dashboard-house"', self.source)
         resolver = self.source.split("function s8ResolveReturnRoute", 1)[1].split(
