@@ -53,7 +53,7 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         self.assertIn('await this._callConfirmed("switch"', self.bind)
 
     def test_shell_owns_viewport_and_hero_is_first_paint_priority(self) -> None:
-        self.assertIn("overscroll-behavior:none;position:fixed;inset:0;width:auto", self.source)
+        self.assertIn("createNikasShellScrollBoundaryGuard", self.source)\n        self.assertIn("block-size:100%", self.source)\n        self.assertNotIn("100dvh", self.source)
         self.assertIn('loading="eager" decoding="sync" fetchpriority="high"', self.source)
 
     def test_version_metadata_cannot_drift_from_runtime(self) -> None:
@@ -61,11 +61,11 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         constants = (ROOT / "custom_components" / "s8_omni" / "const.py").read_text(encoding="utf-8")
         manifest = json.loads((ROOT / "custom_components" / "s8_omni" / "manifest.json").read_text(encoding="utf-8"))
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
-        self.assertEqual("0.7.40", standard["ui_version"])
-        self.assertIn('const UI_VERSION = "v0.7.40"', self.source)
-        self.assertIn('VERSION = "v1.00_b076"', constants)
-        self.assertEqual("1.0.0b76", manifest["version"])
-        self.assertEqual("v0.7.40", panel["dashboard_version"])
+        self.assertEqual("0.7.41", standard["ui_version"])
+        self.assertIn('const UI_VERSION = "v0.7.41"', self.source)
+        self.assertIn('VERSION = "v1.00_b077"', constants)
+        self.assertEqual("1.0.0b77", manifest["version"])
+        self.assertEqual("v0.7.41", panel["dashboard_version"])
         self.assertNotIn("v0.7.31:", self.source)
 
 

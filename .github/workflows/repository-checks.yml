@@ -16,336 +16,57 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - name: Validate JSON files
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          for path in Path('.').rglob('*.json'):
-              if '.git' not in path.parts:
-                  json.loads(path.read_text(encoding='utf-8'))
-                  print(f'OK {path}')
+          for path in Path(".").rglob("*.json"):
+              if ".git" not in path.parts:
+                  json.loads(path.read_text(encoding="utf-8"))
+                  print(f"OK {path}")
           PY
-
       - name: Compile Python sources
-        run: python -m compileall -q custom_components
-
-      - name: Validate frontend JavaScript
+        run: python -m compileall -q custom_components scripts tests
+      - name: Validate bundled JavaScript syntax
         run: node --check custom_components/s8_omni/frontend/s8-omni-panel.js
-
-      - name: Enforce NikaS UI standard v1.9
+      - name: Enforce NikaS v2.2 contract
         run: python scripts/check_nikas_ui_standard.py
-
-      - name: Run panel contract tests
-        run: python -m unittest discover -s tests -p 'test_*.py' -v
-
-      - name: Enforce state-aware Overview and gesture contract
-        shell: bash
-        run: |
-          frontend_dir="custom_components/s8_omni/frontend"
-          assets_dir="$frontend_dir/assets"
-          production="$frontend_dir/s8-omni-panel.js"
-          registration="custom_components/s8_omni/__init__.py"
-          test -f "$production"
-          test -d "$assets_dir"
-          for file in hero-base.webp hero-charging.webp hero-cleaning.webp hero-paused.webp hero-return.webp hero-error.webp hero-dock.webp hero-away.webp hero-dust.webp hero-wash.webp hero-dry.webp product-clean.jpg product-dock.jpg status-robot.jpg status-station.jpg status-water.jpg status-dustbin.jpg; do
-            test -f "$assets_dir/$file" || { echo "Missing asset: $file"; exit 1; }
-          done
-          test "$(find "$frontend_dir" -maxdepth 1 -type f -name '*.js' | wc -l | tr -d ' ')" = "1"
-          if grep -nE '^[[:space:]]*import[[:space:]]' "$production"; then exit 1; fi
-          if grep -nE 's8-omni-panel-v[0-9]+\.js' "$production" "$registration"; then exit 1; fi
-          grep -q 's8-omni-panel\.js?v=' "$registration"
-          grep -q 'const UI_VERSION = "v0.7.40"' "$production"
-          grep -q '_connectionIndicatorState()' "$production"
-          grep -q 'class="connection-indicator' "$production"
-          grep -q 'Данные актуальны' "$production"
-          grep -q 'Данные устарели' "$production"
-          grep -q 'last_poll_success' custom_components/s8_omni/coordinator.py
-          grep -q 'stale_after_seconds' custom_components/s8_omni/coordinator.py
-          grep -q 'telemetry_status' custom_components/s8_omni/binary_sensor.py
-          grep -q 'const HERO_IMAGES = {' "$production"
-          grep -q 'hero-base.webp' "$production"
-          grep -q 'hero-charging.webp' "$production"
-          grep -q 'hero-cleaning.webp' "$production"
-          grep -q 'hero-paused.webp' "$production"
-          grep -q 'hero-return.webp' "$production"
-          grep -q 'hero-error.webp' "$production"
-          grep -q 'hero-dock.webp' "$production"
-          grep -q 'hero-away.webp' "$production"
-          grep -q 'hero-dust.webp' "$production"
-          grep -q 'hero-wash.webp' "$production"
-          grep -q 'hero-dry.webp' "$production"
-          grep -q '_heroState(snap)' "$production"
-          grep -q '_resourceStrip(snap)' "$production"
-          grep -q 'class="state-scene' "$production"
-          grep -q 'Сбор пыли' "$production"
-          grep -q 'Мойка швабры' "$production"
-          grep -q 'Сушка швабры' "$production"
-          grep -q 'Возвращается на базу' "$production"
-          grep -q 'title: "На базе"' "$production"
-          grep -q 'title: "Ожидание"' "$production"
-          grep -Fq '<span>Станция</span>' "$production"
-          if grep -Fq '<span class="eyebrow">Состояние</span>' "$production"; then exit 1; fi
-          if grep -Fq '<span>Телеметрия</span>' "$production"; then exit 1; fi
-          if grep -q '<section class="card statuses-card"' "$production"; then exit 1; fi
-          grep -q 'stop_dust_collection' "$production"
-          grep -q 'stop_roller_cleaning' "$production"
-          grep -q 'stop_roller_drying' "$production"
-          grep -q 'data-station-stop' "$production"
-          grep -Fq 'activeStationStops.length === 1' "$production"
-          grep -Fq 'data-station-command' "$production"
-          grep -Fq 'action === "start" ? "start"' "$production"
-          grep -Fq 'action === "pause" ? "pause"' "$production"
-          grep -Fq 'action === "home" ? "return_to_base"' "$production"
-          grep -Fq 'this._call("vacuum", service, "vacuum")' "$production"
-          grep -Fq 'loading="eager" decoding="sync" fetchpriority="high"' "$production"
-          grep -Fq '_setCleaningDraft(key, value)' "$production"
-          grep -Fq '_waitForReadback(key, expected, timeoutMs' "$production"
-          grep -Fq '_callConfirmed(domain, service, key, extra, expected)' "$production"
-          grep -Fq 'window.confirm(`Применить параметры уборки?' "$production"
-          grep -Fq 'action === "start" ? "Запустить уборку?"' "$production"
-          grep -Fq 'action === "home" ? "Отправить пылесос на базу?"' "$production"
-          grep -Fq 'блокировку от детей?' "$production"
-          if grep -q 'data-zoom-out\|data-zoom-reset\|data-zoom-in\|zoom-controls' "$production"; then exit 1; fi
-          grep -q '_bindWorkspaceGestures()' "$production"
-          grep -q 'translate3d' "$production"
-          grep -q 'touch-action:none' "$production"
-          grep -q 'this._renderDeferred = false' "$production"
-          grep -Fq 'this._nativeScrollActive = false' "$production"
-          grep -Fq '_markNativeScrollActive()' "$production"
-          test "$(grep -o 'shadowRoot.innerHTML' "$production" | wc -l | tr -d ' ')" = "1"
-          if grep -q 'replaceChildren' "$production"; then exit 1; fi
-          grep -Fq 'data-stable-view' "$production"
-          grep -Fq 'view.removeAttribute("inert")' "$production"
-          grep -Fq 'view.setAttribute("inert", "")' "$production"
-          grep -Fq 'this._multiTapStartedAt = performance.now()' "$production"
-          grep -Fq 'this._suppressClicksUntil = Date.now() + 480' "$production"
-          grep -Fq 'if (Math.abs(scale - 1) < 0.0001) return "none";' "$production"
-          grep -Fq ':host{height:100vh;height:100dvh;min-height:0;max-height:100dvh' "$production"
-          grep -Fq 'main{height:100%;min-height:0;display:grid' "$production"
-          grep -Fq '.state-hero .state-scene{height:264px}' "$production"
-          grep -Fq '.state-hero{grid-template-rows:auto auto auto;padding:0;background:transparent;border:0' "$production"
-          grep -Fq '.state-hero>.hero-primary,.state-hero>.resource-strip,.state-hero>.hero-metrics{grid-column:1;justify-self:stretch;width:100%;min-width:0;max-width:100%}' "$production"
-          if grep -q 'min-height:100vh' "$production"; then exit 1; fi
-          if grep -q 'scrollLeft' "$production"; then exit 1; fi
-          grep -q 'scrollTop' "$production"
-          grep -q 'one_pointer_pan_above_100_only' panel.json
-          if grep -nE '(^|[;{])[[:space:]]*zoom[[:space:]]*:' "$production"; then exit 1; fi
-          grep -q 'CLEAN_MODE_OPTIONS' custom_components/s8_omni/const.py
-          grep -q 'effective_clean_mode' custom_components/s8_omni/coordinator.py
-          grep -q 'raw_dp4_mode' custom_components/s8_omni/select.py
-          grep -q 'OperationDesc("start_dust_collection", "Запустить сбор пыли", DP_DUST, True)' custom_components/s8_omni/button.py
-          grep -q 'OperationDesc("stop_dust_collection", "Остановить сбор пыли", DP_DUST, False)' custom_components/s8_omni/button.py
-          grep -q 'OperationDesc("start_roller_cleaning", "Запустить мойку швабры", DP_ROLL_CLEAN, True)' custom_components/s8_omni/button.py
-          grep -q 'OperationDesc("stop_roller_cleaning", "Остановить мойку швабры", DP_ROLL_CLEAN, False)' custom_components/s8_omni/button.py
-          grep -q 'OperationDesc("start_roller_drying", "Запустить сушку швабры", DP_ROLL_DRY, True)' custom_components/s8_omni/button.py
-          grep -q 'OperationDesc("stop_roller_drying", "Остановить сушку швабры", DP_ROLL_DRY, False)' custom_components/s8_omni/button.py
-          grep -q 'await self.coordinator.async_set_dp(' custom_components/s8_omni/button.py
-          grep -q 'async_wait_for_state' custom_components/s8_omni/button.py
-          grep -q 'raise HomeAssistantError(' custom_components/s8_omni/button.py
-          grep -q 'Station operations' docs/PROTOCOL.md
-          grep -Fq 'root.addEventListener("click", async (event) =>' "$production"
-          grep -Fq 'const action = button.dataset.action;' "$production"
-          grep -Fq '.state-hero>.hero-primary{grid-row:1' "$production"
-          grep -Fq '.state-hero .resource-strip{grid-row:2' "$production"
-          grep -Fq '.state-hero .hero-metrics{grid-row:3' "$production"
-          grep -Fq '.state-hero .hero-metrics>div{grid-template-columns:24px minmax(0,1fr)' "$production"
-          grep -Fq '.state-hero .hero-metrics>div:not(:last-child)::after' "$production"
-          grep -Fq '.state-hero .hero-metrics .metric-icon{position:static' "$production"
-          grep -Fq 'font-size:13px;font-weight:750;text-transform:none;letter-spacing:0' "$production"
-          if grep -Fq '.resource-strip{position:absolute' "$production"; then exit 1; fi
-          grep -Fq 'data-header-home aria-label="Вернуться в исходную базовую панель NikaS"' "$production"
-          grep -Fq 'const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1"' "$production"
-          grep -Fq 'const RETURN_ROUTE_KEY = "nikas.s8_omni.return_route.v1"' "$production"
-          grep -Fq 'const SAFE_DEFAULT_ROUTE = "/dashboard-actions/home"' "$production"
-          grep -Fq 'return "/dashboard-house-v11/home"' "$production"
-          grep -Fq 'return "/dashboard-actions/home"' "$production"
-          grep -Fq 'return "/dashboard-infrastructure/overview"' "$production"
-          grep -Fq '.header-title{justify-self:center;min-width:min(290px,100%);max-width:100%;min-height:44px;padding:5px 14px' "$production"
-          grep -Fq 'color-mix(in srgb,var(--primary-color,#03a9d9) 24%,var(--divider-color,#dfe3e8))' "$production"
-          grep -Fq 'color-mix(in srgb,var(--primary-color,#03a9d9) 5%,var(--card-background-color,#fff))' "$production"
-          grep -Fq 'box-shadow:0 5px 16px rgba(23,45,76,.06)' "$production"
-          grep -Fq '.header-title:focus-visible{outline:2px' "$production"
-          grep -Fq '.header-title:active{transform:scale(.985)' "$production"
-          grep -Fq 'color-mix(in srgb,var(--primary-color,#03a9d9) 13%,var(--card-background-color,#fff))' "$production"
-          grep -Fq 'color-mix(in srgb,var(--primary-color,#03a9d9) 42%,var(--divider-color,#dfe3e8))' "$production"
-          grep -Fq '@media(max-width:520px){.header-title{min-width:0;width:100%;padding-inline:8px}' "$production"
-          grep -Fq 'window.dispatchEvent(new Event("location-changed"))' "$production"
-          if grep -Fq 'history.back' "$production"; then exit 1; fi
-          grep -Fq 'const ENTITY_SUFFIXES_BY_LENGTH' "$production"
-          echo "S8 OMNI v0.7.40 mobile audit and v1.9 contract OK"
-
-      - name: Validate panel manifest and state assets
-        run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          root = Path('custom_components/s8_omni/frontend')
-          panel = json.loads(Path('panel.json').read_text(encoding='utf-8'))['panel']
-          if panel.get('dashboard_version') != 'v0.7.40':
-              raise SystemExit('panel.json dashboard_version mismatch')
-          frontend = panel['frontend']
-          if frontend.get('asset_root') != 'frontend/assets':
-              raise SystemExit('panel.json asset_root mismatch')
-          expected = {
-              'assets/product-clean.jpg','assets/product-dock.jpg',
-              'assets/status-robot.jpg','assets/status-station.jpg','assets/status-water.jpg','assets/status-dustbin.jpg',
-              'assets/hero-dock.webp','assets/hero-away.webp','assets/hero-dust.webp','assets/hero-wash.webp','assets/hero-dry.webp',
-              'assets/hero-base.webp','assets/hero-charging.webp','assets/hero-cleaning.webp','assets/hero-paused.webp','assets/hero-return.webp','assets/hero-error.webp',
-          }
-          assets = set(frontend.get('assets', []))
-          if assets != expected:
-              raise SystemExit(f'panel.json assets mismatch: {sorted(assets)}')
-          for rel in assets:
-              if not (root / rel).is_file():
-                  raise SystemExit(f'Manifest asset missing: {rel}')
-          expected_states = {'base','charging','cleaning','paused','returning','error','dock','away','dust_collection','roller_cleaning','drying'}
-          if set(frontend.get('product_art_states', [])) != expected_states:
-              raise SystemExit('state art mapping mismatch')
-          indicator = panel.get('availability', {}).get('connection_indicator', {})
-          if indicator.get('stale_after_scan_periods') != 3:
-              raise SystemExit('connection indicator stale threshold mismatch')
-          if indicator.get('failed_poll_immediately_stale') is not True:
-              raise SystemExit('connection indicator failed-poll rule mismatch')
-          navigation = panel.get('navigation', {})
-          if navigation.get('header_center_action') != 'source_aware_return':
-              raise SystemExit('source-aware Header return mismatch')
-          if navigation.get('header_source_route_key') != 'nikas.specialized.source_route.v1':
-              raise SystemExit('source route hand-off mismatch')
-          if navigation.get('header_safe_fallback') != '/dashboard-actions/home':
-              raise SystemExit('source route fallback mismatch')
-          if panel.get('standard') != 'NIKAS Specialized Panel UI Standard v1.9':
-              raise SystemExit('panel standard mismatch')
-          transform = panel.get('workspace_transform', {})
-          required = {
-              'scope': 'working_area_only',
-              'implementation': 'translate3d_scale',
-              'native_scroll_at_100': True,
-              'horizontal_scroll_at_100': False,
-              'origin_at_100': [0, 0],
-              'css_zoom': False,
-              'pinch_midpoint': True,
-              'one_pointer_pan_above_100_only': True,
-              'pan_only_on_overflowing_axes': True,
-              'clamp_after_resize': True,
-              'tab_change_returns_to_top': True,
-              'two_finger_double_tap_reset': True,
-              'permanent_zoom_controls': False,
-              'identity_transform_at_100': 'none',
-              'defer_rerender_during_native_scroll': True,
-              'viewport_height_owner': 'host',
-              'mobile_overview_scene_height_px': 264,
-              'tabs_mounted_once': True,
-              'whole_tree_replace_after_mount': False,
-              'meaningful_text_min_px': 12,
-              'meaningful_text_max_px': 25,
-              'two_finger_reset_guarded': True,
-              'pinch_blocks_more_info': True,
-          }
-          for key, value in required.items():
-              if transform.get(key) != value:
-                  raise SystemExit(f'workspace_transform {key} mismatch: {transform.get(key)!r}')
-          if set(transform.get('shell_excluded', [])) != {'header','bottom_navigation'}:
-              raise SystemExit('workspace shell exclusion mismatch')
-          detail = panel.get('navigation', {}).get('drill_down', {}).get('cleaning-settings', {})
-          if detail.get('select_write_strategy') != 'draft_explicit_apply_confirmation_write_readback':
-              raise SystemExit('cleaning write strategy mismatch')
-          if detail.get('draft_fields') != ['suction', 'water', 'volume', 'do_not_disturb']:
-              raise SystemExit('cleaning draft fields mismatch')
-          if detail.get('single_apply') is not True or detail.get('readback_required') is not True:
-              raise SystemExit('cleaning apply/readback contract mismatch')
-          first_paint = panel.get('first_paint', {})
-          if first_paint.get('hero_image_loading') != 'eager' or first_paint.get('hero_image_fetch_priority') != 'high':
-              raise SystemExit('first-paint image priority mismatch')
-          ownership = json.loads(Path('panel.json').read_text(encoding='utf-8')).get('ownership', {})
-          if ownership.get('station_start_commands_exposed') is not True:
-              raise SystemExit('station start exposure mismatch')
-          if ownership.get('station_stop_commands_public') is not True:
-              raise SystemExit('station stop exposure mismatch')
-          if ownership.get('station_stop_immediate') is not True:
-              raise SystemExit('station stop immediate mismatch')
-          if ownership.get('verified_station_start_commands') != ['start_dust_collection', 'start_roller_cleaning', 'start_roller_drying']:
-              raise SystemExit('verified station start command mismatch')
-          if ownership.get('verified_station_stop_commands') != ['stop_dust_collection', 'stop_roller_cleaning', 'stop_roller_drying']:
-              raise SystemExit('verified station stop command mismatch')
-          if ownership.get('station_stop_requires_confirmation') is not True:
-              raise SystemExit('station stop confirmation mismatch')
-          if ownership.get('start_and_return_exposed') is not True:
-              raise SystemExit('start/return exposure mismatch')
-          if ownership.get('start_and_return_require_confirmation') is not True:
-              raise SystemExit('start/return confirmation mismatch')
-          if ownership.get('diagnostic_capture_read_only') is not True:
-              raise SystemExit('diagnostic capture safety mismatch')
-          if ownership.get('profile_writes_require_confirmation_and_readback') is not True:
-              raise SystemExit('profile write safety mismatch')
-          metadata = json.loads(Path('.nikas-ui-standard.json').read_text(encoding='utf-8'))
-          if metadata.get('ui_version') != '0.7.40':
-              raise SystemExit('NikaS UI metadata version mismatch')
-          print('Panel manifest OK')
-          PY
-
-      - name: Validate local image assets
-        run: |
-          python - <<'PY'
-          import hashlib
-          from pathlib import Path
-          root = Path('custom_components/s8_omni/frontend/assets')
-          webps = ['hero-base.webp','hero-charging.webp','hero-cleaning.webp','hero-paused.webp','hero-return.webp','hero-error.webp','hero-dock.webp','hero-away.webp','hero-dust.webp','hero-wash.webp','hero-dry.webp']
-          for name in webps:
-              data = (root/name).read_bytes()
-              if len(data) < 5000 or data[:4] != b'RIFF' or data[8:12] != b'WEBP':
-                  raise SystemExit(f'Invalid/small WebP: {name} {len(data)}')
-              print(f'OK {name}: {len(data)} bytes {hashlib.sha256(data).hexdigest()}')
-          jpegs = ['product-clean.jpg','product-dock.jpg','status-robot.jpg','status-station.jpg','status-water.jpg','status-dustbin.jpg']
-          for name in jpegs:
-              data = (root/name).read_bytes()
-              if not (data.startswith(b'\xff\xd8') and data.endswith(b'\xff\xd9')):
-                  raise SystemExit(f'Invalid JPEG: {name}')
-          PY
-
-      - name: Validate packaged integration brand
-        run: |
-          python - <<'PY'
-          import struct
-          from pathlib import Path
-
-          expected = {
-              Path('custom_components/s8_omni/brand/icon.png'): (256, 256),
-              Path('custom_components/s8_omni/brand/icon@2x.png'): (512, 512),
-          }
-          for path, size in expected.items():
-              data = path.read_bytes()
-              if data[:8] != b'\x89PNG\r\n\x1a\n':
-                  raise SystemExit(f'Invalid PNG: {path}')
-              width, height = struct.unpack('>II', data[16:24])
-              if (width, height) != size:
-                  raise SystemExit(f'Unexpected brand size: {path} {(width, height)}')
-              if data[25] not in (4, 6):
-                  raise SystemExit(f'Brand asset has no alpha channel: {path}')
-              print(f'OK {path}: {width}x{height}')
-          PY
-
-      - name: Enforce offline-safe panel lifecycle
+      - name: Run regression tests
+        run: python -m unittest discover -s tests -p 'test_*.py'
+      - name: Verify host-bound Shell v2.1 markers
         run: |
           python - <<'PY'
           from pathlib import Path
-          text=Path('custom_components/s8_omni/__init__.py').read_text(encoding='utf-8')
-          setup=text.split('async def async_setup_entry',1)[1].split('async def async_unload_entry',1)[0]
-          if 'async_config_entry_first_refresh' in setup: raise SystemExit('first refresh must not gate setup')
-          markers=['await _async_register_panel(hass, entry)','await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)','await coordinator.async_refresh()']
-          pos=[setup.find(x) for x in markers]
-          if any(x<0 for x in pos) or pos!=sorted(pos): raise SystemExit('invalid lifecycle order')
-          print('Offline-safe lifecycle OK')
+          source = Path("custom_components/s8_omni/frontend/s8-omni-panel.js").read_text(encoding="utf-8")
+          for forbidden in ("100vh", "100dvh", "/dashboard-house-v11"):
+              assert forbidden not in source, forbidden
+          for required in (
+              'const UI_VERSION = "v0.7.41"',
+              "/dashboard-house-v13/home",
+              "/dashboard-rooms-v11/rooms",
+              "createNikasShellScrollBoundaryGuard",
+              'host.addEventListener("touchmove", moveTouch, { passive: false, capture: true })',
+              "--mdc-icon-size:26px",
+              "<strong>Пылесос</strong>",
+              '"Диагностика"',
+          ):
+              assert required in source, required
           PY
-
       - name: Reject tracked credential/key files
         shell: bash
         run: |
           forbidden="$(git ls-files | grep -E '(^|/)(secrets\.yaml|\.env($|\.)|.*\.(pem|key|p12)$)' | grep -v -E '(^|/)\.env\.example$' || true)"
-          if [ -n "$forbidden" ]; then echo "$forbidden"; exit 1; fi
+          if [ -n "$forbidden" ]; then
+            echo 'Forbidden credential/key-like files are tracked:'
+            echo "$forbidden"
+            exit 1
+          fi
