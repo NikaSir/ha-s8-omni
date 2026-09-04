@@ -6,6 +6,7 @@ Offline-only. Reads `[S8_DP_TX]` events emitted by
 - chronological DP writes;
 - DP15 RobotProtocol frames;
 - legacy room SET 0x14 payloads (`cleanTimes`, `roomCount`, `roomIds`);
+- candidate Tuya bitmap roomHexId values for map v1 versus map v2/v3;
 - scalar sequencing around DP4/DP1/DP2.
 
 No network or device write path exists in this script.
@@ -32,6 +33,21 @@ class Event:
     ts: str
     method: str
     dps: dict[str, Any]
+
+
+def room_hex_id_candidates(room_id: int) -> dict[str, str]:
+    """Return bitmap pixel-byte candidates used by Tuya map versions.
+
+    Tuya map v1 appends the two-bit sweep marker ``00`` to the room ID.
+    Map v2/v3 appends the three-bit sweep marker ``111``.  The active map
+    version still has to be learned from the real S8 map payload.
+    """
+    if not 0 <= room_id <= 31:
+        raise ProtocolError("room id must fit Tuya map room-id range 0..31")
+    return {
+        "map_v1_room_hex_id": f"{(room_id << 2):02x}",
+        "map_v2_v3_room_hex_id": f"{((room_id << 3) | 0b111):02x}",
+    }
 
 
 def _decode_dps(value: Any) -> dict[str, Any]:
@@ -90,12 +106,16 @@ def decode_room_set_14_base64(value: str) -> list[dict[str, Any]]:
         room_count = data[1]
         if len(data) != 2 + room_count:
             raise ProtocolError("room SET 0x14 room count does not match payload length")
+        room_ids = list(data[2:])
         room_sets.append(
             {
                 "command": "0x14",
                 "clean_times": clean_times,
                 "room_count": room_count,
-                "room_ids": list(data[2:]),
+                "room_ids": room_ids,
+                "room_hex_id_candidates": [
+                    {"room_id": room_id, **room_hex_id_candidates(room_id)} for room_id in room_ids
+                ],
                 "raw_hex": frame.raw.hex(),
                 "base64": base64.b64encode(frame.raw).decode("ascii"),
             }
@@ -145,6 +165,12 @@ def analyze(text: str) -> dict[str, Any]:
         "scalar_and_command_sequence": scalar_sequence,
         "room_set_0x14": room_sets,
         "room_set_verified_in_capture": any("room_ids" in item for item in room_sets),
+        "expected_family_order_reference": ["15", "4", "1_or_pause"],
+        "expected_s8_room_mode_candidate": "part",
+        "ordering_note": (
+            "Tuya template requires separate writes commands -> mode -> switch/pause; "
+            "capture remains authoritative for the actual S8 scalar values and ordering."
+        ),
     }
 
 
