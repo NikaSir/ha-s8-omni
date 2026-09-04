@@ -2,25 +2,66 @@
 
 ## Purpose
 
-Compare independent Tuya laser-vacuum implementations without treating donor datapoint numbers or payloads as S8 facts.
+Compare independent Tuya laser-vacuum implementations while keeping donor evidence separate from facts captured from the actual S8 OMNI.
+
+## Actual S8 OMNI — strongest evidence
+
+The saved Home Assistant Tuya diagnostic for product ID `ouh93tro69lmgafr` resolves the numeric schema directly:
+
+```text
+DP14 = path_data       Raw
+DP15 = command_trans   Raw
+DP16 = request         get_map|get_path|get_both
+DP32 = device_timer    Raw
+DP33 = disturb_time_set Raw
+DP35 = voice_data      Raw
+```
+
+The same diagnostic contains an actual DP15 value which decodes into five consecutive, checksum-valid `AA 00` RobotProtocol frames:
+
+```text
+aa00011717      -> 0x17 spot-clean counterpart
+aa0002130013    -> 0x13 virtual-wall V1 counterpart
+aa00021b001b    -> 0x1B restricted-area V1 counterpart
+aa000329000029  -> 0x29 zone-clean V1 counterpart
+aa000315000015  -> 0x15 room-clean V1 counterpart
+```
+
+This promotes the **legacy V0 generation itself** from family hypothesis to actual S8 wire-format evidence.
+
+The product's DP4 schema is:
+
+```text
+smart, zone, pose, part, chargego
+```
+
+and DP5 includes `part_clean`. Therefore room-selection on this S8 is expected to use the device's `part` naming, not the newer generic-template label `select_room`.
 
 ## Reference A — official Tuya RobotProtocol
 
-The public Tuya `RobotProtocol` defines room clean V1 with command byte `0x14`.
+The public Tuya `RobotProtocol` defines the matching legacy App→Robot commands:
 
-For one room and one pass the payload shape is:
+```text
+room clean        0x14 -> 0x15
+spot clean        0x16 -> 0x17
+virtual wall      0x12 -> 0x13
+restricted area   0x1A -> 0x1B
+zone clean        0x28 -> 0x29
+```
+
+For one room and one pass the V0 room frame shape is:
 
 ```text
 AA 00 04 14 01 01 ROOM_ID CHECKSUM
 ```
 
-for frame protocol version 0, where:
+where:
 
 ```text
 CHECKSUM = (0x14 + 0x01 + 0x01 + ROOM_ID) & 0xFF
 ```
 
-The newer public panel template can also use `0x56` room-clean V2 with per-room cleaning parameters.
+The newer public panel template also exposes newer generations (`0x56`, `0x3A`, `0x3E`, `0x38`), but those are no longer the leading candidates for this S8 firmware because the actual S8 has reported the old counterpart opcodes.
 
 ## Reference B — Proscenic Q8, independent 2026 reverse engineering
 
@@ -30,67 +71,66 @@ The `Verandi/proscenic-q8-tuya` project independently captured and reproduced ex
 AA 00 04 14 01 01 ROOM_ID CHECKSUM
 ```
 
-It sends the resulting Base64 value through a Tuya command whose semantic code is exactly:
+and transports it through a semantic `command_trans` datapoint. This is independent confirmation that the old public format is used by real Tuya products.
 
-```text
-command_trans
-```
+It is now a supporting reference rather than the basis for the S8 hypothesis.
 
-This is a strong independent confirmation that the public Tuya V1 command is deployed in real consumer products and is not merely a sample codec.
+## Reference C — Airrobo T20+ / Abir X9 field research
 
-It is **not** evidence that S8 uses the same numeric DP or room payload version.
+Recent community research on another Tuya laser-vacuum family reports map/session state affecting some room commands. This remains a useful warning that a syntactically correct frame is not always sufficient for a different firmware.
 
-## Reference C — Airrobo T20+ / Abir X9, 2026 field research
-
-Recent `tuya-local` community research reports:
-
-- Tuya protocol 3.3;
-- advanced map navigation carried on raw DP15;
-- room commands requiring additional map/session state and resisting static replay;
-- zone and Pin&Go payloads that can be replayed locally in that OEM firmware;
-- command acceptance depending on robot motion/state in that platform.
-
-This reference is important because it demonstrates that two Tuya laser-vacuum families can expose the same high-level UI concepts while applying different additional validation rules around map-based commands.
-
-Therefore a syntactically valid `0x14`, `0x3A` or `0x3E` frame is not automatically sufficient for S8.
+For S8 we therefore still require one outbound Smart Life capture before enabling a new production write, even though the command generation is now strongly constrained.
 
 ## Reference D — BSTY M3-2 / Amicro Smart
 
-The BSTY M3-2 user documentation identifies Amicro Smart as the control application. This creates a plausible hardware/software family reference for KaringBee S8 research because the BSTY/Amicro branch exposes very similar dock, roller-wash and cleaning-mode semantics.
+BSTY M3-2 documentation identifies Amicro Smart as its control application and remains a plausible OEM-family reference for the KaringBee hardware lineage.
 
-No captured BSTY/Amicro raw frame is currently classified as S8-compatible.
+No BSTY/Amicro raw frame is needed to establish DP15 or the RobotProtocol generation anymore: those are now established from the actual S8 diagnostic.
 
 ## Comparison matrix
 
-| Evidence | `command_trans` semantic code | Room cmd | Frame v0 `AA 00` | Extra token/state possible | S8 status |
-|---|---|---:|---|---|---|
-| Tuya public RobotProtocol | yes in panel template | `0x14` / `0x56` | yes | implementation-dependent | `TUYA_STANDARD` |
-| Proscenic Q8 | yes | `0x14` | yes | not required in published room example | `FAMILY_REFERENCE` |
-| Airrobo T20+ / Abir X9 | raw DP15 observed | map/room proprietary wrapper reported | platform-specific | yes | `FAMILY_REFERENCE` |
-| BSTY M3-2 / Amicro | not yet captured | unknown | unknown | unknown | `FAMILY_REFERENCE` |
-| Actual S8 OMNI | not yet captured | unknown | unknown | unknown | pending |
+| Evidence | command transport | Room generation | `AA 00` observed | S8 role |
+|---|---|---|---|---|
+| **Actual S8 OMNI** | **DP15 `command_trans`** | counterpart `0x15` observed | **yes** | **S8 wire evidence** |
+| Tuya public RobotProtocol | semantic `command_trans` | `0x14/0x15` V1; newer `0x56/57` | yes | protocol specification |
+| Proscenic Q8 | `command_trans` | `0x14` | yes | independent supporting reference |
+| Airrobo T20+ / Abir X9 | raw complex transport | OEM/map-state dependent | platform-specific | cautionary reference |
+| BSTY M3-2 / Amicro | not yet captured | unknown | unknown | OEM family reference |
 
-## New decision rule
+## Revised S8 candidate matrix
 
-A future S8 room/zone capture must be classified in this order:
+| S8 action | Numeric DP / scalar mode | Leading command | Confidence before outbound capture |
+|---|---|---:|---|
+| Locate robot | DP11 `seek` | Boolean pulse | schema verified |
+| Manual movement | DP12 `direction_control` | enum | schema verified |
+| Request map/path | DP16 `request` | `get_map/get_path/get_both` | schema verified |
+| Selected-room clean | **DP15**, DP4=`part` | **`0x14`** | counterpart and transport verified |
+| Zone clean | **DP15**, DP4=`zone` | **`0x28`** | counterpart and transport verified |
+| Spot / where-to-clean | **DP15**, DP4=`pose` | **`0x16`** | counterpart and transport verified |
+| Virtual wall | **DP15** | **`0x12`** | counterpart and transport verified |
+| No-go / no-mop area | **DP15** | **`0x1A`** | counterpart and transport verified |
+| Timer | DP32 | `0x30` set / actual `0x31` report | generation verified |
+| DND schedule | DP33 | **`0x32` set / actual `0x33` report** | generation verified |
+| Voice package | DP35 | `0x34` set / actual extended `0x35` report | generation verified |
 
-1. Does Smart Life publish an exact DP code `command_trans`, or only a numeric/raw endpoint?
-2. Does its decoded payload begin with a valid Tuya `AA`/`AB` frame?
-3. Which frame protocol version is used (`AA 00`, `AA 01`, or extended `AB`)?
-4. Is the command byte one of the public RobotProtocol values (`0x14`, `0x56`, `0x3A`, `0x3E`, etc.)?
-5. Are there bytes before/after the public payload indicating map ID, session token, sequence, timestamp, or OEM extension?
-6. Does the same action generate a stable payload across two captures?
-7. Does only the expected semantic field change when selecting a different room or point?
+`DP145` is no longer an active hypothesis: it is absent from the actual saved cloud schema and from repeated LAN status snapshots.
 
-Only after those checks may an offline encoder be considered for S8.
+## Remaining decision rule for a write
 
-## Immediate implication
+For room/zone/spot, the next outbound capture should answer only the remaining implementation details:
 
-The highest-value next capture is **one room, repeated twice without changing the room**, followed by **a different room**. The three frames let us distinguish:
+1. exact payload bytes for a real room/zone/point;
+2. whether Smart Life publishes only DP15 first or combines any scalar writes;
+3. exact order around DP4 (`part|zone|pose`), DP1 and DP2;
+4. whether the same room produces an identical frame on two successive runs;
+5. whether any map/session bytes are appended beyond the public legacy payload.
 
-- static public V1/V2 protocol;
-- room-ID-only delta;
-- dynamic sequence/token fields;
-- map-session-dependent wrappers.
+The best experiment remains:
 
-This is more informative than attempting a single replay immediately.
+```text
+same room -> stop
+same room -> stop
+different room -> stop
+```
+
+If the only changing payload byte is `ROOM_ID` and checksum, the public `0x14` encoder can be promoted with high confidence after physical readback.
