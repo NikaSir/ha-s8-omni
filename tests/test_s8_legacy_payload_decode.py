@@ -41,13 +41,13 @@ class S8LegacyPayloadDecodeTests(unittest.TestCase):
         self.assertEqual([], semantics[4]["room_ids"])
 
     def test_room_15_decoder(self) -> None:
-        result = decode_room_15(decode_frame("hex:aa000615010304050324"))
+        result = decode_room_15(decode_frame("aa000615010304050324"))
         self.assertEqual(1, result["clean_times"])
         self.assertEqual(3, result["room_count"])
         self.assertEqual([4, 5, 3], result["room_ids"])
 
     def test_zone_29_header_decoder(self) -> None:
-        result = decode_zone_29_header(decode_frame("hex:aa000329000029"))
+        result = decode_zone_29_header(decode_frame("aa000329000029"))
         self.assertEqual(0, result["clean_times"])
         self.assertEqual(0, result["zone_count"])
         self.assertEqual("", result["remaining_payload_hex"])
