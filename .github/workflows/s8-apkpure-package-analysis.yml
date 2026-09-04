@@ -24,6 +24,7 @@ jobs:
           python-version: "3.12"
 
       - name: Download verified LINKBEY package
+        id: acquire
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -33,46 +34,143 @@ jobs:
           from __future__ import annotations
 
           import hashlib
+          import os
           import pathlib
+          import time
+          import urllib.parse
           import zipfile
 
           import requests
 
           target = pathlib.Path("work/apk/Packages_1.2.7_127.apk")
-          url = "https://d.apkpure.com/b/APK/com.lynkbey.app?version=latest"
+          report = pathlib.Path("report/acquisition")
+          target.parent.mkdir(parents=True, exist_ok=True)
+          report.mkdir(parents=True, exist_ok=True)
+
+          signed_path = (
+              "/b/APK/Y29tLmx5bmtiZXkuYXBwXzEyN180NzZiYmJhYw"
+              "?as2=8af5b9419e1f8f5a25b05bc05f5055996c753ee6"
+              "&k=78cf907cde5d0501f39051697e93d40d6c753ee6"
+              "&_p=Y29tLmx5bmtiZXkuYXBw"
+              "&c=1%7CLIFESTYLE%7Cb2lkPTkmZGV2PSVFNSU4RSVBNiVFOSU5NyVBOCVFOSVBMiU4NiVFOCVCNCU5RCVFNiU5QyVCQSVFNSU5OSVBOCVFNCVCQSVCQSVFNiU5QyU4OSVFOSU5OSU5MCVFNSU4NSVBQyVFNSU4RiVCOCZ0PWFwayZzPTc1NTczMDI1JnZuPTEuMi43JnZjPTEyNw"
+              "&_fn=JUU5JUEyJTg2JUU4JUI0JTlEJUU2JTlDJUJBJUU1JTk5JUE4JUU0JUJBJUJBXzEuMi43X2Fwa2NvbWJvLmNvbS5hcGs%3D"
+          )
+          urls = [
+              "https://d.apkpure.com/b/APK/com.lynkbey.app?version=latest",
+              "https://d.apkpure.com/b/APK/com.lynkbey.app?version=1.2.7",
+              "https://download.pureapk.com" + signed_path,
+              "https://d.apkpure.com" + signed_path,
+              "https://download.apkpure.com" + signed_path,
+              "https://d.apkpure.net" + signed_path,
+          ]
           headers = {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36",
+              "User-Agent": (
+                  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                  "AppleWebKit/537.36 (KHTML, like Gecko) "
+                  "Chrome/126.0.0.0 Safari/537.36"
+              ),
               "Accept": "application/vnd.android.package-archive,application/octet-stream,*/*;q=0.8",
+              "Accept-Language": "en-US,en;q=0.9",
               "Accept-Encoding": "identity",
           }
-          with requests.get(url, headers=headers, timeout=300, stream=True) as response:
-              response.raise_for_status()
-              with target.open("wb") as output:
-                  for chunk in response.iter_content(chunk_size=1024 * 1024):
-                      if chunk:
-                          output.write(chunk)
-              pathlib.Path("report/acquisition/headers.txt").write_text(
-                  "\n".join(f"{key}: {value}" for key, value in response.headers.items()),
-                  encoding="utf-8",
-              )
-          if target.stat().st_size < 10_000_000:
-              raise SystemExit("Downloaded file is too small")
-          with zipfile.ZipFile(target) as archive:
-              names = set(archive.namelist())
-          if "AndroidManifest.xml" not in names or not any(name.endswith(".dex") for name in names):
-              raise SystemExit("Downloaded file is not a valid APK")
-          pathlib.Path("report/sha256.txt").write_text(
-              hashlib.sha256(target.read_bytes()).hexdigest() + "\n",
-              encoding="utf-8",
-          )
+          logs: list[str] = []
+
+          def log(message: str) -> None:
+              print(message, flush=True)
+              logs.append(message)
+
+          def valid_apk(path: pathlib.Path) -> bool:
+              if not path.is_file() or path.stat().st_size < 10_000_000:
+                  return False
+              try:
+                  with zipfile.ZipFile(path) as archive:
+                      names = set(archive.namelist())
+                  return "AndroidManifest.xml" in names and any(
+                      name.endswith(".dex") for name in names
+                  )
+              except zipfile.BadZipFile:
+                  return False
+
+          session = requests.Session()
+          session.headers.update(headers)
+          referers = (None, "https://apkpure.com/", "https://apkcombo.com/")
+
+          for round_index in range(1, 3):
+              for url_index, url in enumerate(urls, 1):
+                  for ref_index, referer in enumerate(referers, 1):
+                      current_headers = {}
+                      if referer:
+                          current_headers["Referer"] = referer
+                      try:
+                          with session.get(
+                              url,
+                              headers=current_headers,
+                              timeout=300,
+                              allow_redirects=True,
+                              stream=True,
+                          ) as response:
+                              log(
+                                  f"round={round_index} url={url_index} ref={ref_index} "
+                                  f"status={response.status_code} "
+                                  f"host={urllib.parse.urlparse(response.url).hostname} "
+                                  f"path={urllib.parse.urlparse(response.url).path} "
+                                  f"type={response.headers.get('content-type')!r} "
+                                  f"length={response.headers.get('content-length')!r}"
+                              )
+                              (report / f"headers-{round_index}-{url_index}-{ref_index}.txt").write_text(
+                                  "\n".join(f"{key}: {value}" for key, value in response.headers.items()),
+                                  encoding="utf-8",
+                              )
+                              response.raise_for_status()
+                              with target.open("wb") as output:
+                                  total = 0
+                                  prefix = b""
+                                  for chunk in response.iter_content(chunk_size=1024 * 1024):
+                                      if not chunk:
+                                          continue
+                                      if not prefix:
+                                          prefix = chunk[:4]
+                                      output.write(chunk)
+                                      total += len(chunk)
+                              log(f"downloaded={total} prefix={prefix!r}")
+                              if valid_apk(target):
+                                  digest = hashlib.sha256(target.read_bytes()).hexdigest()
+                                  log(f"VALID APK size={target.stat().st_size} sha256={digest}")
+                                  break
+                              body = target.read_bytes()[:500_000]
+                              (report / f"body-{round_index}-{url_index}-{ref_index}.bin").write_bytes(body)
+                              target.unlink(missing_ok=True)
+                      except Exception as exc:  # noqa: BLE001
+                          log(
+                              f"round={round_index} url={url_index} ref={ref_index} "
+                              f"failed: {exc!r}"
+                          )
+                          target.unlink(missing_ok=True)
+                      if not valid_apk(target):
+                          time.sleep(2)
+                  if valid_apk(target):
+                      break
+              if valid_apk(target):
+                  break
+              time.sleep(8)
+
+          (report / "download.log").write_text("\n".join(logs), encoding="utf-8")
+          found = valid_apk(target)
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"found={'true' if found else 'false'}\n")
+              if found:
+                  output.write(f"apk={target}\n")
+          if not found:
+              raise SystemExit("Unable to acquire a valid com.lynkbey.app APK")
           PY
 
       - name: Verify package and signature
+        if: steps.acquire.outputs.found == 'true'
         shell: bash
         run: |
           set -Eeuo pipefail
-          APK=work/apk/Packages_1.2.7_127.apk
-          SDK="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          APK="${{ steps.acquire.outputs.apk }}"
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
           APKANALYZER="$(find "$SDK" -type f -name apkanalyzer 2>/dev/null | head -1)"
           APKSIGNER="$(find "$SDK/build-tools" -type f -name apksigner 2>/dev/null | sort -V | tail -1 || true)"
           APP_ID="$("$APKANALYZER" manifest application-id "$APK")"
@@ -82,27 +180,33 @@ jobs:
           printf 'application_id=%s\nversion_name=%s\nversion_code=%s\n' \
             "$APP_ID" "$VERSION_NAME" "$VERSION_CODE" > report/package.txt
           "$APKANALYZER" manifest print "$APK" > report/AndroidManifest.xml
+          sha256sum "$APK" > report/sha256.txt
+          stat --printf='size_bytes=%s\n' "$APK" > report/size.txt
           keytool -printcert -jarfile "$APK" > report/signing_keytool.txt 2>&1 || true
           if [[ -n "$APKSIGNER" ]]; then
             "$APKSIGNER" verify --verbose --print-certs "$APK" > report/signing_apksigner.txt 2>&1 || true
           fi
 
       - name: Decompile with JADX
+        if: steps.acquire.outputs.found == 'true'
         shell: bash
         run: |
           set -Eeuo pipefail
+          APK="${{ steps.acquire.outputs.apk }}"
           curl -fL --retry 4 --retry-delay 3 \
             https://github.com/skylot/jadx/releases/download/v1.5.2/jadx-1.5.2.zip \
             -o /tmp/jadx.zip
           unzip -q /tmp/jadx.zip -d /tmp/jadx
           mkdir -p work/jadx
           /tmp/jadx/bin/jadx --threads-count 2 --show-bad-code \
-            -d work/jadx work/apk/Packages_1.2.7_127.apk > report/jadx.log 2>&1 || true
+            -d work/jadx "$APK" > report/jadx.log 2>&1 || true
 
       - name: Export first-party source and command evidence
+        if: steps.acquire.outputs.found == 'true'
         shell: bash
         run: |
           set -Eeuo pipefail
+          command -v rg >/dev/null || { sudo apt-get update; sudo apt-get install -y ripgrep; }
           mkdir -p report/first_party_sources report/resources report/hermes
 
           test -d work/jadx/sources/com/lynkbey
@@ -122,7 +226,7 @@ jobs:
           find report/first_party_sources -type f -name '*.java' -printf '%P\t%s bytes\n' \
             | sort > report/first_party_file_index.txt
 
-          rg -n -C 8 \
+          rg -n -C 10 \
             'SendMqttEventBus|robotWithChannel0|robotWithChannel[0-9]+|MQTTControl|channel0|channel1|channel2|channel3|channel4|channel5|channel6|channel7|channel8|publishDps|setDps|chargego|power_go|switch_go|selectroom|zone_clean|part_clean|manual|reset|filter|brush|disturb|timer|schedule|dust|mop|dry|wash|voice|find.?robot|seek.?robot' \
             report/first_party_sources > report/first_party_command_context.txt || true
 
@@ -166,15 +270,19 @@ jobs:
             echo
             cat report/package.txt
             echo
+            cat report/sha256.txt
+            cat report/size.txt
+            echo
             echo 'The artifact contains only public APK-derived source and reports.'
             echo 'No APK, Home Assistant credentials, Device ID, Local Key, cloud token or private diagnostics are included.'
           } > report/README.md
 
       - name: Upload text-only deep analysis artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: s8-linkbey-deep-source-${{ github.run_number }}
           path: report/
-          if-no-files-found: error
+          if-no-files-found: warn
           compression-level: 6
           retention-days: 3
