@@ -12,7 +12,7 @@ permissions:
 jobs:
   acquire-and-scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
 
     steps:
       - name: Check out repository
@@ -23,7 +23,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Acquire public APK and preserve source diagnostics
+      - name: Reproduce package-specific APKCombo request
         id: acquire
         shell: bash
         run: |
@@ -36,41 +36,42 @@ jobs:
 
           import hashlib
           import html
-          import json
           import os
           import pathlib
           import re
           import shutil
+          import time
           import urllib.parse
           import zipfile
-          from collections.abc import Iterable
 
           import requests
           from bs4 import BeautifulSoup
 
           PACKAGE = "com.lynkbey.app"
-          PREFERRED_VERSION = "1.0.3"
-          CURRENT_VERSION = "1.2.7"
-          CHINESE_NAME = "领贝机器人"
+          NAME = "领贝机器人"
           OUT = pathlib.Path("work/apks")
           REPORT = pathlib.Path("report/acquisition")
-          TARGET = OUT / f"{PACKAGE}-acquired.apk"
+          TARGET = OUT / "Packages_Linkbey_acquired.apk"
           OUT.mkdir(parents=True, exist_ok=True)
           REPORT.mkdir(parents=True, exist_ok=True)
 
-          HEADERS = {
+          encoded_name = urllib.parse.quote(NAME, safe="")
+          page_url = (
+              f"https://apkcombo.com/{encoded_name}/{PACKAGE}/download/phone-1.0.3-apk"
+          )
+          origin = "https://apkcombo.com"
+          headers = {
               "User-Agent": (
                   "Mozilla/5.0 (X11; Linux x86_64) "
                   "AppleWebKit/537.36 (KHTML, like Gecko) "
                   "Chrome/126.0.0.0 Safari/537.36"
               ),
-              "Accept": "text/html,application/xhtml+xml,application/json,*/*;q=0.8",
               "Accept-Language": "en-US,en;q=0.9,zh-CN;q=0.8",
           }
           session = requests.Session()
-          session.headers.update(HEADERS)
+          session.headers.update(headers)
           log_lines: list[str] = []
-          candidates: list[tuple[int, str, str]] = []
+          variants: list[str] = []
 
           def log(message: str) -> None:
               print(message, flush=True)
@@ -82,126 +83,41 @@ jobs:
               try:
                   with zipfile.ZipFile(path) as archive:
                       names = set(archive.namelist())
-                      return "AndroidManifest.xml" in names and any(
-                          name.endswith(".dex") for name in names
-                      )
+                  return "AndroidManifest.xml" in names and any(
+                      name.endswith(".dex") for name in names
+                  )
               except zipfile.BadZipFile:
                   return False
 
-          def priority(version: str | None, url: str) -> int:
-              text = f"{version or ''} {url}"
-              if PREFERRED_VERSION in text:
-                  return 0
-              if CURRENT_VERSION in text:
-                  return 1
-              return 5
-
-          def add_candidate(url: str, label: str, version: str | None = None) -> None:
-              url = html.unescape(url).replace("\\/", "/").strip(" \t\r\n\"'")
-              if url.startswith("//"):
-                  url = "https:" + url
-              if not url.startswith(("http://", "https://")):
-                  return
-              lowered = url.lower()
-              if not any(
-                  token in lowered
-                  for token in (
-                      ".apk",
-                      ".xapk",
-                      "download.apkcombo",
-                      "pool.apk",
-                      "aptoide",
-                      "/download/",
-                  )
-              ):
-                  return
-              candidates.append((priority(version, url), label, url))
-
-          def collect_json(value: object, trail: tuple[str, ...] = ()) -> None:
-              if isinstance(value, dict):
-                  version = None
-                  for key in ("vername", "version_name", "versionName", "version"):
-                      candidate = value.get(key)
-                      if isinstance(candidate, (str, int, float)):
-                          version = str(candidate)
-                          break
-                  for key, child in value.items():
-                      next_trail = (*trail, str(key))
-                      if isinstance(child, str):
-                          if child.startswith(("http://", "https://")):
-                              add_candidate(child, "json:" + "/".join(next_trail), version)
-                      collect_json(child, next_trail)
-              elif isinstance(value, list):
-                  for index, child in enumerate(value):
-                      collect_json(child, (*trail, str(index)))
-
-          def save_http_text(response: requests.Response, name: str) -> None:
-              suffix = ".json" if "json" in response.headers.get("content-type", "") else ".html"
-              (REPORT / f"{name}{suffix}").write_text(
-                  response.text[:5_000_000], encoding="utf-8", errors="replace"
-              )
-
-          def inspect_html(text: str, base_url: str, label: str) -> None:
-              soup = BeautifulSoup(text, "html.parser")
-              clues: list[str] = []
-              for tag in soup.find_all(True):
-                  for key, raw_value in tag.attrs.items():
-                      values: Iterable[object]
-                      values = raw_value if isinstance(raw_value, list) else (raw_value,)
-                      for value in values:
-                          if not isinstance(value, str):
-                              continue
-                          joined = urllib.parse.urljoin(base_url, value)
-                          lowered = f"{key} {value}".lower()
-                          if any(token in lowered for token in ("apk", "download", "variant", "url")):
-                              clues.append(f"<{tag.name}> {key}={value}")
-                              add_candidate(joined, f"html:{label}:{tag.name}:{key}")
-              for match in re.findall(r"https?://[^\s\"'<>\\]+", text):
-                  add_candidate(match, f"regex:{label}")
-              for match in re.findall(r"(?:href|url|path|download)[\"']?\s*[:=]\s*[\"']([^\"']+)", text, re.I):
-                  add_candidate(urllib.parse.urljoin(base_url, match), f"script:{label}")
-              (REPORT / f"{label}-clues.txt").write_text(
-                  "\n".join(sorted(set(clues)))[:5_000_000], encoding="utf-8"
-              )
-
-          def save_archive_response(response: requests.Response, label: str) -> bool:
-              content_type = response.headers.get("content-type", "")
-              disposition = response.headers.get("content-disposition", "")
-              log(
-                  f"{label}: status={response.status_code} final={response.url} "
-                  f"type={content_type!r} length={response.headers.get('content-length')!r} "
-                  f"disposition={disposition!r}"
-              )
-              response.raise_for_status()
-              body = response.content
+          def extract_apk(body: bytes, label: str) -> bool:
               if not body.startswith(b"PK\x03\x04"):
                   return False
-
-              staging = OUT / "candidate-download.zip"
+              staging = OUT / "candidate.zip"
               staging.write_bytes(body)
               if valid_apk(staging):
                   shutil.move(staging, TARGET)
-                  digest = hashlib.sha256(TARGET.read_bytes()).hexdigest()
-                  log(f"VALID APK saved: {TARGET} size={TARGET.stat().st_size} sha256={digest}")
+                  log(
+                      f"Valid standalone APK from {label}: size={TARGET.stat().st_size} "
+                      f"sha256={hashlib.sha256(TARGET.read_bytes()).hexdigest()}"
+                  )
                   return True
-
               try:
                   with zipfile.ZipFile(staging) as archive:
-                      apk_members = sorted(
+                      members = sorted(
                           (item for item in archive.infolist() if item.filename.lower().endswith(".apk")),
                           key=lambda item: item.file_size,
                           reverse=True,
                       )
-                      for member in apk_members:
+                      for member in members:
                           nested = OUT / pathlib.Path(member.filename).name
                           with archive.open(member) as source, nested.open("wb") as target:
                               shutil.copyfileobj(source, target)
                           if valid_apk(nested):
                               shutil.move(nested, TARGET)
-                              digest = hashlib.sha256(TARGET.read_bytes()).hexdigest()
                               log(
-                                  f"VALID nested APK saved: {TARGET} from={member.filename} "
-                                  f"size={TARGET.stat().st_size} sha256={digest}"
+                                  f"Valid nested APK from {label}/{member.filename}: "
+                                  f"size={TARGET.stat().st_size} "
+                                  f"sha256={hashlib.sha256(TARGET.read_bytes()).hexdigest()}"
                               )
                               return True
                           nested.unlink(missing_ok=True)
@@ -210,107 +126,153 @@ jobs:
               staging.unlink(missing_ok=True)
               return False
 
-          api_urls = [
-              f"https://ws75.aptoide.com/api/7/app/get/package_name={PACKAGE}/nodes=meta,versions",
-              f"https://ws75.aptoide.com/api/7/app/get/nodes=meta,versions/package_name={PACKAGE}",
-              f"https://ws75.aptoide.com/api/7/apps/search/query={PACKAGE}",
-              f"https://ws75.aptoide.com/api/7/apps/search/query={urllib.parse.quote(CHINESE_NAME)}",
-              f"https://ws2.aptoide.com/api/7/apps/search/query={PACKAGE}",
-              f"https://ws2.aptoide.com/api/7/apps/search/query={urllib.parse.quote(CHINESE_NAME)}",
-          ]
-          for index, api_url in enumerate(api_urls):
-              try:
-                  response = session.get(api_url, timeout=45)
-                  log(f"catalog API {index}: {response.status_code} {response.url}")
-                  save_http_text(response, f"catalog-{index}")
-                  if response.ok:
-                      try:
-                          collect_json(response.json(), (f"catalog-{index}",))
-                      except json.JSONDecodeError as exc:
-                          log(f"catalog API {index} returned non-JSON: {exc}")
-              except Exception as exc:  # noqa: BLE001
-                  log(f"catalog API {index} failed: {exc!r}")
+          def save_text(response: requests.Response, filename: str) -> None:
+              (REPORT / filename).write_text(
+                  response.text[:10_000_000], encoding="utf-8", errors="replace"
+              )
 
-          encoded_name = urllib.parse.quote(CHINESE_NAME, safe="")
-          page_urls = [
-              f"https://apkcombo.app/{encoded_name}/{PACKAGE}/download/phone-{PREFERRED_VERSION}-apk",
-              f"https://apkcombo.app/{encoded_name}/{PACKAGE}/download/phone-{CURRENT_VERSION}-apk",
-              f"https://apkcombo.com/{encoded_name}/{PACKAGE}/download/apk",
-              f"https://apkcombo.com/{encoded_name}/{PACKAGE}/old-versions",
-              f"https://apkpure.com/search?q={PACKAGE}",
-              f"https://en.uptodown.com/android/search/{urllib.parse.quote(PACKAGE)}",
-              f"https://gptoapk.com/en?search={urllib.parse.quote(PACKAGE)}",
-              f"https://apkgody.com/search?q={urllib.parse.quote(PACKAGE)}",
-          ]
+          def collect_variants(text: str, base_url: str, source: str) -> None:
+              soup = BeautifulSoup(text, "html.parser")
+              clues: list[str] = []
+              for tag in soup.find_all(True):
+                  classes = " ".join(tag.get("class", []))
+                  for key, value in tag.attrs.items():
+                      values = value if isinstance(value, list) else [value]
+                      for item in values:
+                          if not isinstance(item, str):
+                              continue
+                          lowered = f"{classes} {key} {item}".lower()
+                          if any(token in lowered for token in ("variant", "download", ".apk", ".xapk")):
+                              clues.append(f"<{tag.name} class={classes!r}> {key}={item}")
+                              if key in {"href", "src", "data-url", "data-href"}:
+                                  variants.append(urllib.parse.urljoin(base_url, html.unescape(item)))
+              for match in re.findall(r"https?://[^\s\"'<>\\]+", text):
+                  if any(token in match.lower() for token in (".apk", ".xapk", "download.apkcombo")):
+                      variants.append(html.unescape(match))
+              (REPORT / f"{source}-clues.txt").write_text(
+                  "\n".join(sorted(set(clues))), encoding="utf-8"
+              )
 
-          checkin = ""
-          try:
-              response = session.get("https://apkcombo.app/checkin", timeout=30)
-              log(f"APKCombo checkin: {response.status_code} {response.text[:200]!r}")
-              if response.ok and "=" in response.text:
-                  checkin = response.text.strip()
-          except Exception as exc:  # noqa: BLE001
-              log(f"APKCombo checkin failed: {exc!r}")
+          page = session.get(page_url, timeout=60, allow_redirects=True)
+          log(f"GET page: {page.status_code} final={page.url} bytes={len(page.content)}")
+          save_text(page, "apkcombo-page.html")
+          page.raise_for_status()
 
-          for index, page_url in enumerate(page_urls):
-              try:
-                  response = session.get(page_url, timeout=60, allow_redirects=True)
-                  log(f"catalog page {index}: {response.status_code} {response.url}")
-                  save_http_text(response, f"page-{index}")
-                  if response.content.startswith(b"PK\x03\x04") and save_archive_response(
-                      response, f"page-direct-{index}"
-                  ):
+          xid_match = re.search(r'var\s+xid\s*=\s*["\']([^"\']+)', page.text)
+          if not xid_match:
+              raise SystemExit("APKCombo xid was not found")
+          xid = xid_match.group(1)
+          endpoint = f"{origin}/{encoded_name}/{PACKAGE}/{xid}/dl"
+          log(f"Discovered package endpoint: {endpoint}")
+
+          ajax_headers = {
+              "Origin": origin,
+              "Referer": page.url,
+              "X-Requested-With": "XMLHttpRequest",
+              "Accept": "text/html, */*; q=0.01",
+          }
+
+          for requested_version in ("", "1.0.3", "1.2.7"):
+              for attempt in range(1, 7):
+                  response = session.post(
+                      endpoint,
+                      files={
+                          "package_name": (None, PACKAGE),
+                          "version": (None, requested_version),
+                      },
+                      headers=ajax_headers,
+                      timeout=90,
+                      allow_redirects=True,
+                  )
+                  label = f"post-v{requested_version or 'latest'}-attempt-{attempt}"
+                  log(
+                      f"POST {label}: status={response.status_code} final={response.url} "
+                      f"type={response.headers.get('content-type')!r} bytes={len(response.content)}"
+                  )
+                  save_text(response, f"{label}.html")
+                  if extract_apk(response.content, label):
                       break
-                  if response.ok and "text" in response.headers.get("content-type", "text"):
-                      inspect_html(response.text, response.url, f"page-{index}")
+                  collect_variants(response.text, response.url, label)
+                  if response.status_code == 200:
+                      break
+                  if response.status_code not in {202, 429, 504}:
+                      break
+                  time.sleep(2)
+              if TARGET.exists():
+                  break
+
+          checkin_values: list[str] = []
+          for method in ("post", "get"):
+              try:
+                  response = getattr(session, method)(
+                      f"{origin}/checkin",
+                      headers={"Referer": page.url, "Origin": origin},
+                      timeout=30,
+                  )
+                  log(
+                      f"CHECKIN {method.upper()}: status={response.status_code} "
+                      f"body={response.text[:300]!r}"
+                  )
+                  if response.ok and "=" in response.text:
+                      checkin_values.append(response.text.strip())
               except Exception as exc:  # noqa: BLE001
-                  log(f"catalog page {index} failed: {exc!r}")
+                  log(f"CHECKIN {method.upper()} failed: {exc!r}")
+
+          (REPORT / "variant_urls.txt").write_text(
+              "\n".join(sorted(set(variants))), encoding="utf-8"
+          )
 
           if not TARGET.exists():
               seen: set[str] = set()
-              for _, label, candidate in sorted(candidates, key=lambda item: item[0]):
-                  normalized = candidate.split("#", 1)[0]
-                  if normalized in seen:
+              for raw_url in variants:
+                  raw_url = html.unescape(raw_url).replace("\\/", "/").split("#", 1)[0]
+                  if not raw_url.startswith(("http://", "https://")):
                       continue
-                  seen.add(normalized)
-                  urls = [normalized]
-                  if checkin and "apkcombo" in normalized:
-                      separator = "&" if "?" in normalized else "?"
-                      urls.insert(0, normalized + separator + checkin)
+                  urls = [raw_url]
+                  for checkin in checkin_values:
+                      separator = "&" if "?" in raw_url else "?"
+                      urls.insert(
+                          0,
+                          raw_url
+                          + separator
+                          + checkin
+                          + f"&package_name={urllib.parse.quote(PACKAGE)}&lang=en",
+                      )
                   for url in urls:
+                      if url in seen:
+                          continue
+                      seen.add(url)
                       try:
                           response = session.get(
                               url,
-                              timeout=180,
+                              headers={"Referer": page.url},
+                              timeout=240,
                               allow_redirects=True,
-                              headers={"Referer": "https://apkcombo.com/"},
                           )
-                          if save_archive_response(response, f"candidate {label}"):
+                          log(
+                              f"GET variant: status={response.status_code} final={response.url} "
+                              f"type={response.headers.get('content-type')!r} "
+                              f"length={response.headers.get('content-length')!r}"
+                          )
+                          if extract_apk(response.content, "variant"):
                               break
                       except Exception as exc:  # noqa: BLE001
-                          log(f"candidate failed {label} {url}: {exc!r}")
+                          log(f"Variant failed {url}: {exc!r}")
                   if TARGET.exists():
                       break
 
-          (REPORT / "candidate_urls.txt").write_text(
-              "\n".join(
-                  f"priority={rank}\t{label}\t{url}"
-                  for rank, label, url in sorted(set(candidates), key=lambda item: item[0])
-              )[:10_000_000],
-              encoding="utf-8",
-          )
           (REPORT / "acquisition.log").write_text("\n".join(log_lines), encoding="utf-8")
-
           found = TARGET.exists() and valid_apk(TARGET)
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
               output.write(f"found={'true' if found else 'false'}\n")
               if found:
                   output.write(f"apk_path={TARGET}\n")
           if not found:
-              log("No valid APK acquired in this pass; diagnostics will still be uploaded")
+              log("No APK was returned; preserved all package-specific responses")
           PY
 
-      - name: Verify APK identity and record metadata
+      - name: Verify exact Linkbey identity
+        id: verify
         if: steps.acquire.outputs.found == 'true'
         shell: bash
         run: |
@@ -324,10 +286,22 @@ jobs:
           sha1sum "${APK}" | tee report/sha1.txt
           unzip -t "${APK}" > report/zip_test.txt
           unzip -q "${APK}" -d work/unpacked
-          find work/unpacked -maxdepth 4 -type f -printf '%P\t%s bytes\n' \
-            | sort > report/apk_inventory.txt
-          find work/unpacked -maxdepth 1 -type f -name 'classes*.dex' -printf '%f\t%s bytes\n' \
-            | sort > report/dex_inventory.txt
+
+          APKANALYZER="$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}" \
+            -type f -name apkanalyzer 2>/dev/null | head -1)"
+          APP_ID="$("${APKANALYZER}" manifest application-id "${APK}")"
+          VERSION_NAME="$("${APKANALYZER}" manifest version-name "${APK}")"
+          VERSION_CODE="$("${APKANALYZER}" manifest version-code "${APK}")"
+          printf '%s\n' "${APP_ID}" | tee report/application_id.txt
+          printf '%s\n' "${VERSION_NAME}" | tee report/version_name.txt
+          printf '%s\n' "${VERSION_CODE}" | tee report/version_code.txt
+          "${APKANALYZER}" manifest print "${APK}" > report/AndroidManifest.xml
+
+          if [ "${APP_ID}" != "com.lynkbey.app" ]; then
+            printf 'IDENTITY MISMATCH: expected com.lynkbey.app, received %s\n' "${APP_ID}" \
+              | tee report/identity_error.txt
+            exit 1
+          fi
 
           keytool -printcert -jarfile "${APK}" > report/signing_keytool.txt 2>&1 || true
           APKSIGNER="$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools" \
@@ -337,21 +311,14 @@ jobs:
               > report/signing_apksigner.txt 2>&1 || true
           fi
 
-          APKANALYZER="$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}" \
-            -type f -name apkanalyzer 2>/dev/null | head -1 || true)"
-          if [ -n "${APKANALYZER}" ]; then
-            "${APKANALYZER}" manifest application-id "${APK}" \
-              > report/application_id.txt 2>&1 || true
-            "${APKANALYZER}" manifest version-name "${APK}" \
-              > report/version_name.txt 2>&1 || true
-            "${APKANALYZER}" manifest version-code "${APK}" \
-              > report/version_code.txt 2>&1 || true
-            "${APKANALYZER}" manifest print "${APK}" \
-              > report/AndroidManifest.xml 2>&1 || true
-          fi
+          find work/unpacked -maxdepth 5 -type f -printf '%P\t%s bytes\n' \
+            | sort > report/apk_inventory.txt
+          find work/unpacked -maxdepth 1 -type f -name 'classes*.dex' -printf '%f\t%s bytes\n' \
+            | sort > report/dex_inventory.txt
+          echo 'verified=true' >> "${GITHUB_OUTPUT}"
 
-      - name: Decompile and scan command paths
-        if: steps.acquire.outputs.found == 'true'
+      - name: Decompile and scan S8 command paths
+        if: steps.verify.outputs.verified == 'true'
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -369,18 +336,17 @@ jobs:
             cp work/jadx/resources/AndroidManifest.xml report/AndroidManifest-jadx.xml
           fi
 
-          PATTERN='publishDps|publishDpsWithQueryOption|setDps|setDp|sendDp|deviceControl|ThingHomeSdk|TuyaHomeSdk|IThingDevice|ITuyaDevice|chargego|selectroom|select_room|zone_clean|part_clean|goto_charge|repositing|power_go|switch_go|break_clean|customize_mode_switch|work_mode|dp_dust|dp_roll_clean|dp_roll_hot|edge_brush_life|roll_brush_life|filter_life|reset.*brush|reset.*filter|consumable|manual.*control|direction.*control|timer.*clean|schedule.*clean|room.*clean|where.*sweep|cistern|suction|dust.*collect|mop.*clean|mop.*dry'
+          PATTERN='publishDps|publishDpsWithQueryOption|setDps|setDp|sendDp|deviceControl|ThingHomeSdk|TuyaHomeSdk|IThingDevice|ITuyaDevice|command_trans|chargego|selectroom|select_room|zone_clean|part_clean|goto_charge|repositing|power_go|switch_go|break_clean|customize_mode_switch|work_mode|dp_dust|dp_roll_clean|dp_roll_hot|edge_brush_life|roll_brush_life|filter_life|reset.*brush|reset.*filter|consumable|manual.*control|direction.*control|timer.*clean|schedule.*clean|room.*clean|where.*sweep|cistern|suction|dust.*collect|mop.*clean|mop.*dry|product.?id|schema|dpCode|Laser Robot Vacuum'
 
           {
-            echo '=== Decompiled Java/Kotlin/resource matches with context ==='
-            grep -RInE -C 10 --binary-files=without-match "${PATTERN}" \
+            echo '=== Decompiled Java/Kotlin/resource matches ==='
+            grep -RInE -C 12 --binary-files=without-match "${PATTERN}" \
               work/jadx/sources work/jadx/resources 2>/dev/null || true
-          } | head -n 40000 > report/command_keyword_context.txt
+          } | head -n 60000 > report/command_keyword_context.txt
 
           grep -RIlE --binary-files=without-match "${PATTERN}" \
-            work/jadx/sources 2>/dev/null | sort | head -n 700 \
+            work/jadx/sources 2>/dev/null | sort | head -n 1000 \
             > report/matched_source_files.txt || true
-
           while IFS= read -r source; do
             [ -f "${source}" ] || continue
             relative="${source#work/jadx/sources/}"
@@ -392,8 +358,7 @@ jobs:
             \( -name '*.js' -o -name '*.bundle' -o -name '*.json' -o -name '*.html' \
                -o -name '*.xml' -o -name '*.txt' -o -name '*.dart' \) -print0 2>/dev/null \
             | xargs -0 -r grep -IlE --binary-files=without-match "${PATTERN}" \
-            | sort | head -n 700 > report/matched_asset_files.txt || true
-
+            | sort | head -n 1000 > report/matched_asset_files.txt || true
           while IFS= read -r asset; do
             [ -f "${asset}" ] || continue
             safe="$(printf '%s' "${asset}" | sed 's#^work/##; s#[/ ]#_#g')"
@@ -401,51 +366,43 @@ jobs:
           done < report/matched_asset_files.txt
 
           {
-            for binary in $(find work/unpacked -type f \
-              \( -name 'classes*.dex' -o -name '*.so' -o -name '*.bundle' \) 2>/dev/null); do
+            while IFS= read -r -d '' binary; do
               echo "=== ${binary} ==="
               strings -a "${binary}" | grep -iE "${PATTERN}" || true
-            done
-          } | sort -u | head -n 30000 > report/binary_command_strings.txt
+            done < <(find work/unpacked -type f \
+              \( -name 'classes*.dex' -o -name '*.so' -o -name '*.bundle' \) -print0)
+          } | sort -u | head -n 50000 > report/binary_command_strings.txt
 
           grep -RohE --binary-files=without-match \
             'https?://[^"'"'"' <>\\]+' work/jadx/sources work/jadx/resources 2>/dev/null \
-            | sed 's/[),;]$//' | sort -u | head -n 5000 > report/endpoints.txt || true
+            | sed 's/[),;]$//' | sort -u | head -n 10000 > report/endpoints.txt || true
 
           find work/jadx/resources/assets work/unpacked/assets work/unpacked/lib \
             -type f -printf '%p\t%s bytes\n' 2>/dev/null \
             | sort > report/assets_and_native_inventory.txt || true
 
-          find work/jadx/sources -type d 2>/dev/null \
-            | grep -Ei '/(com/(lynkbey|tuya|thingclips)|cn/|io/flutter|com/facebook/react)' \
-            | sort | head -n 10000 > report/architecture_packages.txt || true
-
           {
             echo '=== APK identity ==='
-            cat report/application_id.txt 2>/dev/null || true
-            cat report/version_name.txt 2>/dev/null || true
-            cat report/version_code.txt 2>/dev/null || true
+            cat report/application_id.txt report/version_name.txt report/version_code.txt
             echo
             echo '=== Hash ==='
             cat report/sha256.txt
             echo
-            echo '=== App-owned source roots ==='
-            find work/jadx/sources/com/lynkbey -maxdepth 6 -type d 2>/dev/null | sort || true
-            echo
-            echo '=== Tuya / Thing SDK roots ==='
-            find work/jadx/sources/com -maxdepth 5 -type d 2>/dev/null \
-              | grep -Ei '/(tuya|thingclips)' | sort | head -n 1500 || true
+            echo '=== Candidate app-owned roots ==='
+            find work/jadx/sources -maxdepth 7 -type d 2>/dev/null \
+              | grep -Ei '/(lynkbey|linkbey|tuya|thingclips|smartlife|react|flutter|uni)' \
+              | sort | head -n 3000 || true
             echo
             echo '=== Match counts ==='
             wc -l report/matched_source_files.txt report/matched_asset_files.txt
           } > report/summary.txt
 
-      - name: Record no-APK outcome
-        if: steps.acquire.outputs.found != 'true'
+      - name: Record incomplete acquisition
+        if: always() && steps.verify.outputs.verified != 'true'
         shell: bash
         run: |
-          printf '%s\n' \
-            'No APK acquired. Inspect acquisition.log, catalog JSON/HTML and candidate_urls.txt.' \
+          test -f report/summary.txt || printf '%s\n' \
+            'Exact com.lynkbey.app APK was not yet verified; inspect package-specific POST responses.' \
             > report/summary.txt
 
       - name: Upload temporary research artifact
