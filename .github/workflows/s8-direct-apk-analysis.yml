@@ -1,0 +1,287 @@
+name: S8 direct APK analysis
+
+on:
+  push:
+    branches:
+      - research/s8-apk-command-analysis-20260904
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Resolve and download exact Linkbey APK
+        id: acquire
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p work/apk report/acquisition
+          python -m pip install --disable-pip-version-check requests beautifulsoup4
+          python <<'PY'
+          from __future__ import annotations
+
+          import base64
+          import hashlib
+          import html
+          import os
+          import pathlib
+          import re
+          import urllib.parse
+          import zipfile
+
+          import requests
+          from bs4 import BeautifulSoup
+
+          PACKAGE = "com.lynkbey.app"
+          NAME = "领贝机器人"
+          ROOT = pathlib.Path("report/acquisition")
+          TARGET = pathlib.Path("work/apk/Packages_1.2.7_127.apk")
+          ROOT.mkdir(parents=True, exist_ok=True)
+          TARGET.parent.mkdir(parents=True, exist_ok=True)
+
+          encoded_name = urllib.parse.quote(NAME, safe="")
+          page_url = f"https://apkcombo.com/{encoded_name}/{PACKAGE}/download/phone-1.2.7-apk"
+          endpoint_base = f"https://apkcombo.com/{encoded_name}/{PACKAGE}"
+          headers = {
+              "User-Agent": (
+                  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+              ),
+              "Accept-Language": "en-US,en;q=0.9,zh-CN;q=0.8",
+          }
+          session = requests.Session()
+          session.headers.update(headers)
+          logs: list[str] = []
+
+          def log(message: str) -> None:
+              print(message, flush=True)
+              logs.append(message)
+
+          def valid_apk(path: pathlib.Path) -> bool:
+              if not path.is_file() or path.stat().st_size < 10_000_000:
+                  return False
+              try:
+                  with zipfile.ZipFile(path) as archive:
+                      names = set(archive.namelist())
+                  return "AndroidManifest.xml" in names and any(
+                      name.endswith(".dex") for name in names
+                  )
+              except zipfile.BadZipFile:
+                  return False
+
+          page = session.get(page_url, timeout=60)
+          page.raise_for_status()
+          (ROOT / "page.html").write_text(page.text, encoding="utf-8", errors="replace")
+          xid = re.search(r'var\s+xid\s*=\s*["\']([^"\']+)', page.text).group(1)
+          endpoint = f"{endpoint_base}/{xid}/dl"
+          response = session.post(
+              endpoint,
+              files={"package_name": (None, PACKAGE), "version": (None, "")},
+              headers={
+                  "Origin": "https://apkcombo.com",
+                  "Referer": page_url,
+                  "X-Requested-With": "XMLHttpRequest",
+                  "Accept": "text/html, */*; q=0.01",
+              },
+              timeout=90,
+          )
+          response.raise_for_status()
+          (ROOT / "variants.html").write_text(
+              response.text, encoding="utf-8", errors="replace"
+          )
+          soup = BeautifulSoup(response.text, "html.parser")
+          anchor = soup.select_one("a.variant[href]")
+          if anchor is None:
+              raise SystemExit("No APKCombo variant link")
+          wrapper = urllib.parse.urljoin(response.url, html.unescape(anchor["href"]))
+          encoded = urllib.parse.parse_qs(urllib.parse.urlparse(wrapper).query).get("u", [""])[0]
+          if not encoded:
+              raise SystemExit("APKCombo wrapper has no encoded direct URL")
+          encoded += "=" * (-len(encoded) % 4)
+          direct = base64.b64decode(encoded).decode("utf-8")
+          (ROOT / "resolved_url.txt").write_text(direct, encoding="utf-8")
+          log(f"Resolved host={urllib.parse.urlparse(direct).hostname} path={urllib.parse.urlparse(direct).path}")
+
+          attempts = [
+              (direct, "https://apkpure.com/"),
+              (direct, page_url),
+              (direct, "https://apkcombo.com/"),
+          ]
+          for index, (url, referer) in enumerate(attempts, 1):
+              try:
+                  download = session.get(
+                      url,
+                      headers={
+                          "Referer": referer,
+                          "Origin": urllib.parse.urlunparse(
+                              (urllib.parse.urlparse(referer).scheme,
+                               urllib.parse.urlparse(referer).netloc, "", "", "", "")
+                          ),
+                          "Accept": (
+                              "application/vnd.android.package-archive,application/octet-stream,"
+                              "*/*;q=0.8"
+                          ),
+                      },
+                      timeout=300,
+                      allow_redirects=True,
+                  )
+                  log(
+                      f"Attempt {index}: status={download.status_code} final={download.url} "
+                      f"type={download.headers.get('content-type')!r} "
+                      f"length={download.headers.get('content-length')!r} bytes={len(download.content)}"
+                  )
+                  (ROOT / f"attempt-{index}-headers.txt").write_text(
+                      "\n".join(f"{k}: {v}" for k, v in download.headers.items()),
+                      encoding="utf-8",
+                  )
+                  if download.content.startswith(b"PK\x03\x04"):
+                      TARGET.write_bytes(download.content)
+                      if valid_apk(TARGET):
+                          digest = hashlib.sha256(TARGET.read_bytes()).hexdigest()
+                          log(f"VALID APK size={TARGET.stat().st_size} sha256={digest}")
+                          break
+                      TARGET.unlink(missing_ok=True)
+                  else:
+                      (ROOT / f"attempt-{index}-body.txt").write_bytes(download.content[:500_000])
+              except Exception as exc:  # noqa: BLE001
+                  log(f"Attempt {index} failed: {exc!r}")
+
+          (ROOT / "download.log").write_text("\n".join(logs), encoding="utf-8")
+          found = valid_apk(TARGET)
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"found={'true' if found else 'false'}\n")
+              if found:
+                  output.write(f"apk={TARGET}\n")
+          PY
+
+      - name: Verify package, version and signature
+        id: verify
+        if: steps.acquire.outputs.found == 'true'
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          APK="${{ steps.acquire.outputs.apk }}"
+          mkdir -p report work/unpacked
+          APKANALYZER="$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}" \
+            -type f -name apkanalyzer 2>/dev/null | head -1)"
+          APP_ID="$("${APKANALYZER}" manifest application-id "${APK}")"
+          VERSION_NAME="$("${APKANALYZER}" manifest version-name "${APK}")"
+          VERSION_CODE="$("${APKANALYZER}" manifest version-code "${APK}")"
+          printf '%s\n' "${APP_ID}" | tee report/application_id.txt
+          printf '%s\n' "${VERSION_NAME}" | tee report/version_name.txt
+          printf '%s\n' "${VERSION_CODE}" | tee report/version_code.txt
+          test "${APP_ID}" = "com.lynkbey.app"
+          "${APKANALYZER}" manifest print "${APK}" > report/AndroidManifest.xml
+          sha256sum "${APK}" | tee report/sha256.txt
+          sha1sum "${APK}" | tee report/sha1.txt
+          stat --printf='size_bytes=%s\n' "${APK}" | tee report/size.txt
+          keytool -printcert -jarfile "${APK}" > report/signing_keytool.txt 2>&1 || true
+          APKSIGNER="$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools" \
+            -type f -name apksigner 2>/dev/null | sort -V | tail -1 || true)"
+          if [ -n "${APKSIGNER}" ]; then
+            "${APKSIGNER}" verify --verbose --print-certs "${APK}" \
+              > report/signing_apksigner.txt 2>&1 || true
+          fi
+          unzip -q "${APK}" -d work/unpacked
+          find work/unpacked -maxdepth 5 -type f -printf '%P\t%s bytes\n' \
+            | sort > report/apk_inventory.txt
+          echo 'ok=true' >> "${GITHUB_OUTPUT}"
+
+      - name: Decompile and extract command-bearing code
+        if: steps.verify.outputs.ok == 'true'
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          APK="${{ steps.acquire.outputs.apk }}"
+          mkdir -p work/jadx report/relevant_sources report/relevant_assets
+          curl -fL --retry 4 --retry-delay 3 \
+            https://github.com/skylot/jadx/releases/download/v1.5.2/jadx-1.5.2.zip \
+            -o /tmp/jadx.zip
+          unzip -q /tmp/jadx.zip -d /tmp/jadx
+          /tmp/jadx/bin/jadx --threads-count 2 --show-bad-code \
+            -d work/jadx "${APK}" > report/jadx.log 2>&1 || true
+
+          PATTERN='publishDps|publishDpsWithQueryOption|setDps|setDp|sendDp|deviceControl|ThingHomeSdk|TuyaHomeSdk|IThingDevice|ITuyaDevice|command_trans|chargego|selectroom|select_room|zone_clean|part_clean|goto_charge|repositing|power_go|switch_go|break_clean|customize_mode_switch|work_mode|dp_dust|dp_roll_clean|dp_roll_hot|edge_brush_life|roll_brush_life|filter_life|reset.*brush|reset.*filter|consumable|manual.*control|direction.*control|timer.*clean|schedule.*clean|room.*clean|where.*sweep|cistern|suction|dust.*collect|mop.*clean|mop.*dry|product.?id|schema|dpCode|Laser Robot Vacuum'
+
+          grep -RInE -C 14 --binary-files=without-match "${PATTERN}" \
+            work/jadx/sources work/jadx/resources 2>/dev/null \
+            | head -n 80000 > report/command_keyword_context.txt || true
+          grep -RIlE --binary-files=without-match "${PATTERN}" \
+            work/jadx/sources 2>/dev/null | sort | head -n 1500 \
+            > report/matched_source_files.txt || true
+          while IFS= read -r source; do
+            [ -f "${source}" ] || continue
+            relative="${source#work/jadx/sources/}"
+            mkdir -p "report/relevant_sources/$(dirname "${relative}")"
+            cp "${source}" "report/relevant_sources/${relative}"
+          done < report/matched_source_files.txt
+
+          find work/unpacked work/jadx/resources -type f \
+            \( -name '*.js' -o -name '*.bundle' -o -name '*.json' -o -name '*.html' \
+               -o -name '*.xml' -o -name '*.txt' -o -name '*.dart' \) -print0 2>/dev/null \
+            | xargs -0 -r grep -IlE --binary-files=without-match "${PATTERN}" \
+            | sort | head -n 1500 > report/matched_asset_files.txt || true
+          while IFS= read -r asset; do
+            [ -f "${asset}" ] || continue
+            safe="$(printf '%s' "${asset}" | sed 's#^work/##; s#[/ ]#_#g')"
+            cp "${asset}" "report/relevant_assets/${safe}" || true
+          done < report/matched_asset_files.txt
+
+          {
+            while IFS= read -r -d '' binary; do
+              echo "=== ${binary} ==="
+              strings -a "${binary}" | grep -iE "${PATTERN}" || true
+            done < <(find work/unpacked -type f \
+              \( -name 'classes*.dex' -o -name '*.so' -o -name '*.bundle' \) -print0)
+          } | sort -u | head -n 60000 > report/binary_command_strings.txt
+
+          grep -RohE --binary-files=without-match \
+            'https?://[^"'"'"' <>\\]+' work/jadx/sources work/jadx/resources 2>/dev/null \
+            | sed 's/[),;]$//' | sort -u | head -n 12000 > report/endpoints.txt || true
+          find work/jadx/resources/assets work/unpacked/assets work/unpacked/lib \
+            -type f -printf '%p\t%s bytes\n' 2>/dev/null \
+            | sort > report/assets_and_native_inventory.txt || true
+
+          {
+            echo '=== Identity ==='
+            cat report/application_id.txt report/version_name.txt report/version_code.txt
+            echo
+            echo '=== Hash ==='
+            cat report/sha256.txt
+            echo
+            echo '=== Match counts ==='
+            wc -l report/matched_source_files.txt report/matched_asset_files.txt
+          } > report/summary.txt
+
+      - name: Record unresolved direct download
+        if: always() && steps.verify.outputs.ok != 'true'
+        shell: bash
+        run: |
+          test -f report/summary.txt || printf '%s\n' \
+            'The signed direct URL was resolved but the exact APK was not verified.' \
+            > report/summary.txt
+
+      - name: Upload temporary analysis artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: s8-direct-apk-analysis-${{ github.run_number }}
+          path: |
+            work/apk/*.apk
+            report/
+          if-no-files-found: warn
+          compression-level: 6
+          retention-days: 1
