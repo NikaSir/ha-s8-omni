@@ -80,24 +80,37 @@ Frame interpretation using Tuya's public legacy command pairs:
 
 | Command | Observed S8 frame | Legacy family |
 |---:|---|---|
-| `0x17` | `AA 00 01 17 17` | spot-clean counterpart/query/report family |
-| `0x13` | `AA 00 02 13 00 13` | virtual-wall V1 counterpart; zero walls/data count |
-| `0x1B` | `AA 00 02 1B 00 1B` | restricted-area V1 counterpart; zero areas |
-| `0x29` | `AA 00 03 29 00 00 29` | zone-clean V1 counterpart; empty/default selection |
-| `0x15` | `AA 00 03 15 00 00 15` | room-clean V1 counterpart; empty/default selection |
+| `0x17` | `AA 00 01 17 17` | spot-clean V1 query/report opcode |
+| `0x13` | `AA 00 02 13 00 13` | virtual-wall V1 query/report family |
+| `0x1B` | `AA 00 02 1B 00 1B` | restricted-area V1 query/report family |
+| `0x29` | `AA 00 03 29 00 00 29` | zone-clean V1 query/report family |
+| `0x15` | `AA 00 03 15 00 00 15` | room-clean V1 query/report family |
+
+### Direction clarification
+
+Tuya's public legacy codecs explicitly use the odd opcode as an **App → Robot query** as well as the Robot → App report counterpart. For example:
+
+```text
+requestRoomClean0x15() -> App sends 0x15
+requestZoneClean0x29() -> App sends 0x29
+```
+
+Therefore the saved DP15 bundle is best interpreted as a panel/device-initialization query bundle retained as the Raw DP state, not as proof that all five frames were emitted by the robot.
+
+This distinction does not weaken the wire-format result. It actually shows that the S8 panel/device stack uses the public legacy V0 query grammar and that several queries can be concatenated in one DP15 value.
 
 ### Strong consequence
 
 The actual S8 is not merely schema-compatible with Tuya's public RobotProtocol: it has been observed carrying the legacy V0 wire format in DP15.
 
-Therefore the highest-priority S8 write candidates become the matching legacy App→Robot commands:
+Therefore the highest-priority S8 write candidates become the matching legacy App→Robot SET commands:
 
 ```text
-room clean       0x14  -> counterpart 0x15 observed
-zone clean       0x28  -> counterpart 0x29 observed
-spot clean       0x16  -> counterpart 0x17 observed
-virtual wall     0x12  -> counterpart 0x13 observed
-restricted area  0x1A  -> counterpart 0x1B observed
+room clean       0x14  <-> query/report 0x15 observed
+zone clean       0x28  <-> query/report 0x29 observed
+spot clean       0x16  <-> query/report 0x17 observed
+virtual wall     0x12  <-> query/report 0x13 observed
+restricted area  0x1A  <-> query/report 0x1B observed
 ```
 
 The newer Tuya command generations (`0x56`, `0x3A`, `0x3E`, `0x38`) remain useful references but are no longer the first candidates for this S8 firmware.
@@ -207,7 +220,8 @@ This confirms the extended `AB` voice protocol `0x34/0x35` on DP35.
 
 - DP15 is `command_trans` Raw.
 - DP15 carries concatenated `AA 00` legacy RobotProtocol frames.
-- S8 has produced counterpart opcodes `0x17`, `0x13`, `0x1B`, `0x29`, `0x15`.
+- The actual DP15 state contains legacy query/report opcodes `0x17`, `0x13`, `0x1B`, `0x29`, `0x15`.
+- Public Tuya source confirms those odd opcodes are valid App→Robot queries for the same legacy feature families.
 - DP32 carries timer `0x31` V0 frames.
 - DP33 carries DND `0x33` V0 frames.
 - DP35 carries extended voice `AB ... 0x35` frames.
@@ -223,7 +237,7 @@ This confirms the extended `AB` voice protocol `0x34/0x35` on DP35.
 - DP18/20/22 consumable resets.
 - DP32/33/35 corresponding write operations.
 
-### Needs one outbound S8 capture before production write
+### Needs one outbound S8 SET capture before production write
 
 - room clean `0x14` + `mode=part` + cleaning start;
 - zone clean `0x28` + `mode=zone` + cleaning start;
@@ -231,4 +245,4 @@ This confirms the extended `AB` voice protocol `0x34/0x35` on DP35.
 - virtual-wall `0x12`;
 - restricted-area `0x1A`.
 
-The binary frame generation is now strongly constrained by actual S8 evidence, but the exact write ordering and payload for a live S8 task should still be captured once from Smart Life before enabling these controls in Home Assistant.
+The binary frame generation is now strongly constrained by actual S8 evidence, but the exact SET payload and write ordering for a live S8 task should still be captured once from Smart Life before enabling these controls in Home Assistant.
