@@ -21,14 +21,7 @@ from tuya_robot_log_extract import split_frame_stream
 from tuya_robot_protocol import Frame, ProtocolError, decode_frame
 
 
-S8_PANEL_QUERY_ORDER = (0x17, 0x13, 0x1B, 0x29, 0x15)
-S8_PANEL_QUERY_NAMES = {
-    0x17: "spot_clean_query",
-    0x13: "virtual_wall_query",
-    0x1B: "restricted_area_query",
-    0x29: "zone_clean_query",
-    0x15: "room_clean_query",
-}
+S8_LEGACY_COMPLEX_ORDER = (0x17, 0x13, 0x1B, 0x29, 0x15)
 
 
 def _signed_u8(value: int) -> int:
@@ -121,21 +114,76 @@ def decode_voice_35(frame: Frame) -> dict[str, Any]:
     }
 
 
+def decode_room_15(frame: Frame) -> dict[str, Any]:
+    """Decode legacy room-clean state/report shape: times, count, room IDs."""
+    if frame.command != 0x15:
+        raise ProtocolError(f"expected room state 0x15, got 0x{frame.command:02X}")
+    data = frame.data
+    if len(data) < 2:
+        raise ProtocolError("room 0x15 payload too short for state/report")
+    clean_times = data[0]
+    room_count = data[1]
+    if len(data) != 2 + room_count:
+        raise ProtocolError("room 0x15 room count does not match payload length")
+    return {
+        "command": "0x15",
+        "clean_times": clean_times,
+        "room_count": room_count,
+        "room_ids": list(data[2:]),
+    }
+
+
+def decode_zone_29_header(frame: Frame) -> dict[str, Any]:
+    """Decode the stable leading fields of legacy zone-clean state/report."""
+    if frame.command != 0x29:
+        raise ProtocolError(f"expected zone state 0x29, got 0x{frame.command:02X}")
+    data = frame.data
+    if len(data) < 2:
+        raise ProtocolError("zone 0x29 payload too short for state/report")
+    return {
+        "command": "0x29",
+        "clean_times": data[0],
+        "zone_count": data[1],
+        "remaining_payload_hex": data[2:].hex(),
+    }
+
+
+def _frame_semantics(frame: Frame) -> dict[str, Any]:
+    item: dict[str, Any] = {"command": f"0x{frame.command:02X}"}
+    if frame.command == 0x15 and len(frame.data) >= 2:
+        item.update({"kind": "room_state_shape", **decode_room_15(frame)})
+    elif frame.command == 0x29 and len(frame.data) >= 2:
+        item.update({"kind": "zone_state_shape", **decode_zone_29_header(frame)})
+    elif frame.command == 0x13 and frame.data == b"\x00":
+        item.update({"kind": "virtual_wall_empty_state_shape", "wall_count": 0})
+    elif frame.command == 0x1B and frame.data == b"\x00":
+        item.update({"kind": "restricted_area_empty_state_shape", "area_count": 0})
+    elif frame.command == 0x17 and not frame.data:
+        item.update({"kind": "spot_query_shape_or_empty_counterpart"})
+    else:
+        item.update({"kind": "unclassified"})
+    return item
+
+
 def _classify_command_bundle(frames: list[Frame]) -> dict[str, Any]:
     commands = tuple(frame.command for frame in frames)
-    if commands == S8_PANEL_QUERY_ORDER:
+    if commands == S8_LEGACY_COMPLEX_ORDER:
         return {
-            "bundle_classification": "S8_PANEL_LEGACY_QUERY_BUNDLE",
-            "direction": "APP_TO_ROBOT_QUERY",
-            "query_sequence": [S8_PANEL_QUERY_NAMES[command] for command in commands],
+            "bundle_classification": "S8_LEGACY_COMPLEX_STATE_BUNDLE",
+            "direction": "NOT_PROVEN_FROM_STATUS_SNAPSHOT",
+            "frame_semantics": [_frame_semantics(frame) for frame in frames],
             "interpretation": (
-                "Matches Tuya legacy query opcodes used by the panel to request current "
-                "spot, wall, restricted-area, zone and room-clean settings."
+                "The opcode family matches Tuya legacy complex controls, but this saved status value "
+                "must not be labelled App-to-Robot. Official V0 query frames for 0x13/0x15/0x29 "
+                "contain no payload, while the S8 snapshot carries zero-count payloads for several "
+                "counterpart opcodes. Treat it as a legacy complex-state snapshot until an outbound "
+                "publishDps capture proves direction."
             ),
         }
     return {
         "bundle_classification": "UNCLASSIFIED_LEGACY_FRAME_BUNDLE",
         "direction": "UNKNOWN",
+        "frame_semantics": [_frame_semantics(frame) for frame in frames],
     }
 
 
@@ -164,12 +212,16 @@ def decode_named(kind: str, value: str) -> dict[str, Any]:
         return decode_dnd_33(frame)
     if kind == "voice":
         return decode_voice_35(frame)
+    if kind == "room":
+        return decode_room_15(frame)
+    if kind == "zone":
+        return decode_zone_29_header(frame)
     raise ProtocolError(f"unsupported kind: {kind}")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Decode real S8 legacy Raw-DP payloads offline")
-    parser.add_argument("kind", choices=("command_trans", "timer", "dnd", "voice"))
+    parser.add_argument("kind", choices=("command_trans", "timer", "dnd", "voice", "room", "zone"))
     parser.add_argument("value", help="Base64 Raw DP value")
     args = parser.parse_args()
     try:
