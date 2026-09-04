@@ -8,12 +8,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from tuya_robot_log_extract import extract_frames  # noqa: E402
+from tuya_robot_log_extract import extract_frames, split_frame_stream  # noqa: E402
 
 
 class TuyaRobotLogExtractTests(unittest.TestCase):
     ROOM1_HEX = "aa00041401010117"
     ROOM1_B64 = base64.b64encode(bytes.fromhex(ROOM1_HEX)).decode("ascii")
+    REAL_S8_COMMAND_TRANS = "qgABFxeqAAITABOqAAIbABuqAAMpAAApqgADFQAAFQ=="
 
     def test_proscenic_q8_room_frame_matches_public_v1_shape(self) -> None:
         frames = extract_frames({"command_trans": self.ROOM1_B64})
@@ -34,6 +35,30 @@ class TuyaRobotLogExtractTests(unittest.TestCase):
         }
         frames = extract_frames(value)
         self.assertEqual([self.ROOM1_HEX], [item["raw_hex"] for item in frames])
+
+    def test_real_s8_command_trans_stream_splits_into_five_v0_frames(self) -> None:
+        frames = extract_frames({"15": self.REAL_S8_COMMAND_TRANS})
+        self.assertEqual(
+            ["0x17", "0x13", "0x1B", "0x29", "0x15"],
+            [frame["command_hex"] for frame in frames],
+        )
+        self.assertTrue(all(frame["protocol_version"] == 0 for frame in frames))
+        self.assertTrue(all(frame["checksum_valid"] for frame in frames))
+        self.assertTrue(all(frame["source_encoding"] == "base64" for frame in frames))
+
+    def test_split_real_s8_stream_preserves_exact_frame_boundaries(self) -> None:
+        raw = base64.b64decode(self.REAL_S8_COMMAND_TRANS)
+        frames = split_frame_stream(raw)
+        self.assertEqual(
+            [
+                "aa00011717",
+                "aa0002130013",
+                "aa00021b001b",
+                "aa000329000029",
+                "aa000315000015",
+            ],
+            [frame.raw.hex() for frame in frames],
+        )
 
     def test_plain_hex_is_still_supported(self) -> None:
         frames = extract_frames(f"tx={self.ROOM1_HEX}")
