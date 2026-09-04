@@ -1,0 +1,1 @@
+This branch restores the previous S8 OMNI panel interface after the operational-panel experiment. No backend protocol logic is changed.
