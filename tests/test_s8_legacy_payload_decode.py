@@ -10,8 +10,10 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from s8_legacy_payload_decode import (  # noqa: E402
     decode_command_trans_bundle,
     decode_dnd_33,
+    decode_room_15,
     decode_timer_31,
     decode_voice_35,
+    decode_zone_29_header,
 )
 from tuya_robot_protocol import decode_frame  # noqa: E402
 
@@ -29,18 +31,26 @@ class S8LegacyPayloadDecodeTests(unittest.TestCase):
             ["0x17", "0x13", "0x1B", "0x29", "0x15"],
             [item["command_hex"] for item in decoded["frames"]],
         )
-        self.assertEqual("S8_PANEL_LEGACY_QUERY_BUNDLE", decoded["bundle_classification"])
-        self.assertEqual("APP_TO_ROBOT_QUERY", decoded["direction"])
-        self.assertEqual(
-            [
-                "spot_clean_query",
-                "virtual_wall_query",
-                "restricted_area_query",
-                "zone_clean_query",
-                "room_clean_query",
-            ],
-            decoded["query_sequence"],
-        )
+        self.assertEqual("S8_LEGACY_COMPLEX_STATE_BUNDLE", decoded["bundle_classification"])
+        self.assertEqual("NOT_PROVEN_FROM_STATUS_SNAPSHOT", decoded["direction"])
+        semantics = decoded["frame_semantics"]
+        self.assertEqual("spot_query_shape_or_empty_counterpart", semantics[0]["kind"])
+        self.assertEqual(0, semantics[1]["wall_count"])
+        self.assertEqual(0, semantics[2]["area_count"])
+        self.assertEqual(0, semantics[3]["zone_count"])
+        self.assertEqual([], semantics[4]["room_ids"])
+
+    def test_room_15_decoder(self) -> None:
+        result = decode_room_15(decode_frame("hex:aa000615010304050324"))
+        self.assertEqual(1, result["clean_times"])
+        self.assertEqual(3, result["room_count"])
+        self.assertEqual([4, 5, 3], result["room_ids"])
+
+    def test_zone_29_header_decoder(self) -> None:
+        result = decode_zone_29_header(decode_frame("hex:aa000329000029"))
+        self.assertEqual(0, result["clean_times"])
+        self.assertEqual(0, result["zone_count"])
+        self.assertEqual("", result["remaining_payload_hex"])
 
     def test_actual_s8_timer(self) -> None:
         result = decode_timer_31(decode_frame(f"base64:{self.TIMER}"))
