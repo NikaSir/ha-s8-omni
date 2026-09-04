@@ -21,13 +21,18 @@ from .coordinator import S8OmniCoordinator
 
 PLATFORMS = ["vacuum", "sensor", "binary_sensor", "switch", "select", "number", "button"]
 FRONTEND_DIR = Path(__file__).parent / "frontend"
-PANEL_MODULE = f"{PANEL_STATIC_URL}/s8-omni-operational.js?v={DASHBOARD_VERSION}-{VERSION}"
+PANEL_MODULE = f"{PANEL_STATIC_URL}/s8-omni-panel.js?v={DASHBOARD_VERSION}-{VERSION}"
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def _async_register_panel(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Serve and register the integration-owned native panel."""
+    """Serve and register the integration-owned native panel.
+
+    Return True only when this call registered the panel. This lets setup clean up
+    safely after a real platform/setup exception without removing somebody else's
+    route in the unlikely event of a path collision.
+    """
     try:
         await hass.http.async_register_static_paths(
             [StaticPathConfig(PANEL_STATIC_URL, str(FRONTEND_DIR), True)]
@@ -45,7 +50,7 @@ async def _async_register_panel(hass: HomeAssistant, entry: ConfigEntry) -> bool
     await panel_custom.async_register_panel(
         hass=hass,
         frontend_url_path=PANEL_PATH,
-        webcomponent_name="s8-omni-operational",
+        webcomponent_name="s8-omni-panel",
         module_url=PANEL_MODULE,
         sidebar_title=PANEL_TITLE,
         sidebar_icon=PANEL_ICON,
@@ -61,7 +66,6 @@ async def _async_register_panel(hass: HomeAssistant, entry: ConfigEntry) -> bool
             "parent_route": PANEL_PARENT_PATH,
             "preferred_view": "overview",
             "expose_in_generated_ui": True,
-            "feature_scope": "operational_without_map_or_rooms",
         },
     )
     return True
