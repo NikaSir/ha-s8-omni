@@ -21,6 +21,16 @@ from tuya_robot_log_extract import split_frame_stream
 from tuya_robot_protocol import Frame, ProtocolError, decode_frame
 
 
+S8_PANEL_QUERY_ORDER = (0x17, 0x13, 0x1B, 0x29, 0x15)
+S8_PANEL_QUERY_NAMES = {
+    0x17: "spot_clean_query",
+    0x13: "virtual_wall_query",
+    0x1B: "restricted_area_query",
+    0x29: "zone_clean_query",
+    0x15: "room_clean_query",
+}
+
+
 def _signed_u8(value: int) -> int:
     return value - 256 if value > 127 else value
 
@@ -111,16 +121,36 @@ def decode_voice_35(frame: Frame) -> dict[str, Any]:
     }
 
 
+def _classify_command_bundle(frames: list[Frame]) -> dict[str, Any]:
+    commands = tuple(frame.command for frame in frames)
+    if commands == S8_PANEL_QUERY_ORDER:
+        return {
+            "bundle_classification": "S8_PANEL_LEGACY_QUERY_BUNDLE",
+            "direction": "APP_TO_ROBOT_QUERY",
+            "query_sequence": [S8_PANEL_QUERY_NAMES[command] for command in commands],
+            "interpretation": (
+                "Matches Tuya legacy query opcodes used by the panel to request current "
+                "spot, wall, restricted-area, zone and room-clean settings."
+            ),
+        }
+    return {
+        "bundle_classification": "UNCLASSIFIED_LEGACY_FRAME_BUNDLE",
+        "direction": "UNKNOWN",
+    }
+
+
 def decode_command_trans_bundle(value: str) -> dict[str, Any]:
     try:
         raw = base64.b64decode(value, validate=True)
     except Exception as exc:
         raise ProtocolError(f"invalid Base64 command_trans: {exc}") from exc
     frames = split_frame_stream(raw, strict=True)
-    return {
+    result = {
         "frame_count": len(frames),
         "frames": [frame.to_dict() for frame in frames],
     }
+    result.update(_classify_command_bundle(frames))
+    return result
 
 
 def decode_named(kind: str, value: str) -> dict[str, Any]:
