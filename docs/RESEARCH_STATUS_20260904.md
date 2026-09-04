@@ -71,19 +71,26 @@ AA 00 03 29 00 00 29
 AA 00 03 15 00 00 15
 ```
 
-Public Tuya source confirms that odd opcodes such as `0x15` and `0x29` are valid App→Robot query commands for the legacy room/zone feature families. The retained value is therefore best interpreted as an initialization/query bundle.
-
 This establishes that the S8 stack uses the legacy `AA 00` RobotProtocol generation.
+
+The **direction of this saved DP15 status snapshot is not proven**. Public Tuya tests show that pure V0 App→Robot queries such as `requestRoomClean0x15` and `requestVirtualWall0x13` have no payload (`AA 00 01 ...`). The S8 snapshot instead carries zero-count payloads in `0x13`, `0x1B`, `0x29` and `0x15`. Therefore the canonical classification is:
+
+```text
+S8_LEGACY_COMPLEX_STATE_BUNDLE
+direction = NOT_PROVEN_FROM_STATUS_SNAPSHOT
+```
+
+Structurally, the retained `0x15` frame decodes as `cleanTimes=0`, `roomCount=0`, `roomIds=[]`; `0x29` begins with `cleanTimes=0`, `zoneCount=0`.
 
 ## Leading complex SET commands for this S8 firmware
 
 | Action | DP | RobotProtocol SET | Scalar mode | Status counterpart |
 |---|---:|---:|---|---|
-| Selected rooms | 15 | `0x14` | `part` | `part_clean` / query-report `0x15` |
-| Zone | 15 | `0x28` | `zone` | `zone_clean` / query-report `0x29` |
-| Spot / where-to-clean | 15 | `0x16` | `pose` | query-report `0x17` |
-| Virtual wall | 15 | `0x12` | n/a | query-report `0x13` |
-| Restricted area | 15 | `0x1A` | n/a | query-report `0x1B` |
+| Selected rooms | 15 | `0x14` | `part` | `part_clean` / counterpart `0x15` |
+| Zone | 15 | `0x28` | `zone` | `zone_clean` / counterpart `0x29` |
+| Spot / where-to-clean | 15 | `0x16` | `pose` | counterpart `0x17` |
+| Virtual wall | 15 | `0x12` | n/a | counterpart `0x13` |
+| Restricted area | 15 | `0x1A` | n/a | counterpart `0x1B` |
 
 The newer generic Tuya generations (`0x56`, `0x3A`, `0x3E`, `0x38`) remain reference material but are not the leading candidates for the actual S8 anymore.
 
@@ -151,11 +158,13 @@ one zone -> stop
 one point -> stop
 ```
 
+A non-empty legacy `0x15` is now directly decodable by `scripts/s8_legacy_payload_decode.py`; once captured it will expose `cleanTimes`, `roomCount` and the exact `roomIds` bytes.
+
 ## Research tooling in this branch
 
 - `scripts/tuya_robot_protocol.py` — generic AA/AB decoder/encoder and schema inspector.
 - `scripts/tuya_robot_log_extract.py` — Base64/hex log extraction including concatenated frame streams.
-- `scripts/s8_legacy_payload_decode.py` — decoder for actual S8 DP15/32/33/35 evidence.
+- `scripts/s8_legacy_payload_decode.py` — decoder for actual S8 DP15/32/33/35 evidence plus legacy room/zone state payloads.
 - `scripts/s8_legacy_candidate_frames.py` — **offline-only** room/zone/spot SET candidate builder.
 - `scripts/s8_raw_dp_monitor.py` — read-only raw LAN DP monitor.
 - `research/s8_apk/frida_smartlife_publish_dps.js` — panel-side TX interception.
