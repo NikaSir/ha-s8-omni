@@ -41,7 +41,9 @@ class S8LegacyPayloadDecodeTests(unittest.TestCase):
         self.assertEqual([], semantics[4]["room_ids"])
 
     def test_room_15_decoder(self) -> None:
-        result = decode_room_15(decode_frame("aa000615010304050324"))
+        # Tuya's public cmd14_15.test.ts currently ends this fixture with 0x24,
+        # but its own getCheckSum(cmd + data) implementation yields 0x25.
+        result = decode_room_15(decode_frame("aa000615010304050325"))
         self.assertEqual(1, result["clean_times"])
         self.assertEqual(3, result["room_count"])
         self.assertEqual([4, 5, 3], result["room_ids"])
