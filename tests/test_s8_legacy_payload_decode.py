@@ -29,6 +29,18 @@ class S8LegacyPayloadDecodeTests(unittest.TestCase):
             ["0x17", "0x13", "0x1B", "0x29", "0x15"],
             [item["command_hex"] for item in decoded["frames"]],
         )
+        self.assertEqual("S8_PANEL_LEGACY_QUERY_BUNDLE", decoded["bundle_classification"])
+        self.assertEqual("APP_TO_ROBOT_QUERY", decoded["direction"])
+        self.assertEqual(
+            [
+                "spot_clean_query",
+                "virtual_wall_query",
+                "restricted_area_query",
+                "zone_clean_query",
+                "room_clean_query",
+            ],
+            decoded["query_sequence"],
+        )
 
     def test_actual_s8_timer(self) -> None:
         result = decode_timer_31(decode_frame(f"base64:{self.TIMER}"))
