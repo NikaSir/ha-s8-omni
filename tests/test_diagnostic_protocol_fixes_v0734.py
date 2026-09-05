@@ -40,7 +40,8 @@ class DiagnosticProtocolFixesV0734Tests(unittest.TestCase):
         self.assertIn("if actively_cleaning", return_home)
         self.assertIn("async_set_sequence", return_home)
         self.assertIn("[(DP_POWER_GO, False), (DP_PAUSE, True)]", return_home)
-        self.assertIn('in {"standby", "paused"}', return_home)
+        self.assertIn('str(data.get(DP_STATUS)) == "standby"', return_home)
+        self.assertNotIn('in {"standby", "paused"}', return_home)
         self.assertIn('in {"goto_charge", "repositing", "charging", "charge_done"}', return_home)
         self.assertIn("async_wait_for_state", return_home)
 
