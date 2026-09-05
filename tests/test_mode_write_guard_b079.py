@@ -16,13 +16,14 @@ class ModeWriteGuardB079Tests(unittest.TestCase):
         self.assertIn("raise HomeAssistantError(reason)", SELECT_SOURCE)
         self.assertNotIn("await self.coordinator.async_set_dp(self.desc.dp, option)\n        await", SELECT_SOURCE)
 
-    def test_verified_vacuum_actions_remain_canonical(self) -> None:
+    def test_verified_vacuum_actions_remain_guarded(self) -> None:
         self.assertIn('DP_MODE: "smart"', VACUUM_SOURCE)
         self.assertIn("DP_PAUSE: False", VACUUM_SOURCE)
         self.assertIn("DP_POWER_GO: True", VACUUM_SOURCE)
-        self.assertIn("[(DP_POWER_GO, False), (DP_PAUSE, True)]", VACUUM_SOURCE)
+        self.assertIn('operation="pause"', VACUUM_SOURCE)
         self.assertIn('(DP_MODE, "chargego")', VACUUM_SOURCE)
-        self.assertIn("[(DP_POWER_GO, True)]", VACUUM_SOURCE)
+        self.assertIn("[(DP_PAUSE, False)]", VACUUM_SOURCE)
+        self.assertNotIn("[(DP_POWER_GO, True)]", VACUUM_SOURCE)
 
 
 if __name__ == "__main__":
