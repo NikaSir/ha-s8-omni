@@ -1,8 +1,5 @@
 const Panel = customElements.get("s8-omni-panel");
 
-const UI_PATCH_FROM = "v0.7.41";
-const UI_PATCH_VERSION = "v0.7.42";
-
 const PRESETS = {
   "dry-quiet": {
     label: "Сухая · Тихий",
@@ -88,13 +85,13 @@ function openUserPreset(panel, kind) {
   panel._switchWorkspace("cleaning", "cleaning-settings");
 }
 
-if (Panel && !Panel.prototype.__s8CleaningPresetsV0742) {
-  Panel.prototype.__s8CleaningPresetsV0742 = true;
+if (Panel && !Panel.prototype.__s8CleaningPresets) {
+  Panel.prototype.__s8CleaningPresets = true;
 
   const originalStyles = Panel.prototype._styles;
   Panel.prototype._styles = function patchedStyles() {
     return `${originalStyles.call(this)}
-      /* v0.7.42: cleaning type and approved dry/wet presets. */
+      /* Approved cleaning type and dry/wet presets. */
       .cleaning-type-card{padding:12px 15px}
       .cleaning-type-row{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:48px}
       .cleaning-type-row ha-icon{--mdc-icon-size:26px;color:var(--primary-color)}
@@ -121,16 +118,6 @@ if (Panel && !Panel.prototype.__s8CleaningPresetsV0742) {
       .preset-context strong{display:block;font-size:14px}.preset-context span{display:block;margin-top:3px;color:var(--secondary-text-color);font-size:12px;line-height:1.2}
       @media(max-width:390px){.preset-groups{grid-template-columns:1fr}.preset-option{min-height:78px}.cleaning-type-row strong{font-size:17px}}
     `;
-  };
-
-  const originalHeader = Panel.prototype._header;
-  Panel.prototype._header = function patchedHeader() {
-    return originalHeader.call(this).replaceAll(UI_PATCH_FROM, UI_PATCH_VERSION);
-  };
-
-  const originalDiagnostics = Panel.prototype._diagnostics;
-  Panel.prototype._diagnostics = function patchedDiagnostics() {
-    return originalDiagnostics.call(this).replaceAll(UI_PATCH_FROM, UI_PATCH_VERSION);
   };
 
   Panel.prototype._cleaning = function patchedCleaning() {
@@ -184,7 +171,7 @@ if (Panel && !Panel.prototype.__s8CleaningPresetsV0742) {
 
   const originalCleaningSettings = Panel.prototype._cleaningSettings;
   Panel.prototype._cleaningSettings = function patchedCleaningSettings() {
-    let settings = originalCleaningSettings.call(this).replace("<span>Режим уборки</span>", "<span>Вид уборки</span>");
+    const settings = originalCleaningSettings.call(this).replace("<span>Режим уборки</span>", "<span>Вид уборки</span>");
     if (!this._cleaningPresetContext) return settings;
     const dry = this._cleaningPresetContext === "dry";
     const context = `<section class="preset-context"><strong>Пользовательская · ${dry ? "Сухая" : "Влажная"}</strong><span>${dry ? "Подача воды подготовлена как «Выкл.». Настройте требуемое всасывание." : "Настройте всасывание и подачу воды для влажной уборки."}</span></section>`;
