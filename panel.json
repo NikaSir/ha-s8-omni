@@ -9,7 +9,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.7.42",
+    "dashboard_version": "v0.7.41",
     "template": "NikaS Integration Panel Template v2.2",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -112,7 +112,7 @@
       "header_title_focus_visible": true,
       "header_center_lines": [
         "Пылесос",
-        "UI v0.7.42"
+        "UI v0.7.41"
       ],
       "primary_navigation": "full_width_fixed_bottom_tab_bar",
       "bottom_tab_min_height_px": 52,
