@@ -55,9 +55,9 @@ class PanelDynamicActionsUiV0723Tests(unittest.TestCase):
         constants = (ROOT / "custom_components" / "s8_omni" / "const.py").read_text(encoding="utf-8")
         manifest = json.loads((ROOT / "custom_components" / "s8_omni" / "manifest.json").read_text(encoding="utf-8"))
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
-        self.assertIn('VERSION = "v1.00_b083"', constants)
+        self.assertIn('VERSION = "v1.00_b084"', constants)
         self.assertIn('DASHBOARD_VERSION = "v0.7.41"', constants)
-        self.assertEqual("1.0.0b83", manifest["version"])
+        self.assertEqual("1.0.0b84", manifest["version"])
         self.assertEqual("v0.7.41", panel["dashboard_version"])
 
     def test_commands_fail_closed_with_busy_and_visible_error_state(self) -> None:
