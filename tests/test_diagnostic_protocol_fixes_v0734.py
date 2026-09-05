@@ -30,20 +30,19 @@ class DiagnosticProtocolFixesV0734Tests(unittest.TestCase):
         self.assertIn("DP_POWER_GO: True", start)
         self.assertNotIn("async_set_sequence", start)
 
-    def test_captured_return_waits_for_standby_then_triggers_chargego(self) -> None:
+    def test_return_uses_native_pause_then_chargego_release(self) -> None:
         return_home = self.vacuum.split("    async def async_return_to_base", 1)[1].split(
             "    async def async_set_fan_speed", 1
         )[0]
         self.assertIn("if actively_cleaning", return_home)
-        self.assertIn("async_set_sequence", return_home)
-        self.assertIn("[(DP_POWER_GO, False), (DP_PAUSE, True)]", return_home)
-        self.assertIn('str(data.get(DP_STATUS)) == "standby"', return_home)
-        self.assertNotIn('in {"standby", "paused"}', return_home)
+        self.assertIn("async_set_dp", return_home)
+        self.assertIn("DP_PAUSE,\n                True", return_home)
+        self.assertIn('str(data.get(DP_STATUS)) == "paused"', return_home)
         self.assertIn("async_set_sequence_after_confirmation", return_home)
         self.assertIn('(DP_MODE, "chargego")', return_home)
-        self.assertIn("[(DP_POWER_GO, True)]", return_home)
-        self.assertIn('str(data.get(DP_MODE)) == "chargego"', return_home)
-        self.assertIn("data.get(DP_PAUSE) in {True, 1}", return_home)
+        self.assertIn("[(DP_PAUSE, False)]", return_home)
+        self.assertNotIn("[(DP_POWER_GO, True)]", return_home)
+        self.assertNotIn("[(DP_POWER_GO, False), (DP_PAUSE, True)]", return_home)
         self.assertIn('in {"goto_charge", "repositing", "charging", "charge_done"}', return_home)
         self.assertIn("async_wait_for_state", return_home)
 
