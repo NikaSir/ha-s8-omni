@@ -1,5 +1,5 @@
 DOMAIN = "s8_omni"
-VERSION = "v1.00_b078"
+VERSION = "v1.00_b079"
 DASHBOARD_VERSION = "v0.7.41"
 
 PANEL_ID = "s8_omni"
@@ -45,6 +45,8 @@ SUCTION_OPTIONS = ["gentle", "normal", "strong"]
 # `closed` was captured on 2026-08-21 and `middle` was confirmed by the
 # 2026-08-30 Home Assistant config-entry diagnostics from the real device.
 WATER_OPTIONS = ["closed", "low", "middle", "high"]
+# These values are retained for factual display/remembering of DP4 states.
+# Direct DP4 writes are blocked in select.py; only verified vacuum actions may write mode.
 CLEAN_MODE_OPTIONS = ["smart", "selectroom", "zone", "pose", "part"]
 DEFAULT_CLEAN_MODE = "smart"
 MODE_OPTIONS = ["smart", "zone", "pose", "part", "chargego", "wallfollow", "selectroom"]
