@@ -21,7 +21,8 @@ class ModeWriteGuardB079Tests(unittest.TestCase):
         self.assertIn("DP_PAUSE: False", VACUUM_SOURCE)
         self.assertIn("DP_POWER_GO: True", VACUUM_SOURCE)
         self.assertIn("[(DP_POWER_GO, False), (DP_PAUSE, True)]", VACUUM_SOURCE)
-        self.assertIn('DP_MODE,\n            "chargego"', VACUUM_SOURCE)
+        self.assertIn('(DP_MODE, "chargego")', VACUUM_SOURCE)
+        self.assertIn("[(DP_POWER_GO, True)]", VACUUM_SOURCE)
 
 
 if __name__ == "__main__":
