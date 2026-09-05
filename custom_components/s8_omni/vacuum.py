@@ -93,9 +93,8 @@ class S8OmniVacuum(S8OmniEntity, StateVacuumEntity):
         )
 
     async def async_pause(self):
-        # Physical S8 test: DP1=false silently stops execution rather than
-        # invoking the robot's native Pause behaviour. Test the dedicated
-        # Tuya pause datapoint in isolation so DP1 remains untouched.
+        # Physically verified on the real S8: DP2=true invokes native Pause
+        # (including the robot's pause voice prompt) without touching DP1.
         await self.coordinator.async_set_dp(
             DP_PAUSE,
             True,
@@ -121,37 +120,35 @@ class S8OmniVacuum(S8OmniEntity, StateVacuumEntity):
             self.dp(DP_POWER_GO) is True and self.dp(DP_PAUSE) is False
         )
 
+        # Controlled Home test based on the now verified native pause semantics:
+        # pause with DP2 only, select chargego, then release pause with DP2=false.
+        # DP1 is deliberately untouched because the physical S8 test proved
+        # DP1=true resumes the cleaning job rather than acting as a Home trigger.
         if actively_cleaning:
-            await self.coordinator.async_set_sequence(
-                [(DP_POWER_GO, False), (DP_PAUSE, True)],
+            await self.coordinator.async_set_dp(
+                DP_PAUSE,
+                True,
                 operation="return_to_base_pause",
             )
-            standby = await self.coordinator.async_wait_for_state(
-                lambda data: data.get(DP_POWER_GO) in {False, 0}
-                and data.get(DP_PAUSE) in {True, 1}
-                and str(data.get(DP_STATUS)) == "standby",
+            paused = await self.coordinator.async_wait_for_state(
+                lambda data: data.get(DP_PAUSE) in {True, 1}
+                and str(data.get(DP_STATUS)) == "paused",
                 operation="return_to_base_pause",
-                timeout=25.0,
+                timeout=15.0,
             )
-            if standby is None:
+            if paused is None:
                 raise HomeAssistantError(
-                    "Пылесос остановился, но не перешёл в режим ожидания перед возвратом на базу."
+                    "Пылесос не подтвердил штатную паузу перед возвратом на базу."
                 )
 
-        # Historical b071 assumption retained only until Home is captured from
-        # the official panel. A physical 2026-09-05 test showed DP1=true can
-        # resume cleaning, so do not treat this sequence as protocol proof.
         await self.coordinator.async_set_sequence_after_confirmation(
             (DP_MODE, "chargego"),
-            [(DP_POWER_GO, True)],
-            lambda data: (
-                str(data.get(DP_MODE)) == "chargego"
-                and data.get(DP_PAUSE) in {True, 1}
-            ),
+            [(DP_PAUSE, False)],
+            lambda data: str(data.get(DP_MODE)) == "chargego",
             operation="return_to_base",
             failure_message=(
                 "Пылесос не подтвердил режим возврата на базу. "
-                "Команда движения не отправлена."
+                "Снятие паузы не выполнено."
             ),
         )
 
@@ -163,7 +160,7 @@ class S8OmniVacuum(S8OmniEntity, StateVacuumEntity):
         )
         if returning is None:
             raise HomeAssistantError(
-                "Пылесос принял режим возврата и триггер запуска, но не подтвердил движение к базе."
+                "Пылесос принял chargego и снятие паузы, но не подтвердил движение к базе."
             )
 
     async def async_set_fan_speed(self, fan_speed, **kwargs):
