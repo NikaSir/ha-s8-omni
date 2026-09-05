@@ -25,6 +25,14 @@ OPERATION_DESCS = [
 ]
 
 
+def _dp_bool_matches(actual, expected: bool) -> bool:
+    if isinstance(actual, bool):
+        return actual is expected
+    if actual in (0, 1, "0", "1"):
+        return bool(int(actual)) is expected
+    return False
+
+
 async def async_setup_entry(hass, entry, async_add_entities):
     coordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities(
@@ -90,7 +98,7 @@ class S8OmniStationOperationButton(S8OmniEntity, ButtonEntity):
             operation=self.desc.key,
         )
         confirmed = await self.coordinator.async_wait_for_state(
-            lambda data: data.get(self.desc.dp) is self.desc.value,
+            lambda data: _dp_bool_matches(data.get(self.desc.dp), self.desc.value),
             operation=self.desc.key,
             timeout=12.0,
         )
