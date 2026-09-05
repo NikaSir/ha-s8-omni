@@ -118,16 +118,16 @@ class S8OmniVacuum(S8OmniEntity, StateVacuumEntity):
                 [(DP_POWER_GO, False), (DP_PAUSE, True)],
                 operation="return_to_base_pause",
             )
-            paused = await self.coordinator.async_wait_for_state(
+            standby = await self.coordinator.async_wait_for_state(
                 lambda data: data.get(DP_POWER_GO) is False
                 and data.get(DP_PAUSE) is True
-                and str(data.get(DP_STATUS)) in {"standby", "paused"},
+                and str(data.get(DP_STATUS)) == "standby",
                 operation="return_to_base_pause",
-                timeout=12.0,
+                timeout=25.0,
             )
-            if paused is None:
+            if standby is None:
                 raise HomeAssistantError(
-                    "Пылесос не подтвердил остановку уборки перед возвратом на базу."
+                    "Пылесос остановился, но не перешёл в режим ожидания перед возвратом на базу."
                 )
         await self.coordinator.async_set_dp(
             DP_MODE,
