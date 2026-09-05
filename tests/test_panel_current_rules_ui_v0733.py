@@ -57,6 +57,11 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         self.assertIn('targetState !== "unavailable"', self.bootstrap)
         self.assertIn('!["unknown", "unavailable"].includes(targetState)', self.bootstrap)
 
+    def test_child_modules_are_cache_busted_with_release_version(self) -> None:
+        self.assertIn('import "./s8-omni-panel.js?v=1.0.0b88";', self.bootstrap)
+        self.assertIn('import "./s8-omni-cleaning-presets.js?v=1.0.0b88";', self.bootstrap)
+        self.assertNotIn('import "./s8-omni-cleaning-presets.js";', self.bootstrap)
+
     def test_child_lock_is_confirmed_and_read_back(self) -> None:
         self.assertIn("блокировку от детей?", self.bind)
         self.assertIn('await this._callConfirmed("switch"', self.bind)
@@ -106,9 +111,9 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
         self.assertEqual("0.7.41", standard["ui_version"])
         self.assertIn('const UI_VERSION = "v0.7.41"', self.source)
-        self.assertIn('VERSION = "v1.00_b087"', constants)
+        self.assertIn('VERSION = "v1.00_b088"', constants)
         self.assertIn('DASHBOARD_VERSION = "v0.7.41"', constants)
-        self.assertEqual("1.0.0b87", manifest["version"])
+        self.assertEqual("1.0.0b88", manifest["version"])
         self.assertEqual("v0.7.41", panel["dashboard_version"])
         self.assertNotIn("v0.7.31:", self.source)
 
