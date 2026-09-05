@@ -15,6 +15,6 @@ def test_pause_uses_only_dp2_and_does_not_stop_power_go():
     assert "async_set_sequence" not in pause_block
 
 
-def test_manifest_is_b083():
+def test_manifest_is_current_b086():
     manifest = Path("custom_components/s8_omni/manifest.json").read_text(encoding="utf-8")
-    assert '"version": "1.0.0b83"' in manifest
+    assert '"version": "1.0.0b86"' in manifest

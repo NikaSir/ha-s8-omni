@@ -67,9 +67,12 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         self.assertNotIn("100dvh", self.source)
         self.assertIn('loading="eager" decoding="sync" fetchpriority="high"', self.source)
 
-    def test_approved_cleaning_presets_are_separate_from_cleaning_type(self) -> None:
-        self.assertIn('data-more="mode"', self.presets)
-        self.assertIn('Тип уборки', self.presets)
+    def test_approved_cleaning_presets_are_two_full_width_rows_without_mode_card(self) -> None:
+        self.assertNotIn('Тип уборки', self.presets)
+        self.assertNotIn('cleaning-type-card', self.presets)
+        self.assertIn('.preset-groups{display:grid;grid-template-columns:1fr;gap:10px}', self.presets)
+        self.assertEqual(1, self.presets.count('class="preset-group dry"'))
+        self.assertEqual(1, self.presets.count('class="preset-group wet"'))
         self.assertIn('"dry-quiet"', self.presets)
         self.assertIn('suction: "gentle"', self.presets)
         self.assertIn('water: "closed"', self.presets)
@@ -81,7 +84,6 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         self.assertIn('water: "high"', self.presets)
         self.assertIn('data-user-preset="dry"', self.presets)
         self.assertIn('data-user-preset="wet"', self.presets)
-        self.assertNotIn('<h2>Как убирать</h2>', self.presets)
 
     def test_preset_writes_are_confirmed_and_read_back(self) -> None:
         self.assertIn('window.confirm(`Применить предустановку', self.presets)
@@ -95,9 +97,9 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
         self.assertEqual("0.7.41", standard["ui_version"])
         self.assertIn('const UI_VERSION = "v0.7.41"', self.source)
-        self.assertIn('VERSION = "v1.00_b085"', constants)
+        self.assertIn('VERSION = "v1.00_b086"', constants)
         self.assertIn('DASHBOARD_VERSION = "v0.7.41"', constants)
-        self.assertEqual("1.0.0b85", manifest["version"])
+        self.assertEqual("1.0.0b86", manifest["version"])
         self.assertEqual("v0.7.41", panel["dashboard_version"])
         self.assertNotIn("v0.7.31:", self.source)
 

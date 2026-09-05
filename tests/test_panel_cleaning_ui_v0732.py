@@ -36,9 +36,10 @@ class PanelCleaningUiV0732Tests(unittest.TestCase):
         self.assertIn("Карта и комнаты", self.presets)
         self.assertIn("Комнатная и зональная уборка появятся", self.presets)
 
-    def test_type_and_cleaning_profile_are_separate(self) -> None:
-        self.assertIn("Тип уборки", self.presets)
-        self.assertIn('this._stateValue("mode")', self.presets)
+    def test_mode_card_is_removed_and_profile_controls_stay_in_settings(self) -> None:
+        self.assertNotIn("Тип уборки", self.presets)
+        self.assertNotIn('this._stateValue("mode")', self.presets)
+        self.assertNotIn('cleaning-type-card', self.presets)
         self.assertNotIn('<h2>Как убирать</h2>', self.presets)
         self.assertIn('closed: "Выкл."', self.source)
         self.assertNotIn('_segmentControl("work_mode"', self.source)

@@ -91,14 +91,9 @@ if (Panel && !Panel.prototype.__s8CleaningPresets) {
   const originalStyles = Panel.prototype._styles;
   Panel.prototype._styles = function patchedStyles() {
     return `${originalStyles.call(this)}
-      /* Approved cleaning type and dry/wet presets. */
-      .cleaning-type-card{padding:12px 15px}
-      .cleaning-type-row{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:48px}
-      .cleaning-type-row ha-icon{--mdc-icon-size:26px;color:var(--primary-color)}
-      .cleaning-type-row span{font-size:13px;color:var(--secondary-text-color);font-weight:650}
-      .cleaning-type-row strong{font-size:18px;line-height:1.12;font-weight:800;text-align:right;overflow-wrap:anywhere}
+      /* Approved dry/wet presets: two full-width rows. */
       .preset-card{padding:14px}
-      .preset-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+      .preset-groups{display:grid;grid-template-columns:1fr;gap:10px}
       .preset-group{border:1px solid color-mix(in srgb,var(--divider-color) 62%,transparent);border-radius:18px;padding:10px;min-width:0}
       .preset-group.dry{background:color-mix(in srgb,#f5e8cf 34%,var(--card-background-color))}
       .preset-group.wet{background:color-mix(in srgb,var(--primary-color) 7%,var(--card-background-color))}
@@ -107,16 +102,16 @@ if (Panel && !Panel.prototype.__s8CleaningPresets) {
       .preset-group.wet .preset-group-head ha-icon{color:var(--primary-color)}
       .preset-group-head strong{display:block;font-size:15px;line-height:1.08;font-weight:800}
       .preset-group-head small{display:block;margin-top:2px;font-size:12px;line-height:1.1;color:var(--secondary-text-color)}
-      .preset-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
-      .preset-option{min-height:92px;padding:8px 4px;border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:14px;background:color-mix(in srgb,var(--card-background-color) 94%,transparent);color:var(--primary-text-color);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center}
-      .preset-option ha-icon{--mdc-icon-size:24px;color:var(--secondary-text-color)}
+      .preset-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+      .preset-option{min-height:76px;padding:8px 7px;border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:14px;background:color-mix(in srgb,var(--card-background-color) 94%,transparent);color:var(--primary-text-color);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;text-align:left;overflow:hidden}
+      .preset-option ha-icon{--mdc-icon-size:22px;color:var(--secondary-text-color);margin-bottom:1px}
       .preset-group.wet .preset-option ha-icon,.preset-option.user ha-icon{color:var(--primary-color)}
-      .preset-option strong{font-size:13px;line-height:1.05;font-weight:800}
-      .preset-option small{font-size:12px;line-height:1.08;color:var(--secondary-text-color);white-space:normal}
+      .preset-option strong{font-size:13px;line-height:1.05;font-weight:800;white-space:nowrap}
+      .preset-option small{font-size:12px;line-height:1.1;color:var(--secondary-text-color);white-space:normal;overflow-wrap:normal;word-break:normal}
       .preset-option:disabled{opacity:.42}
       .preset-context{margin-bottom:10px;padding:11px 13px;border:1px solid color-mix(in srgb,var(--primary-color) 20%,var(--divider-color));border-radius:16px;background:color-mix(in srgb,var(--primary-color) 6%,var(--card-background-color))}
       .preset-context strong{display:block;font-size:14px}.preset-context span{display:block;margin-top:3px;color:var(--secondary-text-color);font-size:12px;line-height:1.2}
-      @media(max-width:390px){.preset-groups{grid-template-columns:1fr}.preset-option{min-height:78px}.cleaning-type-row strong{font-size:17px}}
+      @media(max-width:390px){.preset-options{gap:5px}.preset-option{min-height:72px;padding:7px 5px}.preset-option strong{font-size:12.5px}.preset-option small{font-size:11.5px}}
     `;
   };
 
@@ -124,8 +119,6 @@ if (Panel && !Panel.prototype.__s8CleaningPresets) {
     const snap = this._snapshot();
     const cleanTime = snap.connected ? this._stateValue("clean_time") : null;
     const cleanArea = snap.connected ? this._stateValue("clean_area") : null;
-    const rawMode = snap.connected ? this._stateValue("mode") : null;
-    const mode = rawMode === null || rawMode === undefined || rawMode === "" ? "Нет данных" : String(rawMode);
     const volumeObj = this._state("volume");
     const volumeValue = snap.connected && this._available(volumeObj) ? Number(volumeObj.state) : null;
     const dndObj = this._state("do_not_disturb");
@@ -141,9 +134,6 @@ if (Panel && !Panel.prototype.__s8CleaningPresets) {
           <div class="metric" data-more="clean_area"><ha-icon icon="mdi:ruler-square"></ha-icon><span>Площадь</span><strong>${cleanArea !== null ? `${escapePatchHtml(cleanArea)} м²` : "—"}</strong></div>
         </div>
       </section>
-      <section class="card cleaning-type-card" data-more="mode">
-        <div class="cleaning-type-row"><ha-icon icon="mdi:robot-vacuum"></ha-icon><span>Тип уборки</span><strong>${escapePatchHtml(mode)}</strong></div>
-      </section>
       <section class="card preset-card">
         <div class="section-title"><h2>Предустановки уборки</h2></div>
         <div class="preset-groups">
@@ -158,8 +148,8 @@ if (Panel && !Panel.prototype.__s8CleaningPresets) {
           <div class="preset-group wet">
             <div class="preset-group-head"><ha-icon icon="mdi:water-outline"></ha-icon><span><strong>Влажная уборка</strong><small>Сухая + подача воды</small></span></div>
             <div class="preset-options">
-              <button class="preset-option" type="button" data-cleaning-preset="wet-quiet"${disabled}><ha-icon icon="mdi:water-outline"></ha-icon><strong>Тихий</strong><small>Мин. всасывание<br>Мин. воды</small></button>
-              <button class="preset-option" type="button" data-cleaning-preset="wet-max"${disabled}><ha-icon icon="mdi:water-plus-outline"></ha-icon><strong>Макс</strong><small>Макс. всасывание<br>Макс. воды</small></button>
+              <button class="preset-option" type="button" data-cleaning-preset="wet-quiet"${disabled}><ha-icon icon="mdi:water-outline"></ha-icon><strong>Тихий</strong><small>Мин. всасывание · Мин. воды</small></button>
+              <button class="preset-option" type="button" data-cleaning-preset="wet-max"${disabled}><ha-icon icon="mdi:water-plus-outline"></ha-icon><strong>Макс</strong><small>Макс. всасывание · Макс. воды</small></button>
               <button class="preset-option user" type="button" data-user-preset="wet"${disabled}><ha-icon icon="mdi:tune-variant"></ha-icon><strong>Польз.</strong><small>Настроить</small></button>
             </div>
           </div>
