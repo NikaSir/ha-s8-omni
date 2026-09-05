@@ -73,22 +73,31 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         self.assertIn('.preset-groups{display:grid;grid-template-columns:1fr;gap:10px}', self.presets)
         self.assertEqual(1, self.presets.count('class="preset-group dry"'))
         self.assertEqual(1, self.presets.count('class="preset-group wet"'))
-        self.assertIn('"dry-quiet"', self.presets)
-        self.assertIn('suction: "gentle"', self.presets)
-        self.assertIn('water: "closed"', self.presets)
-        self.assertIn('"dry-max"', self.presets)
-        self.assertIn('suction: "strong"', self.presets)
-        self.assertIn('"wet-quiet"', self.presets)
-        self.assertIn('water: "low"', self.presets)
-        self.assertIn('"wet-max"', self.presets)
-        self.assertIn('water: "high"', self.presets)
-        self.assertIn('data-user-preset="dry"', self.presets)
-        self.assertIn('data-user-preset="wet"', self.presets)
+        for key in ('"dry-quiet"', '"dry-max"', '"wet-quiet"', '"wet-max"'):
+            self.assertIn(key, self.presets)
+        self.assertIn('data-cleaning-preset="dry-user"', self.presets)
+        self.assertIn('data-cleaning-preset="wet-user"', self.presets)
+        self.assertIn('data-user-preset-edit="dry"', self.presets)
+        self.assertIn('data-user-preset-edit="wet"', self.presets)
 
-    def test_preset_writes_are_confirmed_and_read_back(self) -> None:
-        self.assertIn('window.confirm(`Применить предустановку', self.presets)
+    def test_preset_confirmation_is_custom_wide_and_cancelable(self) -> None:
+        self.assertIn('width:min(520px,calc(100vw - 24px))', self.presets)
+        self.assertIn('data-preset-cancel>Отмена', self.presets)
+        self.assertIn('data-preset-apply>Применить', self.presets)
+        self.assertIn('await showPresetConfirm(panel, preset, changes)', self.presets)
+        self.assertNotIn('window.confirm(`Применить предустановку', self.presets)
         self.assertIn('await panel._callConfirmed(', self.presets)
         self.assertIn('"select_option"', self.presets)
+
+    def test_user_presets_are_persistent_and_editor_never_writes_device(self) -> None:
+        self.assertIn('window.localStorage.getItem(userPresetStorageKey(panel, kind))', self.presets)
+        self.assertIn('window.localStorage.setItem(userPresetStorageKey(panel, kind)', self.presets)
+        editor = self.presets.split('function showUserPresetEditor', 1)[1].split('async function applyPreset', 1)[0]
+        self.assertIn('Настройки только сохраняются в предустановку', editor)
+        self.assertIn('writeUserPreset(panel, kind', editor)
+        self.assertNotIn('_callConfirmed', editor)
+        self.assertNotIn('_switchWorkspace', editor)
+        self.assertNotIn('_setCleaningDraft', editor)
 
     def test_version_metadata_cannot_drift_from_runtime(self) -> None:
         standard = json.loads((ROOT / ".nikas-ui-standard.json").read_text(encoding="utf-8"))
@@ -97,9 +106,9 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
         self.assertEqual("0.7.41", standard["ui_version"])
         self.assertIn('const UI_VERSION = "v0.7.41"', self.source)
-        self.assertIn('VERSION = "v1.00_b086"', constants)
+        self.assertIn('VERSION = "v1.00_b087"', constants)
         self.assertIn('DASHBOARD_VERSION = "v0.7.41"', constants)
-        self.assertEqual("1.0.0b86", manifest["version"])
+        self.assertEqual("1.0.0b87", manifest["version"])
         self.assertEqual("v0.7.41", panel["dashboard_version"])
         self.assertNotIn("v0.7.31:", self.source)
 
