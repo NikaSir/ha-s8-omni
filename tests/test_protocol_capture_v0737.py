@@ -80,8 +80,9 @@ class ProtocolCaptureV0737Tests(unittest.TestCase):
         self.assertIn('operation="pause"', pause)
         self.assertIn("async_set_sequence", return_home)
         self.assertIn("[(DP_POWER_GO, False), (DP_PAUSE, True)]", return_home)
-        self.assertIn("async_set_dp", return_home)
-        self.assertIn('"chargego"', return_home)
+        self.assertIn("async_set_sequence_after_confirmation", return_home)
+        self.assertIn('(DP_MODE, "chargego")', return_home)
+        self.assertIn("[(DP_POWER_GO, True)]", return_home)
         self.assertIn("async_wait_for_state", return_home)
 
     def test_panel_exposes_verified_transport_and_drying_stop(self) -> None:

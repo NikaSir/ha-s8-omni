@@ -100,6 +100,9 @@ class S8OmniVacuum(S8OmniEntity, StateVacuumEntity):
 
     async def async_return_to_base(self, **kwargs):
         raw_status = str(self.dp(DP_STATUS) or "")
+        if raw_status in {"charging", "charge_done"}:
+            return
+
         actively_cleaning = raw_status in {
             "cleaning",
             "smart",
@@ -113,14 +116,15 @@ class S8OmniVacuum(S8OmniEntity, StateVacuumEntity):
         } or (
             self.dp(DP_POWER_GO) is True and self.dp(DP_PAUSE) is False
         )
+
         if actively_cleaning:
             await self.coordinator.async_set_sequence(
                 [(DP_POWER_GO, False), (DP_PAUSE, True)],
                 operation="return_to_base_pause",
             )
             standby = await self.coordinator.async_wait_for_state(
-                lambda data: data.get(DP_POWER_GO) is False
-                and data.get(DP_PAUSE) is True
+                lambda data: data.get(DP_POWER_GO) in {False, 0}
+                and data.get(DP_PAUSE) in {True, 1}
                 and str(data.get(DP_STATUS)) == "standby",
                 operation="return_to_base_pause",
                 timeout=25.0,
@@ -129,11 +133,24 @@ class S8OmniVacuum(S8OmniEntity, StateVacuumEntity):
                 raise HomeAssistantError(
                     "Пылесос остановился, но не перешёл в режим ожидания перед возвратом на базу."
                 )
-        await self.coordinator.async_set_dp(
-            DP_MODE,
-            "chargego",
+
+        # Verified working sequence from build b071: selecting chargego alone only
+        # changes the mode. DP1=true is the execution trigger, while DP2 remains
+        # true so the paused cleaning job is not resumed.
+        await self.coordinator.async_set_sequence_after_confirmation(
+            (DP_MODE, "chargego"),
+            [(DP_POWER_GO, True)],
+            lambda data: (
+                str(data.get(DP_MODE)) == "chargego"
+                and data.get(DP_PAUSE) in {True, 1}
+            ),
             operation="return_to_base",
+            failure_message=(
+                "Пылесос не подтвердил режим возврата на базу. "
+                "Команда движения не отправлена."
+            ),
         )
+
         returning = await self.coordinator.async_wait_for_state(
             lambda data: str(data.get(DP_STATUS))
             in {"goto_charge", "repositing", "charging", "charge_done"},
@@ -142,7 +159,7 @@ class S8OmniVacuum(S8OmniEntity, StateVacuumEntity):
         )
         if returning is None:
             raise HomeAssistantError(
-                "Пылесос принял режим возврата, но не подтвердил движение к базе."
+                "Пылесос принял режим возврата и триггер запуска, но не подтвердил движение к базе."
             )
 
     async def async_set_fan_speed(self, fan_speed, **kwargs):
