@@ -1,4 +1,5 @@
 import "./s8-omni-panel.js";
+import "./s8-omni-cleaning-presets.js";
 
 const Panel = customElements.get("s8-omni-panel");
 if (Panel && !Panel.prototype.__s8ButtonUnknownCompatibilityPatch) {
