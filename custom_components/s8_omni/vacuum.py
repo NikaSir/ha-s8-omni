@@ -93,8 +93,12 @@ class S8OmniVacuum(S8OmniEntity, StateVacuumEntity):
         )
 
     async def async_pause(self):
-        await self.coordinator.async_set_sequence(
-            [(DP_POWER_GO, False), (DP_PAUSE, True)],
+        # Physical S8 test: DP1=false silently stops execution rather than
+        # invoking the robot's native Pause behaviour. Test the dedicated
+        # Tuya pause datapoint in isolation so DP1 remains untouched.
+        await self.coordinator.async_set_dp(
+            DP_PAUSE,
+            True,
             operation="pause",
         )
 
@@ -134,9 +138,9 @@ class S8OmniVacuum(S8OmniEntity, StateVacuumEntity):
                     "Пылесос остановился, но не перешёл в режим ожидания перед возвратом на базу."
                 )
 
-        # Verified working sequence from build b071: selecting chargego alone only
-        # changes the mode. DP1=true is the execution trigger, while DP2 remains
-        # true so the paused cleaning job is not resumed.
+        # Historical b071 assumption retained only until Home is captured from
+        # the official panel. A physical 2026-09-05 test showed DP1=true can
+        # resume cleaning, so do not treat this sequence as protocol proof.
         await self.coordinator.async_set_sequence_after_confirmation(
             (DP_MODE, "chargego"),
             [(DP_POWER_GO, True)],
