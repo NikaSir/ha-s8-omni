@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from homeassistant.components.select import SelectEntity
+from homeassistant.exceptions import HomeAssistantError
 
 from .const import (
     CLEAN_MODE_OPTIONS,
@@ -62,9 +63,17 @@ class S8Select(S8OmniEntity, SelectEntity):
         return {
             "raw_dp4_mode": self.dp(self.desc.dp),
             "clean_mode_source": self.coordinator.clean_mode_source,
+            "write_policy": "blocked_use_verified_vacuum_actions",
         }
 
     async def async_select_option(self, option):
         if option not in self.desc.options:
             raise ValueError(f"Unsupported option: {option}")
+        if self.desc.key == "mode":
+            reason = (
+                "Direct DP4 mode writes are blocked. Use the verified vacuum Start "
+                "or Return-to-base actions; room/zone/pose modes require separate protocol verification."
+            )
+            self.coordinator.trace_blocked_command("direct_mode_select", reason)
+            raise HomeAssistantError(reason)
         await self.coordinator.async_set_dp(self.desc.dp, option)
