@@ -132,7 +132,7 @@
       ],
       "view_responsibilities": {
         "overview": "state_aware_photographic_hero_resource_strip_battery_mode_station_and_actions_without_duplicate_telemetry",
-        "cleaning": "current_cleaning_metrics_shared_profile_surface_and_separate_settings_drill_down",
+        "cleaning": "current_cleaning_metrics_raw_clean_type_and_separate_dry_wet_presets_with_user_settings_drill_down",
         "station": "compact_station_state_summary_operations_and_unified_stop_explanation",
         "maintenance": "consumable_minutes_derived_percentages_and_service",
         "diagnostics": "technical_state_and_raw_context"
@@ -188,11 +188,17 @@
       "station_summary_layout": "three_equal_compact_columns",
       "station_operation_density": "compact_without_reducing_touch_readability",
       "cleaning_root_actions": false,
-      "cleaning_key_profile_cards": [
-        "suction",
-        "water"
-      ],
-      "cleaning_key_profile_layout": "one_shared_two_section_surface",
+      "cleaning_key_profile_cards": [],
+      "cleaning_profile_controls_location": "cleaning-settings",
+      "cleaning_presets": {
+        "dry_quiet": ["gentle", "closed"],
+        "dry_max": ["strong", "closed"],
+        "wet_quiet": ["gentle", "low"],
+        "wet_max": ["strong", "high"],
+        "dry_user": "settings_with_water_closed",
+        "wet_user": "settings_with_water_enabled"
+      },
+      "cleaning_type_source": "mode_raw",
       "cleaning_zero_minute_active_label": "< 1 мин",
       "cleaning_settings_secondary_summary": [
         "volume",

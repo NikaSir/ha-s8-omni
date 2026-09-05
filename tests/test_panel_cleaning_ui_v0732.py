@@ -7,12 +7,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "custom_components" / "s8_omni" / "frontend" / "s8-omni-panel.js"
+PRESETS = ROOT / "custom_components" / "s8_omni" / "frontend" / "s8-omni-cleaning-presets.js"
 
 
 class PanelCleaningUiV0732Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.source = SOURCE.read_text(encoding="utf-8")
+        cls.presets = PRESETS.read_text(encoding="utf-8")
         cls.cleaning = cls.source.split("  _cleaning() {", 1)[1].split(
             "  _segmentControl(", 1
         )[0]
@@ -23,23 +25,22 @@ class PanelCleaningUiV0732Tests(unittest.TestCase):
             "  _patchStableDom() {", 1
         )[0]
 
-    def test_current_metrics_and_profile_use_shared_two_section_surfaces(self) -> None:
+    def test_current_metrics_keep_shared_two_section_surface(self) -> None:
         self.assertIn(".metric-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0", self.source)
         self.assertIn(".metric:first-child::after", self.source)
-        self.assertEqual(2, self.cleaning.count('class="metric-grid"'))
-        self.assertIn("this._formatCleaningTime(cleanTime, cleanArea, snap)", self.cleaning)
+        self.assertIn("this._formatCleaningTime(cleanTime, cleanArea, snap)", self.presets)
         self.assertIn('return active ? "< 1 мин" : "—"', self.source)
 
     def test_map_and_rooms_reminder_is_preserved(self) -> None:
-        self.assertIn("Следующий этап", self.cleaning)
-        self.assertIn("Карта и комнаты", self.cleaning)
-        self.assertIn("Комнатная и зональная уборка появятся", self.cleaning)
+        self.assertIn("Следующий этап", self.presets)
+        self.assertIn("Карта и комнаты", self.presets)
+        self.assertIn("Комнатная и зональная уборка появятся", self.presets)
 
-    def test_verified_cleaning_names_and_read_only_work_mode(self) -> None:
+    def test_type_and_cleaning_profile_are_separate(self) -> None:
+        self.assertIn("Тип уборки", self.presets)
+        self.assertIn('this._stateValue("mode")', self.presets)
+        self.assertNotIn('<h2>Как убирать</h2>', self.presets)
         self.assertIn('closed: "Выкл."', self.source)
-        self.assertIn('both_work: "Сухая и влажная"', self.source)
-        self.assertIn('mop_work: "Влажная"', self.source)
-        self.assertIn('<span>Режим уборки</span>', self.settings)
         self.assertNotIn('_segmentControl("work_mode"', self.source)
 
     def test_suction_and_water_are_staged_until_apply(self) -> None:
@@ -94,7 +95,9 @@ class PanelCleaningUiV0732Tests(unittest.TestCase):
         self.assertTrue(detail["single_apply"])
         self.assertTrue(detail["readback_required"])
         self.assertEqual("official_application_not_public_entity", detail["dnd_period_source"])
-        self.assertTrue(panel["mobile_fit"]["cleaning_key_profile_layout"].startswith("one_shared"))
+        self.assertEqual("cleaning-settings", panel["mobile_fit"]["cleaning_profile_controls_location"])
+        self.assertEqual(["gentle", "closed"], panel["mobile_fit"]["cleaning_presets"]["dry_quiet"])
+        self.assertEqual(["strong", "high"], panel["mobile_fit"]["cleaning_presets"]["wet_max"])
 
 
 if __name__ == "__main__":
