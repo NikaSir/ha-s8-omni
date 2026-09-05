@@ -50,7 +50,7 @@ class ProtocolCaptureV0737Tests(unittest.TestCase):
         self.assertIn('result["protocol_trace"] = list(coordinator.command_trace)', self.diagnostics)
         self.assertIn('"diagnostic_capture_active": coordinator.diagnostic_capture_active', self.diagnostics)
 
-    def test_verified_transport_uses_captured_protocol(self) -> None:
+    def test_verified_start_pause_and_guarded_home_transport(self) -> None:
         features = self.vacuum.split("_attr_supported_features", 1)[1].split("def __init__", 1)[0]
         start = self.vacuum.split("    async def async_start", 1)[1].split(
             "    async def async_pause", 1
@@ -78,11 +78,12 @@ class ProtocolCaptureV0737Tests(unittest.TestCase):
         self.assertIn("self._set_multiple_sync", atomic)
         self.assertNotIn("async_set_sequence", start)
         self.assertIn('operation="pause"', pause)
-        self.assertIn("async_set_sequence", return_home)
-        self.assertIn("[(DP_POWER_GO, False), (DP_PAUSE, True)]", return_home)
+        self.assertIn("DP_PAUSE,", pause)
+        self.assertNotIn("DP_POWER_GO", pause)
         self.assertIn("async_set_sequence_after_confirmation", return_home)
         self.assertIn('(DP_MODE, "chargego")', return_home)
-        self.assertIn("[(DP_POWER_GO, True)]", return_home)
+        self.assertIn("[(DP_PAUSE, False)]", return_home)
+        self.assertNotIn("[(DP_POWER_GO, True)]", return_home)
         self.assertIn("async_wait_for_state", return_home)
 
     def test_panel_exposes_verified_transport_and_drying_stop(self) -> None:
