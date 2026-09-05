@@ -8,11 +8,12 @@
   "role": "specialized",
   "artifact_kind": "production",
   "runtime_files": [
-    "custom_components/s8_omni/frontend/s8-omni-panel.js"
+    "custom_components/s8_omni/frontend/s8-omni-panel.js",
+    "custom_components/s8_omni/frontend/s8-omni-cleaning-presets.js"
   ],
   "production_entrypoint": "custom_components/s8_omni/frontend/s8-omni-panel.js",
   "build_source_files": [],
-  "ui_version": "0.7.41",
+  "ui_version": "0.7.42",
   "web_component": "s8-omni-panel",
   "bundle_contract": {
     "autonomous": true,
