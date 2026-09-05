@@ -7,12 +7,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "custom_components" / "s8_omni" / "frontend" / "s8-omni-panel.js"
+BOOTSTRAP = ROOT / "custom_components" / "s8_omni" / "frontend" / "s8-omni-panel-bootstrap.js"
 
 
 class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.source = SOURCE.read_text(encoding="utf-8")
+        cls.bootstrap = BOOTSTRAP.read_text(encoding="utf-8")
         cls.bind = cls.source.split("  _bindStableContent(root) {", 1)[1].split(
             "  _patchStableDom() {", 1
         )[0]
@@ -48,6 +50,11 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         self.assertIn("Остановить текущую операцию станции?", self.bind)
         self.assertIn('button.matches("[data-station-command]")', self.bind)
 
+    def test_button_unknown_state_is_callable_before_first_press(self) -> None:
+        self.assertIn('domain === "button"', self.bootstrap)
+        self.assertIn('targetState !== "unavailable"', self.bootstrap)
+        self.assertIn('!["unknown", "unavailable"].includes(targetState)', self.bootstrap)
+
     def test_child_lock_is_confirmed_and_read_back(self) -> None:
         self.assertIn("блокировку от детей?", self.bind)
         self.assertIn('await this._callConfirmed("switch"', self.bind)
@@ -65,8 +72,8 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
         self.assertEqual("0.7.41", standard["ui_version"])
         self.assertIn('const UI_VERSION = "v0.7.41"', self.source)
-        self.assertIn('VERSION = "v1.00_b080"', constants)
-        self.assertEqual("1.0.0b80", manifest["version"])
+        self.assertIn('VERSION = "v1.00_b081"', constants)
+        self.assertEqual("1.0.0b81", manifest["version"])
         self.assertEqual("v0.7.41", panel["dashboard_version"])
         self.assertNotIn("v0.7.31:", self.source)
 
