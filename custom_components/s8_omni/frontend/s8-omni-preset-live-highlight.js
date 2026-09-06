@@ -1,0 +1,85 @@
+const Panel = customElements.get("s8-omni-panel");
+
+const FIXED_PRESETS = {
+  "dry-quiet": { suction: "gentle", water: "closed" },
+  "dry-max": { suction: "strong", water: "closed" },
+  "wet-quiet": { suction: "gentle", water: "low" },
+  "wet-max": { suction: "strong", water: "high" },
+};
+
+function entryKey(panel) {
+  return String(panel?._panel?.config?.entry_id || panel?._config?.entry_id || panel?.config?.entry_id || "default");
+}
+
+function selectedKey(panel) {
+  return `nikas.s8_omni.selected_preset.v1.${entryKey(panel)}`;
+}
+
+function userKey(entry, kind) {
+  return `nikas.s8_omni.user_preset.v1.${entry}.${kind}`;
+}
+
+function readUserPreset(panel, kind) {
+  try {
+    const keys = [userKey(entryKey(panel), kind), userKey("default", kind)];
+    for (const key of [...new Set(keys)]) {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw);
+      if (!parsed?.suction) continue;
+      if (kind === "dry") return { suction: parsed.suction, water: "closed" };
+      if (parsed.water) return { suction: parsed.suction, water: parsed.water };
+    }
+  } catch (_error) {}
+  return null;
+}
+
+function valuesFor(panel, key) {
+  if (FIXED_PRESETS[key]) return FIXED_PRESETS[key];
+  if (key === "dry-user") return readUserPreset(panel, "dry");
+  if (key === "wet-user") return readUserPreset(panel, "wet");
+  return null;
+}
+
+function selectedPreset(panel) {
+  let key = null;
+  try { key = window.localStorage.getItem(selectedKey(panel)); } catch (_error) {}
+  const values = key ? valuesFor(panel, key) : null;
+  if (!values) return null;
+  const suctionOk = panel._controlValuesEqual("suction", panel._controlValue("suction"), values.suction);
+  const waterOk = panel._controlValuesEqual("water", panel._controlValue("water"), values.water);
+  return suctionOk && waterOk ? key : null;
+}
+
+function syncSelectedPresetDom(panel) {
+  const root = panel.shadowRoot;
+  if (!root) return;
+
+  root.querySelectorAll(".preset-option.selected,.user-preset-shell.selected").forEach((node) => node.classList.remove("selected"));
+
+  const key = selectedPreset(panel);
+  if (!key) return;
+  const button = root.querySelector(`[data-cleaning-preset="${key}"]`);
+  if (!button) return;
+  const card = key.endsWith("-user") ? button.closest(".user-preset-shell") : button.closest(".preset-option");
+  card?.classList.add("selected");
+}
+
+if (Panel && !Panel.prototype.__s8PresetLiveHighlightB092) {
+  Panel.prototype.__s8PresetLiveHighlightB092 = true;
+
+  const oldQueueLivePatch = Panel.prototype._queueLivePatch;
+  Panel.prototype._queueLivePatch = function presetHighlightQueueLivePatch(...args) {
+    const result = oldQueueLivePatch.apply(this, args);
+    queueMicrotask(() => syncSelectedPresetDom(this));
+    requestAnimationFrame(() => syncSelectedPresetDom(this));
+    return result;
+  };
+
+  const oldBindStableContent = Panel.prototype._bindStableContent;
+  Panel.prototype._bindStableContent = function presetHighlightBindStableContent(root) {
+    const result = oldBindStableContent.call(this, root);
+    queueMicrotask(() => syncSelectedPresetDom(this));
+    return result;
+  };
+}
