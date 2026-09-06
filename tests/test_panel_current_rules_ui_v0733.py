@@ -57,9 +57,9 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         self.assertIn('!["unknown", "unavailable"].includes(targetState)', self.bootstrap)
 
     def test_child_modules_are_cache_busted_with_release_version(self) -> None:
-        self.assertIn('import "./s8-omni-panel.js?v=1.0.0b89";', self.bootstrap)
-        self.assertIn('import "./s8-omni-cleaning-presets.js?v=1.0.0b89";', self.bootstrap)
-        self.assertIn('import "./s8-omni-service-settings.js?v=1.0.0b89";', self.bootstrap)
+        self.assertIn('import "./s8-omni-panel.js?v=1.0.0b90";', self.bootstrap)
+        self.assertIn('import "./s8-omni-cleaning-presets.js?v=1.0.0b90";', self.bootstrap)
+        self.assertIn('import "./s8-omni-service-settings.js?v=1.0.0b90";', self.bootstrap)
         self.assertNotIn('import "./s8-omni-cleaning-presets.js";', self.bootstrap)
 
     def test_child_lock_is_confirmed_and_read_back(self) -> None:
@@ -86,6 +86,11 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         self.assertIn("storeSelected(panel, key)", self.service)
         self.assertIn("preset-option.selected", self.service)
         self.assertIn("user-preset-shell.selected", self.service)
+
+    def test_user_preset_highlight_reads_entry_and_legacy_default_storage(self) -> None:
+        self.assertIn('userKeyForEntry(entryKey(panel), kind)', self.service)
+        self.assertIn('userKeyForEntry("default", kind)', self.service)
+        self.assertIn('new Set(keys)', self.service)
 
     def test_approved_cleaning_presets_are_two_full_width_rows_without_mode_card(self) -> None:
         self.assertNotIn('Тип уборки', self.presets)
@@ -126,9 +131,9 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
         self.assertEqual("0.7.41", standard["ui_version"])
         self.assertIn('const UI_VERSION = "v0.7.41"', self.source)
-        self.assertIn('VERSION = "v1.00_b089"', constants)
+        self.assertIn('VERSION = "v1.00_b090"', constants)
         self.assertIn('DASHBOARD_VERSION = "v0.7.41"', constants)
-        self.assertEqual("1.0.0b89", manifest["version"])
+        self.assertEqual("1.0.0b90", manifest["version"])
         self.assertEqual("v0.7.41", panel["dashboard_version"])
         self.assertNotIn("v0.7.31:", self.source)
 
