@@ -57,9 +57,9 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         self.assertIn('!["unknown", "unavailable"].includes(targetState)', self.bootstrap)
 
     def test_child_modules_are_cache_busted_with_release_version(self) -> None:
-        self.assertIn('import "./s8-omni-panel.js?v=1.0.0b90";', self.bootstrap)
-        self.assertIn('import "./s8-omni-cleaning-presets.js?v=1.0.0b90";', self.bootstrap)
-        self.assertIn('import "./s8-omni-service-settings.js?v=1.0.0b90";', self.bootstrap)
+        self.assertIn('import "./s8-omni-panel.js?v=1.0.0b91";', self.bootstrap)
+        self.assertIn('import "./s8-omni-cleaning-presets.js?v=1.0.0b91";', self.bootstrap)
+        self.assertIn('import "./s8-omni-service-settings.js?v=1.0.0b91";', self.bootstrap)
         self.assertNotIn('import "./s8-omni-cleaning-presets.js";', self.bootstrap)
 
     def test_child_lock_is_confirmed_and_read_back(self) -> None:
@@ -78,12 +78,14 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         self.assertNotIn('data-apply-cleaning', settings)
         self.assertIn("Кнопка «Применить» находится в разделе «Сервис»", settings)
 
-    def test_selected_preset_is_persisted_only_after_device_values_match(self) -> None:
+    def test_selected_preset_commits_after_confirmed_readback(self) -> None:
         self.assertIn("nikas.s8_omni.selected_preset", self.service)
-        self.assertIn("rememberAfterReadback", self.service)
-        self.assertIn("_controlValuesEqual(\"suction\"", self.service)
-        self.assertIn("_controlValuesEqual(\"water\"", self.service)
+        self.assertIn("commitPendingSelection", self.service)
+        self.assertIn("const oldCallConfirmed = Panel.prototype._callConfirmed", self.service)
+        self.assertIn("if (result) commitPendingSelection(this)", self.service)
+        self.assertIn("presetMatches(panel, key)", self.service)
         self.assertIn("storeSelected(panel, key)", self.service)
+        self.assertNotIn("rememberAfterReadback", self.service)
         self.assertIn("preset-option.selected", self.service)
         self.assertIn("user-preset-shell.selected", self.service)
 
@@ -131,9 +133,9 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
         self.assertEqual("0.7.41", standard["ui_version"])
         self.assertIn('const UI_VERSION = "v0.7.41"', self.source)
-        self.assertIn('VERSION = "v1.00_b090"', constants)
+        self.assertIn('VERSION = "v1.00_b091"', constants)
         self.assertIn('DASHBOARD_VERSION = "v0.7.41"', constants)
-        self.assertEqual("1.0.0b90", manifest["version"])
+        self.assertEqual("1.0.0b91", manifest["version"])
         self.assertEqual("v0.7.41", panel["dashboard_version"])
         self.assertNotIn("v0.7.31:", self.source)
 
