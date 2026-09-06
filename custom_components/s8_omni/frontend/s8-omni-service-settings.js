@@ -26,21 +26,22 @@ function entryKey(panel) {
 function selectedKey(panel) {
   return `nikas.s8_omni.selected_preset.v${SELECTED_PRESET_VERSION}.${entryKey(panel)}`;
 }
-function userKey(panel, kind) {
-  return `nikas.s8_omni.user_preset.v1.${entryKey(panel)}.${kind}`;
+function userKeyForEntry(entry, kind) {
+  return `nikas.s8_omni.user_preset.v1.${entry}.${kind}`;
 }
 function readUser(panel, kind) {
   try {
-    const raw = window.localStorage.getItem(userKey(panel, kind));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed?.suction) return null;
-    return kind === "dry"
-      ? { suction: parsed.suction, water: "closed" }
-      : { suction: parsed.suction, water: parsed.water };
-  } catch (_error) {
-    return null;
-  }
+    const keys = [userKeyForEntry(entryKey(panel), kind), userKeyForEntry("default", kind)];
+    for (const key of [...new Set(keys)]) {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw);
+      if (!parsed?.suction) continue;
+      if (kind === "dry") return { suction: parsed.suction, water: "closed" };
+      if (parsed.water) return { suction: parsed.suction, water: parsed.water };
+    }
+  } catch (_error) {}
+  return null;
 }
 function presetValues(panel, key) {
   const fixed = {
