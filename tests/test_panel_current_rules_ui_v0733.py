@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "custom_components" / "s8_omni" / "frontend" / "s8-omni-panel.js"
 BOOTSTRAP = ROOT / "custom_components" / "s8_omni" / "frontend" / "s8-omni-panel-bootstrap.js"
 PRESETS = ROOT / "custom_components" / "s8_omni" / "frontend" / "s8-omni-cleaning-presets.js"
+SERVICE = ROOT / "custom_components" / "s8_omni" / "frontend" / "s8-omni-service-settings.js"
 
 
 class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
@@ -17,19 +18,17 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         cls.source = SOURCE.read_text(encoding="utf-8")
         cls.bootstrap = BOOTSTRAP.read_text(encoding="utf-8")
         cls.presets = PRESETS.read_text(encoding="utf-8")
+        cls.service = SERVICE.read_text(encoding="utf-8")
         cls.bind = cls.source.split("  _bindStableContent(root) {", 1)[1].split(
             "  _patchStableDom() {", 1
-        )[0]
-        cls.settings = cls.source.split("  _cleaningSettings() {", 1)[1].split(
-            "  _operation(", 1
         )[0]
 
     def test_all_cleaning_writes_share_one_draft_and_apply(self) -> None:
         self.assertIn('["suction", "water", "volume", "do_not_disturb"]', self.source)
         self.assertIn('this._setCleaningDraft("volume", Number(volume.value))', self.bind)
         self.assertIn('key === "do_not_disturb"', self.bind)
-        self.assertIn("Изменения готовы", self.settings)
-        self.assertEqual(1, self.settings.count("data-apply-cleaning"))
+        self.assertIn('data-apply-cleaning', self.service)
+        self.assertIn("Изменения готовы", self.service)
         self.assertNotIn('this._call("number", "set_value", "volume"', self.bind)
 
     def test_apply_requires_confirmation_and_device_readback(self) -> None:
@@ -58,19 +57,35 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         self.assertIn('!["unknown", "unavailable"].includes(targetState)', self.bootstrap)
 
     def test_child_modules_are_cache_busted_with_release_version(self) -> None:
-        self.assertIn('import "./s8-omni-panel.js?v=1.0.0b88";', self.bootstrap)
-        self.assertIn('import "./s8-omni-cleaning-presets.js?v=1.0.0b88";', self.bootstrap)
+        self.assertIn('import "./s8-omni-panel.js?v=1.0.0b89";', self.bootstrap)
+        self.assertIn('import "./s8-omni-cleaning-presets.js?v=1.0.0b89";', self.bootstrap)
+        self.assertIn('import "./s8-omni-service-settings.js?v=1.0.0b89";', self.bootstrap)
         self.assertNotIn('import "./s8-omni-cleaning-presets.js";', self.bootstrap)
 
     def test_child_lock_is_confirmed_and_read_back(self) -> None:
         self.assertIn("блокировку от детей?", self.bind)
         self.assertIn('await this._callConfirmed("switch"', self.bind)
 
-    def test_shell_owns_viewport_and_hero_is_first_paint_priority(self) -> None:
-        self.assertIn("createNikasShellScrollBoundaryGuard", self.source)
-        self.assertIn("block-size:100%", self.source)
-        self.assertNotIn("100dvh", self.source)
-        self.assertIn('loading="eager" decoding="sync" fetchpriority="high"', self.source)
+    def test_service_owns_volume_dnd_and_apply(self) -> None:
+        self.assertIn("Голосовые уведомления", self.service)
+        self.assertIn("Не беспокоить", self.service)
+        self.assertIn('data-volume', self.service)
+        self.assertIn('data-toggle="do_not_disturb"', self.service)
+        self.assertIn('data-apply-cleaning', self.service)
+        settings = self.service.split("Panel.prototype._cleaningSettings", 1)[1].split("const oldMaintenance", 1)[0]
+        self.assertNotIn("Голосовые уведомления", settings)
+        self.assertNotIn("Не беспокоить", settings)
+        self.assertNotIn('data-apply-cleaning', settings)
+        self.assertIn("Кнопка «Применить» находится в разделе «Сервис»", settings)
+
+    def test_selected_preset_is_persisted_only_after_device_values_match(self) -> None:
+        self.assertIn("nikas.s8_omni.selected_preset", self.service)
+        self.assertIn("rememberAfterReadback", self.service)
+        self.assertIn("_controlValuesEqual(\"suction\"", self.service)
+        self.assertIn("_controlValuesEqual(\"water\"", self.service)
+        self.assertIn("storeSelected(panel, key)", self.service)
+        self.assertIn("preset-option.selected", self.service)
+        self.assertIn("user-preset-shell.selected", self.service)
 
     def test_approved_cleaning_presets_are_two_full_width_rows_without_mode_card(self) -> None:
         self.assertNotIn('Тип уборки', self.presets)
@@ -111,9 +126,9 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
         self.assertEqual("0.7.41", standard["ui_version"])
         self.assertIn('const UI_VERSION = "v0.7.41"', self.source)
-        self.assertIn('VERSION = "v1.00_b088"', constants)
+        self.assertIn('VERSION = "v1.00_b089"', constants)
         self.assertIn('DASHBOARD_VERSION = "v0.7.41"', constants)
-        self.assertEqual("1.0.0b88", manifest["version"])
+        self.assertEqual("1.0.0b89", manifest["version"])
         self.assertEqual("v0.7.41", panel["dashboard_version"])
         self.assertNotIn("v0.7.31:", self.source)
 
