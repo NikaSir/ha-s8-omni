@@ -59,10 +59,10 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         self.assertIn('!["unknown", "unavailable"].includes(targetState)', self.bootstrap)
 
     def test_child_modules_are_cache_busted_with_release_version(self) -> None:
-        self.assertIn('import "./s8-omni-panel.js?v=1.0.0b93";', self.bootstrap)
-        self.assertIn('import "./s8-omni-cleaning-presets.js?v=1.0.0b93";', self.bootstrap)
-        self.assertIn('import "./s8-omni-service-settings.js?v=1.0.0b93";', self.bootstrap)
-        self.assertIn('import "./s8-omni-preset-live-highlight.js?v=1.0.0b93";', self.bootstrap)
+        self.assertIn('import "./s8-omni-panel.js?v=1.0.0b94";', self.bootstrap)
+        self.assertIn('import "./s8-omni-cleaning-presets.js?v=1.0.0b94";', self.bootstrap)
+        self.assertIn('import "./s8-omni-service-settings.js?v=1.0.0b94";', self.bootstrap)
+        self.assertIn('import "./s8-omni-preset-live-highlight.js?v=1.0.0b94";', self.bootstrap)
 
     def test_live_preset_highlight_runs_after_stable_dom_patch(self) -> None:
         self.assertIn("syncSelectedPresetDom", self.live_highlight)
@@ -93,6 +93,13 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         self.assertIn("presetMatches(panel, key)", self.service)
         self.assertIn("storeSelected(panel, key)", self.service)
         self.assertNotIn("rememberAfterReadback", self.service)
+
+    def test_user_preset_dialog_confirmation_is_observed_outside_stable_view(self) -> None:
+        self.assertIn("const shadow = this.shadowRoot", self.service)
+        self.assertIn("shadow.__s8PresetDialogSelectionB094", self.service)
+        self.assertIn('event.target?.closest?.("[data-preset-apply]")', self.service)
+        self.assertIn("this.__s8PendingPresetSelection = this.__s8PresetCandidate", self.service)
+        self.assertIn('event.target?.closest?.("[data-preset-cancel]")', self.service)
 
     def test_user_preset_highlight_reads_entry_and_legacy_default_storage(self) -> None:
         self.assertIn('userKeyForEntry(entryKey(panel), kind)', self.service)
@@ -128,9 +135,9 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
         self.assertEqual("0.7.41", standard["ui_version"])
         self.assertIn('const UI_VERSION = "v0.7.41"', self.source)
-        self.assertIn('VERSION = "v1.00_b093"', constants)
+        self.assertIn('VERSION = "v1.00_b094"', constants)
         self.assertIn('DASHBOARD_VERSION = "v0.7.41"', constants)
-        self.assertEqual("1.0.0b93", manifest["version"])
+        self.assertEqual("1.0.0b94", manifest["version"])
         self.assertEqual("v0.7.41", panel["dashboard_version"])
 
 
