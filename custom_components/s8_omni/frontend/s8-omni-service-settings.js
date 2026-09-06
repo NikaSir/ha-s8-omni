@@ -55,33 +55,28 @@ function presetValues(panel, key) {
   if (key === "wet-user") return readUser(panel, "wet");
   return null;
 }
+function presetMatches(panel, key) {
+  const preset = key ? presetValues(panel, key) : null;
+  if (!preset) return false;
+  return panel._controlValuesEqual("suction", panel._controlValue("suction"), preset.suction)
+    && panel._controlValuesEqual("water", panel._controlValue("water"), preset.water);
+}
 function currentPreset(panel) {
   let key = null;
   try { key = window.localStorage.getItem(selectedKey(panel)); } catch (_error) {}
-  const preset = key ? presetValues(panel, key) : null;
-  if (!preset) return null;
-  return panel._controlValuesEqual("suction", panel._controlValue("suction"), preset.suction)
-    && panel._controlValuesEqual("water", panel._controlValue("water"), preset.water)
-    ? key
-    : null;
+  return key && presetMatches(panel, key) ? key : null;
 }
 function storeSelected(panel, key) {
   try { window.localStorage.setItem(selectedKey(panel), key); } catch (_error) {}
 }
-async function rememberAfterReadback(panel, key) {
-  const preset = presetValues(panel, key);
-  if (!preset) return;
-  const started = Date.now();
-  while (Date.now() - started < 8500) {
-    const suctionOk = panel._controlValuesEqual("suction", panel._controlValue("suction"), preset.suction);
-    const waterOk = panel._controlValuesEqual("water", panel._controlValue("water"), preset.water);
-    if (suctionOk && waterOk) {
-      storeSelected(panel, key);
-      panel._queueLivePatch();
-      return;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 250));
-  }
+function commitPendingSelection(panel) {
+  const key = panel.__s8PendingPresetSelection;
+  if (!key || !presetMatches(panel, key)) return false;
+  storeSelected(panel, key);
+  panel.__s8PendingPresetSelection = null;
+  panel.__s8PresetCandidate = null;
+  panel._queueLivePatch();
+  return true;
 }
 function markSelected(markup, key) {
   if (!key) return markup;
@@ -93,8 +88,8 @@ function markSelected(markup, key) {
   return markup.replace(needle, `class="preset-option selected" type="button" data-cleaning-preset="${key}"`);
 }
 
-if (Panel && !Panel.prototype.__s8ServiceSettingsB089) {
-  Panel.prototype.__s8ServiceSettingsB089 = true;
+if (Panel && !Panel.prototype.__s8ServiceSettingsB091) {
+  Panel.prototype.__s8ServiceSettingsB091 = true;
 
   const oldStyles = Panel.prototype._styles;
   Panel.prototype._styles = function serviceStyles() {
@@ -137,15 +132,40 @@ if (Panel && !Panel.prototype.__s8ServiceSettingsB089) {
     return `${base}<div class="service-settings-block"><section class="card"><div class="section-title"><div><span class="eyebrow">Звук</span><h2>Громкость</h2></div></div><div class="slider-row"><div class="slider-head"><span><strong>Голосовые уведомления</strong></span><strong data-volume-label>${volumeValue === null ? "—" : `${Math.round(volumeValue)}%`}</strong></div><input type="range" min="0" max="100" step="1" value="${volumeValue === null ? 0 : volumeValue}" data-volume ${volumeValue === null || busy ? "disabled" : ""}></div></section><section class="card"><div class="section-title"><div><span class="eyebrow">Поведение</span><h2>Автоматизация</h2></div></div><button class="toggle-row" type="button" data-toggle="do_not_disturb" ${dndUsable ? "" : "disabled"}><span><strong>Не беспокоить</strong><small>Без звука, расписания и возобновления уборки; период задаётся в приложении.</small></span><span class="toggle ${dndValue === true ? "on" : ""}"></span></button></section><section class="card apply-card"><div><strong>${hasDraft ? "Изменения готовы" : "Настройки без изменений"}</strong><small>${hasDraft ? "Параметры будут записаны после подтверждения и проверены по данным устройства." : "Сначала измените один или несколько параметров."}</small></div><button class="apply-button" type="button" data-apply-cleaning ${hasDraft && !busy ? "" : "disabled"}>Применить</button></section></div>`;
   };
 
+  const oldCallConfirmed = Panel.prototype._callConfirmed;
+  Panel.prototype._callConfirmed = async function serviceCallConfirmed(...args) {
+    const result = await oldCallConfirmed.apply(this, args);
+    if (result) commitPendingSelection(this);
+    return result;
+  };
+
   const oldBind = Panel.prototype._bindStableContent;
   Panel.prototype._bindStableContent = function serviceBind(root) {
     oldBind.call(this, root);
-    if (!root || root.__s8PresetSelectionB089) return;
-    root.__s8PresetSelectionB089 = true;
+    if (!root || root.__s8PresetSelectionB091) return;
+    root.__s8PresetSelectionB091 = true;
     root.addEventListener("click", (event) => {
-      const button = event.target?.closest?.("[data-cleaning-preset]");
-      if (!button || !root.contains(button) || button.disabled) return;
-      void rememberAfterReadback(this, button.dataset.cleaningPreset);
+      const presetButton = event.target?.closest?.("[data-cleaning-preset]");
+      if (presetButton && root.contains(presetButton) && !presetButton.disabled) {
+        const key = presetButton.dataset.cleaningPreset;
+        this.__s8PresetCandidate = key;
+        if (presetMatches(this, key)) {
+          storeSelected(this, key);
+          this.__s8PresetCandidate = null;
+          this._queueLivePatch();
+        }
+        return;
+      }
+      const applyButton = event.target?.closest?.("[data-preset-apply]");
+      if (applyButton && this.__s8PresetCandidate) {
+        this.__s8PendingPresetSelection = this.__s8PresetCandidate;
+        return;
+      }
+      const cancelButton = event.target?.closest?.("[data-preset-cancel]");
+      if (cancelButton) {
+        this.__s8PresetCandidate = null;
+        this.__s8PendingPresetSelection = null;
+      }
     });
   };
 }
