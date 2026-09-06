@@ -88,8 +88,8 @@ function markSelected(markup, key) {
   return markup.replace(needle, `class="preset-option selected" type="button" data-cleaning-preset="${key}"`);
 }
 
-if (Panel && !Panel.prototype.__s8ServiceSettingsB091) {
-  Panel.prototype.__s8ServiceSettingsB091 = true;
+if (Panel && !Panel.prototype.__s8ServiceSettingsB094) {
+  Panel.prototype.__s8ServiceSettingsB094 = true;
 
   const oldStyles = Panel.prototype._styles;
   Panel.prototype._styles = function serviceStyles() {
@@ -142,8 +142,8 @@ if (Panel && !Panel.prototype.__s8ServiceSettingsB091) {
   const oldBind = Panel.prototype._bindStableContent;
   Panel.prototype._bindStableContent = function serviceBind(root) {
     oldBind.call(this, root);
-    if (!root || root.__s8PresetSelectionB091) return;
-    root.__s8PresetSelectionB091 = true;
+    if (!root || root.__s8PresetSelectionB094) return;
+    root.__s8PresetSelectionB094 = true;
     root.addEventListener("click", (event) => {
       const presetButton = event.target?.closest?.("[data-cleaning-preset]");
       if (presetButton && root.contains(presetButton) && !presetButton.disabled) {
@@ -154,18 +154,24 @@ if (Panel && !Panel.prototype.__s8ServiceSettingsB091) {
           this.__s8PresetCandidate = null;
           this._queueLivePatch();
         }
-        return;
-      }
-      const applyButton = event.target?.closest?.("[data-preset-apply]");
-      if (applyButton && this.__s8PresetCandidate) {
-        this.__s8PendingPresetSelection = this.__s8PresetCandidate;
-        return;
-      }
-      const cancelButton = event.target?.closest?.("[data-preset-cancel]");
-      if (cancelButton) {
-        this.__s8PresetCandidate = null;
-        this.__s8PendingPresetSelection = null;
       }
     });
+
+    const shadow = this.shadowRoot;
+    if (shadow && !shadow.__s8PresetDialogSelectionB094) {
+      shadow.__s8PresetDialogSelectionB094 = true;
+      shadow.addEventListener("click", (event) => {
+        const applyButton = event.target?.closest?.("[data-preset-apply]");
+        if (applyButton && this.__s8PresetCandidate) {
+          this.__s8PendingPresetSelection = this.__s8PresetCandidate;
+          return;
+        }
+        const cancelButton = event.target?.closest?.("[data-preset-cancel]");
+        if (cancelButton) {
+          this.__s8PresetCandidate = null;
+          this.__s8PendingPresetSelection = null;
+        }
+      });
+    }
   };
 }
