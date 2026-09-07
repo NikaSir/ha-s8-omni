@@ -45,3 +45,9 @@ The toolbar can publish synthetic robot states and volume telemetry, hold or rel
 These checks exercise the actual panel DOM and event bindings against synthetic data. Volume changes dispatch input/change events at the range element; this checks draft handling and stable DOM bindings, not pointer dragging. Button actions use real browser clicks, including automatic scrolling into view. Assertions wait for the panel's native-scroll and render queues to settle without waiting for a particular expected field value.
 
 They do not validate Tuya commands, physical cleaning or station actions, real Home Assistant registry timing, WebSocket transport, iOS safe areas or touch gestures, or cache behaviour after an installed release update. `ha-icon` is a size-preserving test element without rendered SVG artwork; image assets come from the repository. Screenshot comparison is not part of the regression.
+
+## Command confirmation regression
+
+`node tests/ui/command-readback-regression.mjs` imports the same production bootstrap and all four child modules with Node's ES module loader. It executes production parsing, equality, command/readback and Apply handlers using synthetic HA states, minimal DOM boundaries and a virtual clock. The unittest wrapper `tests/test_command_readback_b096.py` runs it in the repository CI regression step.
+
+The scenarios cover unknown/missing/malformed states, valid zero/on/off, timeout/error draft retention, connected/current telemetry, target identity, post-dispatch updates, no-op writes and overlapping commands. No physical commands are sent. These tests establish frontend handling of HA state objects, not the validity of raw device DP data or real-device command acknowledgement.

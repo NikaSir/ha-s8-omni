@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.42";
+const UI_VERSION = "v0.7.43";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.75;
 const VIEW_SCALE_MAX = 2.00;
@@ -485,8 +485,10 @@ class S8OmniPanel extends HTMLElement {
     if (connection === "unknown") return "no_data";
     const obj = this._state("local_connection");
     const attrs = obj?.attributes || {};
-    const age = Number(this._stateValue("telemetry_age"));
-    const hasSnapshot = attrs.has_successful_snapshot === true || Number.isFinite(age);
+    const rawAge = this._stateValue("telemetry_age");
+    const age = typeof rawAge === "number" || (typeof rawAge === "string" && rawAge.trim()) ? Number(rawAge) : NaN;
+    const validAge = Number.isFinite(age) && age >= 0;
+    const hasSnapshot = attrs.has_successful_snapshot !== false && (attrs.has_successful_snapshot === true || validAge);
     if (!hasSnapshot) return "no_data";
     if (connection === "disconnected") return "stale";
     const declared = String(attrs.telemetry_status || "").toLowerCase();
@@ -495,9 +497,9 @@ class S8OmniPanel extends HTMLElement {
     const threshold = Number.isFinite(configuredThreshold) && configuredThreshold > 0
       ? configuredThreshold
       : Number.isFinite(scan) && scan > 0 ? scan * 3 : 15;
-    if (Number.isFinite(age) && age > threshold) return "stale";
+    if (validAge && age > threshold) return "stale";
     if (declared === "stale") return "stale";
-    if (declared === "no_data") return "no_data";
+    if (declared === "no_data" || (!validAge && declared !== "current")) return "no_data";
     return "current";
   }
 
@@ -902,19 +904,31 @@ class S8OmniPanel extends HTMLElement {
       this._queueLivePatch();
     }
   }
+  _parseControlValue(key, value) {
+    if (value === null || value === undefined) return null;
+    if (["do_not_disturb", "child_lock"].includes(key)) {
+      if (value === "on" || value === true) return true;
+      if (value === "off" || value === false) return false;
+      return null;
+    }
+    if (key === "volume") {
+      if (typeof value !== "number" && (typeof value !== "string" || !/^\d+(?:\.\d+)?$/.test(value.trim()))) return null;
+      const numeric = Number(value);
+      return Number.isInteger(numeric) && numeric >= 0 && numeric <= 100 ? numeric : null;
+    }
+    return typeof value === "string" && value.trim() && !["unknown", "unavailable", "none"].includes(value.trim())
+      ? value : null;
+  }
   _controlValue(key) {
     const value = this._stateValue(key);
-    if (key === "volume") {
-      const numeric = Number(value);
-      return Number.isFinite(numeric) ? Math.round(numeric) : null;
-    }
-    if (["do_not_disturb", "child_lock"].includes(key)) return value === "on";
-    return value;
+    // HA switch states are literal on/off; booleans are only draft/expected values.
+    if (["do_not_disturb", "child_lock"].includes(key) && typeof value !== "string") return null;
+    return this._parseControlValue(key, value);
   }
   _controlValuesEqual(key, left, right) {
-    if (key === "volume") return Number(left) === Number(right);
-    if (["do_not_disturb", "child_lock"].includes(key)) return Boolean(left) === Boolean(right);
-    return String(left ?? "") === String(right ?? "");
+    const parsedLeft = this._parseControlValue(key, left);
+    const parsedRight = this._parseControlValue(key, right);
+    return parsedLeft !== null && parsedRight !== null && parsedLeft === parsedRight;
   }
   _setCleaningDraft(key, value) {
     if (this._controlValuesEqual(key, value, this._controlValue(key))) delete this._cleaningDraft[key];
@@ -926,25 +940,56 @@ class S8OmniPanel extends HTMLElement {
         && !this._controlValuesEqual(key, this._cleaningDraft[key], this._controlValue(key)),
     );
   }
-  _readbackMatches(key, expected) {
-    return this._controlValuesEqual(key, this._controlValue(key), expected);
+  _readbackMatches(key, expected, before = null) {
+    if (this._connectionState() !== "connected" || this._telemetryFreshnessState() !== "current") return false;
+    const state = this._state(key);
+    if (!this._available(state) || !this._controlValuesEqual(key, this._controlValue(key), expected)) return false;
+    if (!before) return true;
+    if (this._entityId(key) !== before.entityId) return false;
+    // A matching value cached before dispatch is not a command response. A value
+    // change or a newer timestamp on this target is evidence of an HA update;
+    // a different entity's update or a rebuilt hass object is not.
+    return state.state !== before.value
+      || ["last_updated", "last_reported"].some((field) =>
+        Number.isFinite(Date.parse(state[field]))
+        && Number.isFinite(Date.parse(before[field]))
+        && Date.parse(state[field]) > Date.parse(before[field]));
   }
-  async _waitForReadback(key, expected, timeoutMs = COMMAND_READBACK_TIMEOUT_MS) {
+  async _waitForReadback(key, expected, timeoutMs = COMMAND_READBACK_TIMEOUT_MS, before = null) {
     const startedAt = Date.now();
     while (Date.now() - startedAt <= timeoutMs) {
-      if (this._readbackMatches(key, expected)) return true;
+      if (this._readbackMatches(key, expected, before)) return true;
       await new Promise((resolve) => setTimeout(resolve, 180));
     }
     return false;
   }
   async _callConfirmed(domain, service, key, extra, expected) {
+    if (this._controlValue(key) === null || this._parseControlValue(key, expected) === null
+        || this._connectionState() !== "connected" || this._telemetryFreshnessState() !== "current") {
+      this._commandError = "Цель команды недоступна или не подтверждена Home Assistant.";
+      this._queueLivePatch();
+      return false;
+    }
+    if (this._busyCommands.size > 0) return false;
+    // The current available value already satisfies the request: no write and no
+    // claim that a newly dispatched command has been acknowledged.
+    if (this._readbackMatches(key, expected)) {
+      this._commandError = null;
+      this._queueLivePatch();
+      return true;
+    }
+    const state = this._state(key);
+    const before = {
+      entityId: this._entityId(key), value: state?.state,
+      last_updated: state?.last_updated, last_reported: state?.last_reported,
+    };
     const accepted = await this._call(domain, service, key, extra);
     if (!accepted) return false;
     const readbackKey = `readback:${key}`;
     this._busyCommands.add(readbackKey);
     this._queueLivePatch();
     try {
-      if (await this._waitForReadback(key, expected)) return true;
+      if (await this._waitForReadback(key, expected, COMMAND_READBACK_TIMEOUT_MS, before)) return true;
       this._commandError = "Home Assistant принял команду, но устройство не подтвердило новое значение.";
       return false;
     } finally {
@@ -1394,7 +1439,7 @@ class S8OmniPanel extends HTMLElement {
     return `<div class="resource ${life.tone}" data-more="${key}"><span class="icon"><ha-icon icon="${icon}"></ha-icon></span><span><strong>${title}</strong><span>${escapeHtml(minutes)}</span></span><b>${escapeHtml(percent)}</b></div>`;
   }
   _maintenance() {
-    const snap = this._snapshot(); const child = this._state("child_lock"); const childUsable = snap.connected && this._available(child) && this._busyCommands.size === 0;
+    const snap = this._snapshot(); const child = this._state("child_lock"); const childUsable = snap.connected && this._controlValue("child_lock") !== null && this._busyCommands.size === 0;
     return `${this._trustBanner(snap)}<section class="view-heading"><span class="eyebrow">S8 OMNI</span><h2>Обслуживание</h2><p>Остаточный ресурс расходников.</p></section><section class="card resource-list" aria-label="Ресурс расходников">${this._resource("filter_life","Фильтр","mdi:air-filter",snap.connected)}${this._resource("side_brush_life","Боковая щётка","mdi:fan",snap.connected)}${this._resource("main_brush_life","Основная щётка","mdi:brush",snap.connected)}</section><section class="card protection-card"><div class="section-title"><h2>Защита и ошибки</h2></div><div class="info-row" data-more="fault"><span>Состояние</span><strong>${escapeHtml(snap.connected ? (String(this._stateValue("fault","—")) === "0" ? "Ошибок нет" : `Ошибка ${this._formatEntity("fault","—")}`) : "—")}</strong></div><button class="toggle-row service-toggle-row" type="button" data-toggle="child_lock" ${childUsable ? "" : "disabled"}><span class="toggle-copy"><strong>Блокировка от детей</strong><small>Защита кнопок робота</small></span><span class="toggle ${childUsable && child?.state === "on" ? "on" : ""}"></span></button></section>`;
   }
 
@@ -1561,12 +1606,15 @@ class S8OmniPanel extends HTMLElement {
         if (key === "do_not_disturb") {
           const current = Object.prototype.hasOwnProperty.call(this._cleaningDraft, key)
             ? Boolean(this._cleaningDraft[key])
-            : Boolean(this._controlValue(key));
+            : this._controlValue(key);
+          if (current === null) { this._queueLivePatch(); return; }
           this._setCleaningDraft(key, !current);
           this._queueLivePatch();
           return;
         }
-        const next = !Boolean(this._controlValue(key));
+        const current = this._controlValue(key);
+        if (current === null) { this._queueLivePatch(); return; }
+        const next = !current;
         if (!window.confirm(`${next ? "Включить" : "Выключить"} блокировку от детей?`)) return;
         await this._callConfirmed("switch", next ? "turn_on" : "turn_off", key, {}, next);
       }

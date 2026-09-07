@@ -127,11 +127,9 @@ if (Panel && !Panel.prototype.__s8ServiceSettingsB094) {
   Panel.prototype._maintenance = function serviceMaintenance() {
     const base = oldMaintenance.call(this);
     const snap = this._snapshot();
-    const volume = this._state("volume");
-    const dnd = this._state("do_not_disturb");
     const busy = this._busyCommands.size > 0;
-    const rawVolume = snap.connected && this._available(volume) ? Number(volume.state) : null;
-    const rawDnd = snap.connected && this._available(dnd) ? dnd.state === "on" : null;
+    const rawVolume = snap.connected ? this._controlValue("volume") : null;
+    const rawDnd = snap.connected ? this._controlValue("do_not_disturb") : null;
     const volumeValue = Object.prototype.hasOwnProperty.call(this._cleaningDraft, "volume") ? this._cleaningDraft.volume : rawVolume;
     const dndValue = Object.prototype.hasOwnProperty.call(this._cleaningDraft, "do_not_disturb") ? this._cleaningDraft.do_not_disturb : rawDnd;
     const dndUsable = rawDnd !== null && !busy;
