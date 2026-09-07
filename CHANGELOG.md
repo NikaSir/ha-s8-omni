@@ -1,3 +1,11 @@
+## v1.00_b096 / UI v0.7.43
+
+- Groups child lock with volume and Do Not Disturb in the Service settings card, removing the separate Protection and Errors card.
+- Keeps child lock as an immediate confirmed action with readback, independent of the volume/DND draft and Cancel/Apply.
+- Moves device fault detail to Diagnostics while preserving active-fault visibility on Overview.
+- Shows `Ошибок нет` only for an explicit current zero without an error state; unknown fault data says `Нет данных`, and stale data says `Данные устарели`.
+- Updates frontend cache keys and version metadata without changing verified robot or station commands.
+
 ## v1.00_b095 / UI v0.7.42
 
 - Keeps the approved two-by-three dry/wet preset layout and save-only user editors, with separate confirmed application and live readback selection.

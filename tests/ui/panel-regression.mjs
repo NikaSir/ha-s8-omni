@@ -206,6 +206,67 @@ try {
     assert.ok(layout.headerTop >= -1 && layout.navBottom <= layout.height+1,`${view}: shell exceeds host`);
   }
   report("five workspaces stay inside the mobile host at 100% scale");
+
+  await navigate("maintenance");
+  const settings = active.locator(".service-settings-card");
+  assert.equal(await settings.locator("[data-volume]").count(),1);
+  assert.equal(await settings.locator('[data-toggle="do_not_disturb"]').count(),1);
+  assert.equal(await settings.locator('[data-toggle="child_lock"]').count(),1);
+  assert.equal(await active.locator(".protection-card").count(),0);
+  assert.equal(await active.locator('[data-more="fault"]').count(),0);
+  await inputVolume(72);
+  const beforeChild = (await calls()).length;
+  await page.evaluate(() => { window.fixture.autoReadback = true; });
+  acceptConfirmation = true;
+  await settings.locator('[data-toggle="child_lock"]').click();
+  await page.waitForFunction(() => window.fixture.panel._controlValue("child_lock") === true && window.fixture.panel._busyCommands.size === 0);
+  await patch();
+  assert.match(confirmations.at(-1),/Включить блокировку от детей/);
+  assert.deepEqual((await calls()).slice(beforeChild),[
+    {domain:"switch",service:"turn_on",data:{entity_id:"switch.fixture_child_lock"}},
+  ]);
+  assert.equal(await settings.locator('[data-toggle="child_lock"]').getAttribute("aria-pressed"),"true");
+  assert.deepEqual(await page.evaluate(() => window.fixture.panel._cleaningDraft),{volume:72});
+  assert.equal(await page.evaluate(() => window.fixture.panel._controlValue("volume")),55);
+  await settings.locator("[data-cancel-service-draft]").click();
+  await patch();
+  await countCalls(beforeChild+1);
+  assert.deepEqual(await page.evaluate(() => window.fixture.panel._cleaningDraft),{});
+  assert.equal(await settings.locator("[data-volume]").inputValue(),"55");
+  assert.equal(await settings.locator('[data-toggle="child_lock"]').getAttribute("aria-pressed"),"true");
+  report("child lock shares the settings card and stays independent of draft apply/cancel");
+
+  await navigate("diagnostics");
+  const fault = active.locator('.fault-status[data-more="fault"]');
+  assert.equal(await fault.locator("strong").innerText(),"Ошибок нет");
+  await page.evaluate(() => window.fixture.setState("fault","16"));
+  await patch();
+  assert.equal(await fault.locator("strong").innerText(),"Код ошибки: 16");
+  assert.match(await fault.getAttribute("class"),/\berror\b/);
+  await navigate("overview");
+  assert.equal(await active.locator(".state-hero h1").innerText(),"Требуется внимание");
+  await navigate("diagnostics");
+  await page.evaluate(() => window.fixture.setState("fault","unknown"));
+  await patch();
+  assert.equal(await fault.locator("strong").innerText(),"Нет данных");
+  await page.evaluate(() => {
+    window.fixture.setState("fault","0");
+    window.fixture.setState("telemetry_age","60");
+  });
+  await patch();
+  assert.equal(await fault.locator("strong").innerText(),"Данные устарели");
+  await page.evaluate(() => {
+    window.fixture.setState("telemetry_age","0");
+    window.fixture.setState("composite_status","error");
+  });
+  await patch();
+  assert.equal(await fault.locator("strong").innerText(),"Требуется внимание · код не получен");
+  assert.match(await fault.getAttribute("class"),/\berror\b/);
+  await navigate("overview");
+  assert.equal(await active.locator(".state-hero h1").innerText(),"Требуется внимание");
+  await countCalls(beforeChild+1);
+  report("diagnostics distinguishes clear, active, unknown and stale faults; overview keeps active warnings");
+
   assert.deepEqual(failures,[],"uncaught errors from the real bootstrap");
   console.log("All browser UI regressions passed.");
 } catch (error) {
