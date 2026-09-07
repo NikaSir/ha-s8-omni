@@ -214,6 +214,18 @@ try {
   assert.equal(await settings.locator('[data-toggle="child_lock"]').count(),1);
   assert.equal(await active.locator(".protection-card").count(),0);
   assert.equal(await active.locator('[data-more="fault"]').count(),0);
+  const beforeInvalidChild = (await calls()).length;
+  for (const value of ["unknown", "unavailable", "", "malformed", true, false]) {
+    await page.evaluate(value => window.fixture.setState("child_lock",value),value);
+    await patch();
+    const childControl = settings.locator('[data-toggle="child_lock"]');
+    assert.equal(await childControl.isDisabled(),true,`child lock ${String(value)} must be disabled`);
+    await childControl.evaluate(button => button.click());
+    await countCalls(beforeInvalidChild);
+  }
+  await page.evaluate(() => window.fixture.setState("child_lock","off"));
+  await patch();
+  report("relocated child lock rejects unknown and malformed state without dispatch");
   await inputVolume(72);
   const beforeChild = (await calls()).length;
   await page.evaluate(() => { window.fixture.autoReadback = true; });

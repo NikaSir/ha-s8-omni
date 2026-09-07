@@ -127,17 +127,15 @@ if (Panel && !Panel.prototype.__s8ServiceSettingsB094) {
   Panel.prototype._maintenance = function serviceMaintenance() {
     const base = oldMaintenance.call(this);
     const snap = this._snapshot();
-    const volume = this._state("volume");
-    const dnd = this._state("do_not_disturb");
     const busy = this._busyCommands.size > 0;
-    const rawVolume = snap.connected && this._available(volume) ? Number(volume.state) : null;
-    const rawDnd = snap.connected && this._available(dnd) ? dnd.state === "on" : null;
+    const rawVolume = snap.connected ? this._controlValue("volume") : null;
+    const rawDnd = snap.connected ? this._controlValue("do_not_disturb") : null;
     const volumeValue = Object.prototype.hasOwnProperty.call(this._cleaningDraft, "volume") ? this._cleaningDraft.volume : rawVolume;
     const dndValue = Object.prototype.hasOwnProperty.call(this._cleaningDraft, "do_not_disturb") ? this._cleaningDraft.do_not_disturb : rawDnd;
     const dndUsable = rawDnd !== null && !busy;
-    const child = this._state("child_lock");
-    const childUsable = snap.connected && this._available(child) && !busy;
-    const childOn = child?.state === "on";
+    const childValue = this._controlValue("child_lock");
+    const childUsable = snap.connected && childValue !== null && !busy;
+    const childOn = childValue === true;
     const hasDraft = this._hasCleaningDraft();
     return `${base}<div class="service-settings-block"><section class="card service-settings-card" aria-label="Настройки робота"><div class="slider-row"><div class="slider-head"><span><strong>Громкость</strong><small class="service-volume-hint">Голосовые уведомления</small></span><strong data-volume-label>${volumeValue === null ? "—" : `${Math.round(volumeValue)}%`}</strong></div><input type="range" aria-label="Громкость голосовых уведомлений" min="0" max="100" step="1" value="${volumeValue === null ? 0 : volumeValue}" data-volume ${rawVolume === null || busy ? "disabled" : ""}></div><button class="toggle-row" type="button" data-toggle="do_not_disturb" aria-pressed="${dndValue === true}" ${dndUsable ? "" : "disabled"}><span><strong>Не беспокоить</strong><small>В заданные часы отключаются звук, уборка по расписанию и возобновление уборки. Период задаётся в штатном приложении.</small></span><span class="toggle ${dndValue === true ? "on" : ""}"></span></button><div class="service-apply-bar"><span class="service-apply-status ${hasDraft ? "has-changes" : ""}" data-service-draft-status role="status">${hasDraft ? "Неприменённые изменения" : "Нет изменений"}</span><div class="service-apply-actions"><button class="service-cancel-button" type="button" data-cancel-service-draft ${hasDraft && !busy ? "" : "disabled"}>Отменить</button><button class="apply-button" type="button" data-apply-cleaning ${hasDraft && snap.connected && !busy ? "" : "disabled"}>Применить</button></div></div><button class="toggle-row service-toggle-row" type="button" data-toggle="child_lock" aria-pressed="${childOn}" ${childUsable ? "" : "disabled"}><span class="toggle-copy"><strong>Блокировка от детей</strong><small>Защита кнопок робота. Отдельное подтверждение.</small></span><span class="toggle ${childOn ? "on" : ""}"></span></button></section></div>`;
   };
