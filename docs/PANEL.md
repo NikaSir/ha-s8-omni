@@ -6,7 +6,7 @@ The S8 OMNI integration owns and ships its canonical Home Assistant UI.
 
 - Panel: `/dashboard-s8-omni`
 
-Dashboard version: `v0.7.42`.
+Dashboard version: `v0.7.43`.
 
 The panel is registered through Home Assistant's custom-panel API. No Lovelace YAML, LocalTuya command, cloud request or direct Tuya DP write is required by the frontend.
 
@@ -34,7 +34,7 @@ On mobile widths up to 480 CSS px:
 48 px | minmax(0, 1fr) | 48 px
 ```
 
-The two side slots remain symmetric, so `Пылесос` stays centered against the viewport rather than the free space between controls. Menu and Refresh remain at least 44×44 px touch targets and use matching plaques. The center title is also a visible semantic 52 px-high button with `Пылесос` and the exact `UI v0.7.42` second line. It captures the validated source base-panel route once and returns through explicit Home Assistant navigation.
+The two side slots remain symmetric, so `Пылесос` stays centered against the viewport rather than the free space between controls. Menu and Refresh remain at least 44×44 px touch targets and use matching plaques. The center title is also a visible semantic 52 px-high button with `Пылесос` and the exact `UI v0.7.43` second line. It captures the validated source base-panel route once and returns through explicit Home Assistant navigation.
 
 On the five root views:
 
@@ -49,7 +49,7 @@ The hero card does not repeat S8 OMNI as another large title. The Header identif
 
 At the primary iPhone Pro Max portrait width, the panel must not depend on horizontal overflow or clipped labels.
 
-Dashboard `v0.7.42` applies these mobile rules:
+Dashboard `v0.7.43` applies these mobile rules:
 
 - Header side controls reduce from 52 px to 48 px while preserving symmetric geometry;
 - the three frequent actions remain **three equal columns**;
@@ -75,7 +75,7 @@ It owns:
 - Start / Pause / Home;
 - compact **Робот** summary;
 - compact **Станция** summary;
-- explicit unknown/unavailable/error handling.
+- explicit unknown/unavailable/error handling, including a visible warning for a confirmed active device fault.
 
 It intentionally does not duplicate cleaning time/area, suction/water configuration or the full station-operation list.
 
@@ -119,18 +119,18 @@ Station exposes separate confirmed **Запустить / Остановить**
 Maintenance owns:
 
 - one card with filter, side-brush and main-brush resource rows;
-- fault state and child lock;
-- volume and Do Not Disturb settings;
+- one settings card grouping child lock, volume and Do Not Disturb;
 - local service draft status and **Отменить / Применить** actions.
 
 Resource percentages use the manufacturer lifetime counters. Remaining usage time is formatted without rounding away minutes: for example, `2419` minutes becomes **40 ч 19 мин**. This is usage time, not a calendar replacement estimate. No unverified reset command is shown.
 
-Volume and DND changes stay in a local draft until Apply is confirmed, and each write requires entity-state readback. Cancel discards only the draft. Child lock remains separate: its own confirmation writes immediately and checks readback. DND wording explains that its restrictions apply during the configured hours; the period itself is configured in the official application.
+Volume and DND changes stay in a local draft until Apply is confirmed, and each write requires entity-state readback. Cancel discards only the draft. Child lock is visually grouped in the same settings card, with its own confirmation that writes immediately and checks readback. It is not a draft field and does not wait for Apply. DND wording explains that its restrictions apply during the configured hours; the period itself is configured in the official application.
 
 ### Diagnostics
 
 Diagnostics contains technical state:
 
+- device fault detail, moved from Maintenance; **Ошибок нет** requires an explicit current zero without an error state, unknown data says **Нет данных**, stale data says **Данные устарели**, and a confirmed nonzero fault remains an error;
 - local Tuya LAN connection health;
 - availability and telemetry age;
 - normalized composite/robot/station state;
@@ -185,7 +185,7 @@ Home Assistant registers the stable `s8-omni-panel-bootstrap.js` module with das
 - `s8-omni-service-settings.js` — service controls and selection bookkeeping;
 - `s8-omni-preset-live-highlight.js` — point updates of the confirmed selected preset.
 
-Each child import is also cache-busted with the integration version (`1.0.0b95`). This prevents a refreshed bootstrap from loading an older child module from browser cache.
+Each child import is also cache-busted with the integration version (`1.0.0b96`). This prevents a refreshed bootstrap from loading an older child module from browser cache.
 
 The core panel does not import previous UI implementations. Historical frontend versions belong in Git history, not in the browser dependency chain.
 

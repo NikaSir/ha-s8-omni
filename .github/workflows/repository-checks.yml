@@ -53,7 +53,7 @@ jobs:
           for forbidden in ("100vh", "100dvh", "/dashboard-house-v11"):
               assert forbidden not in source, forbidden
           for required in (
-              'const UI_VERSION = "v0.7.42"',
+              'const UI_VERSION = "v0.7.43"',
               "/dashboard-house-v13/home",
               "/dashboard-rooms-v11/rooms",
               "createNikasShellScrollBoundaryGuard",
