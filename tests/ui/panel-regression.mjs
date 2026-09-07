@@ -38,7 +38,21 @@ page.on("dialog",async dialog => {
 const active = page.locator("[data-stable-view]:not([hidden])");
 const calls = () => page.evaluate(() => window.fixture.calls);
 const countCalls = async count => assert.equal((await calls()).length,count);
-const patch = async () => page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+const patch = async () => {
+  // A Playwright click can scroll a control into view. The panel deliberately
+  // defers DOM patches until that native scrolling finishes, so two animation
+  // frames alone do not imply that the event's render has completed.
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  await page.waitForFunction(() => {
+    const panel = window.fixture.panel;
+    return !panel._nativeScrollActive
+      && panel._gesturePointers.size === 0
+      && !panel._stablePatchQueued
+      && !panel._renderQueued
+      && !panel._renderDeferred
+      && Date.now() >= panel._suppressClicksUntil;
+  });
+};
 const navigate = async view => {
   await page.locator(`nav [data-view="${view}"]`).click();
   await page.waitForFunction(view => window.fixture.panel._view === view,view);
@@ -66,6 +80,7 @@ try {
   assert.equal(await active.locator("[data-volume]").inputValue(),"72");
   assert.equal(await active.locator("[data-apply-cleaning]").isEnabled(),true);
   await active.locator("[data-cancel-service-draft]").click();
+  assert.deepEqual(await page.evaluate(() => window.fixture.panel._cleaningDraft),{},"cancel must clear the draft immediately");
   await patch();
   await countCalls(0);
   assert.equal(await active.locator("[data-volume]").inputValue(),"50");
@@ -193,6 +208,29 @@ try {
   report("five workspaces stay inside the mobile host at 100% scale");
   assert.deepEqual(failures,[],"uncaught errors from the real bootstrap");
   console.log("All browser UI regressions passed.");
+} catch (error) {
+  const diagnostic = await page.evaluate(() => {
+    const panel = window.fixture?.panel;
+    const view = panel?.shadowRoot.querySelector('[data-stable-view]:not([hidden])');
+    const slider = view?.querySelector("[data-volume]");
+    const focused = panel?.shadowRoot.activeElement;
+    return {
+      view:panel?._view,
+      draft:panel?._cleaningDraft,
+      nativeScrollActive:panel?._nativeScrollActive,
+      gesturePointers:panel?._gesturePointers.size,
+      renderDeferred:panel?._renderDeferred,
+      renderQueued:panel?._renderQueued,
+      patchQueued:panel?._stablePatchQueued,
+      focused:focused ? {tag:focused.tagName,attributes:Object.fromEntries(Array.from(focused.attributes,attr => [attr.name,attr.value]))} : null,
+      slider:slider ? {value:slider.value,attribute:slider.getAttribute("value")} : null,
+      draftStatus:view?.querySelector("[data-service-draft-status]")?.textContent,
+      cancelDisabled:view?.querySelector("[data-cancel-service-draft]")?.disabled,
+      calls:window.fixture?.calls,
+    };
+  }).catch(() => ({fixtureUnavailable:true}));
+  console.error("Fixture at failure:",JSON.stringify(diagnostic,null,2));
+  throw error;
 } finally {
   await browser.close();
   await new Promise(resolve => server.close(resolve));

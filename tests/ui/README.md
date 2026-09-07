@@ -42,4 +42,6 @@ The toolbar can publish synthetic robot states and volume telemetry, hold or rel
 
 ## Limits
 
-These checks exercise the actual panel DOM and event bindings against synthetic data. They do not validate Tuya commands, physical cleaning or station actions, real Home Assistant registry timing, WebSocket transport, iOS safe areas or touch gestures, or cache behaviour after an installed release update. `ha-icon` is a size-preserving test element without rendered SVG artwork; image assets come from the repository. Screenshot comparison is not part of the regression.
+These checks exercise the actual panel DOM and event bindings against synthetic data. Volume changes dispatch input/change events at the range element; this checks draft handling and stable DOM bindings, not pointer dragging. Button actions use real browser clicks, including automatic scrolling into view. Assertions wait for the panel's native-scroll and render queues to settle without waiting for a particular expected field value.
+
+They do not validate Tuya commands, physical cleaning or station actions, real Home Assistant registry timing, WebSocket transport, iOS safe areas or touch gestures, or cache behaviour after an installed release update. `ha-icon` is a size-preserving test element without rendered SVG artwork; image assets come from the repository. Screenshot comparison is not part of the regression.
