@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.44";
+const UI_VERSION = "v0.7.45";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.75;
 const VIEW_SCALE_MAX = 2.00;
@@ -935,7 +935,7 @@ class S8OmniPanel extends HTMLElement {
     else this._cleaningDraft[key] = value;
   }
   _hasCleaningDraft() {
-    return ["suction", "water", "volume", "do_not_disturb"].some(
+    return ["suction", "water", "volume", "do_not_disturb", "child_lock"].some(
       (key) => Object.prototype.hasOwnProperty.call(this._cleaningDraft, key)
         && !this._controlValuesEqual(key, this._cleaningDraft[key], this._controlValue(key)),
     );
@@ -1586,7 +1586,7 @@ class S8OmniPanel extends HTMLElement {
       }
       if (button.matches("[data-apply-cleaning]")) {
         const draft = { ...this._cleaningDraft };
-        const changes = ["suction", "water", "volume", "do_not_disturb"].filter(
+        const changes = ["suction", "water", "volume", "do_not_disturb", "child_lock"].filter(
           (key) => Object.prototype.hasOwnProperty.call(draft, key)
             && !this._controlValuesEqual(key, draft[key], this._controlValue(key)),
         );
@@ -1595,7 +1595,8 @@ class S8OmniPanel extends HTMLElement {
           if (key === "suction") return `Всасывание: ${SUCTION_LABELS[draft[key]] || draft[key]}`;
           if (key === "water") return `Подача воды: ${WATER_LABELS[draft[key]] || draft[key]}`;
           if (key === "volume") return `Громкость: ${Math.round(Number(draft[key]))}%`;
-          return `Не беспокоить: ${draft[key] ? "Вкл" : "Выкл"}`;
+          if (key === "do_not_disturb") return `Не беспокоить: ${draft[key] ? "Вкл" : "Выкл"}`;
+          return `Блокировка от детей: ${draft[key] ? "Вкл" : "Выкл"}`;
         }).join("\n");
         if (!window.confirm(`Применить настройки?\n\n${summary}`)) return;
         for (const key of changes) {
@@ -1616,7 +1617,7 @@ class S8OmniPanel extends HTMLElement {
       }
       if (button.matches("[data-toggle]")) {
         const key = button.dataset.toggle;
-        if (key === "do_not_disturb") {
+        if (["do_not_disturb", "child_lock"].includes(key)) {
           const current = Object.prototype.hasOwnProperty.call(this._cleaningDraft, key)
             ? Boolean(this._cleaningDraft[key])
             : this._controlValue(key);
@@ -1625,11 +1626,6 @@ class S8OmniPanel extends HTMLElement {
           this._queueLivePatch();
           return;
         }
-        const current = this._controlValue(key);
-        if (current === null) { this._queueLivePatch(); return; }
-        const next = !current;
-        if (!window.confirm(`${next ? "Включить" : "Выключить"} блокировку от детей?`)) return;
-        await this._callConfirmed("switch", next ? "turn_on" : "turn_off", key, {}, next);
       }
     });
     const volume = root.querySelector("[data-volume]");

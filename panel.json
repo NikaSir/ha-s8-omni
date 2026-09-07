@@ -9,7 +9,7 @@
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v0.7.44",
+    "dashboard_version": "v0.7.45",
     "template": "NikaS Integration Panel Template v2.2",
     "frontend": {
       "module": "s8-omni-panel.js",
@@ -119,7 +119,7 @@
       "header_title_focus_visible": true,
       "header_center_lines": [
         "Пылесос",
-        "UI v0.7.44"
+        "UI v0.7.45"
       ],
       "primary_navigation": "full_width_fixed_bottom_tab_bar",
       "bottom_tab_min_height_px": 52,
@@ -141,7 +141,7 @@
         "overview": "state_aware_photographic_hero_resource_strip_battery_mode_station_and_actions_without_duplicate_telemetry",
         "cleaning": "compact_current_session_metrics_and_two_dry_wet_rows_with_three_presets_each",
         "station": "one_station_hero_with_robot_charge_and_confirmed_start_stop_operation_rows",
-        "maintenance": "three_consumable_rows_and_one_settings_card_with_immediate_child_lock_and_volume_dnd_draft_apply_cancel",
+        "maintenance": "three_consumable_rows_and_one_settings_card_with_volume_dnd_child_lock_draft_apply_cancel",
         "diagnostics": "device_faults_technical_normalized_and_raw_context_positive_station_data_status_and_separate_integration_ui_versions"
       },
       "drill_down": {
@@ -155,7 +155,8 @@
             "suction",
             "water",
             "volume",
-            "do_not_disturb"
+            "do_not_disturb",
+            "child_lock"
           ],
           "single_apply": true,
           "readback_required": true,
@@ -186,12 +187,13 @@
         "location": "maintenance",
         "draft_fields": [
           "volume",
-          "do_not_disturb"
+          "do_not_disturb",
+          "child_lock"
         ],
         "cancel_strategy": "discard_local_draft_without_device_writes",
         "apply_strategy": "explicit_confirmation_public_entity_write_readback",
         "dnd_period_source": "official_application_not_public_entity",
-        "child_lock": "same_card_immediate_confirmation_and_readback_outside_draft"
+        "child_lock": "same_card_shared_draft_confirmation_apply_and_readback"
       }
     },
     "mobile_fit": {

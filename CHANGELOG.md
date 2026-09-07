@@ -1,3 +1,11 @@
+## v1.00_b098 / UI v0.7.45
+
+- Moves child lock directly beside Do Not Disturb in the shared Service settings card.
+- Makes child lock part of the same local draft as volume and Do Not Disturb; toggling it no longer writes immediately.
+- Applies all changed Service settings through one confirmation, with the existing per-entity state readback retained for every write.
+- Makes Cancel restore child lock, Do Not Disturb and volume to their current device values without sending commands.
+- Updates frontend cache keys and version metadata without changing robot, station or cleaning-preset commands.
+
 ## v1.00_b097 / UI v0.7.44
 
 - Preserves unavailable, unknown, missing, empty and malformed setting states as unknown instead of treating them as volume zero or switch off. Draft comparison uses valid typed values without truthiness or numeric coercion.

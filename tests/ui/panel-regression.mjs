@@ -212,6 +212,13 @@ try {
   assert.equal(await settings.locator("[data-volume]").count(),1);
   assert.equal(await settings.locator('[data-toggle="do_not_disturb"]').count(),1);
   assert.equal(await settings.locator('[data-toggle="child_lock"]').count(),1);
+  assert.equal(await settings.evaluate((card) => {
+    const dnd = card.querySelector('[data-toggle="do_not_disturb"]');
+    const child = card.querySelector('[data-toggle="child_lock"]');
+    const actions = card.querySelector(".service-apply-bar");
+    return Boolean(dnd.compareDocumentPosition(child) & Node.DOCUMENT_POSITION_FOLLOWING)
+      && Boolean(child.compareDocumentPosition(actions) & Node.DOCUMENT_POSITION_FOLLOWING);
+  }),true);
   assert.equal(await active.locator(".protection-card").count(),0);
   assert.equal(await active.locator('[data-more="fault"]').count(),0);
   const beforeInvalidChild = (await calls()).length;
@@ -228,25 +235,38 @@ try {
   report("relocated child lock rejects unknown and malformed state without dispatch");
   await inputVolume(72);
   const beforeChild = (await calls()).length;
-  await page.evaluate(() => { window.fixture.autoReadback = true; });
-  acceptConfirmation = true;
+  const confirmationsBeforeChild = confirmations.length;
   await settings.locator('[data-toggle="child_lock"]').click();
-  await page.waitForFunction(() => window.fixture.panel._controlValue("child_lock") === true && window.fixture.panel._busyCommands.size === 0);
   await patch();
-  assert.match(confirmations.at(-1),/Включить блокировку от детей/);
-  assert.deepEqual((await calls()).slice(beforeChild),[
-    {domain:"switch",service:"turn_on",data:{entity_id:"switch.fixture_child_lock"}},
-  ]);
+  await countCalls(beforeChild);
+  assert.equal(confirmations.length,confirmationsBeforeChild);
   assert.equal(await settings.locator('[data-toggle="child_lock"]').getAttribute("aria-pressed"),"true");
-  assert.deepEqual(await page.evaluate(() => window.fixture.panel._cleaningDraft),{volume:72});
+  assert.deepEqual(await page.evaluate(() => window.fixture.panel._cleaningDraft),{volume:72,child_lock:true});
   assert.equal(await page.evaluate(() => window.fixture.panel._controlValue("volume")),55);
   await settings.locator("[data-cancel-service-draft]").click();
   await patch();
-  await countCalls(beforeChild+1);
+  await countCalls(beforeChild);
   assert.deepEqual(await page.evaluate(() => window.fixture.panel._cleaningDraft),{});
   assert.equal(await settings.locator("[data-volume]").inputValue(),"55");
+  assert.equal(await settings.locator('[data-toggle="child_lock"]').getAttribute("aria-pressed"),"false");
+
+  await settings.locator('[data-toggle="do_not_disturb"]').click();
+  await settings.locator('[data-toggle="child_lock"]').click();
+  await patch();
+  assert.deepEqual(await page.evaluate(() => window.fixture.panel._cleaningDraft),{do_not_disturb:false,child_lock:true});
+  await page.evaluate(() => { window.fixture.autoReadback = true; });
+  acceptConfirmation = true;
+  await settings.locator("[data-apply-cleaning]").click();
+  await page.waitForFunction(() => !window.fixture.panel._hasCleaningDraft() && window.fixture.panel._busyCommands.size === 0);
+  await patch();
+  assert.match(confirmations.at(-1),/Не беспокоить: Выкл[\s\S]*Блокировка от детей: Вкл/);
+  assert.deepEqual((await calls()).slice(beforeChild),[
+    {domain:"switch",service:"turn_off",data:{entity_id:"switch.fixture_do_not_disturb"}},
+    {domain:"switch",service:"turn_on",data:{entity_id:"switch.fixture_child_lock"}},
+  ]);
+  assert.equal(await settings.locator('[data-toggle="do_not_disturb"]').getAttribute("aria-pressed"),"false");
   assert.equal(await settings.locator('[data-toggle="child_lock"]').getAttribute("aria-pressed"),"true");
-  report("child lock shares the settings card and stays independent of draft apply/cancel");
+  report("child lock and DND share one confirmed Apply/Cancel draft");
 
   await navigate("diagnostics");
   const fault = active.locator('.fault-status[data-more="fault"]');
@@ -276,7 +296,7 @@ try {
   assert.match(await fault.getAttribute("class"),/\berror\b/);
   await navigate("overview");
   assert.equal(await active.locator(".state-hero h1").innerText(),"Требуется внимание");
-  await countCalls(beforeChild+1);
+  await countCalls(beforeChild+2);
   report("diagnostics distinguishes clear, active, unknown and stale faults; overview keeps active warnings");
 
   assert.deepEqual(failures,[],"uncaught errors from the real bootstrap");
