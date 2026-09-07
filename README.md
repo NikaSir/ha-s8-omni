@@ -6,7 +6,7 @@
 
 Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum and OMNI station, built from verified Tuya LAN datapoints.
 
-> Current development line: **v1.00_b097** (`1.0.0b97`). This is an early test build.
+> Current development line: **v1.00_b098** (`1.0.0b98`). This is an early test build.
 
 ## Scope
 
@@ -28,7 +28,7 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 
 `ha-s8-omni` owns its full appliance UI instead of exposing a loose collection of Lovelace entities as the primary experience.
 
-Dashboard **v0.7.44** follows **NIKAS Specialized Panel UI Standard v2.2**, **Navigation Contract v1.2** and **NikaS Integration Panel Template v2.2**, with the primary acceptance viewport **iPhone Pro Max portrait**:
+Dashboard **v0.7.45** follows **NIKAS Specialized Panel UI Standard v2.2**, **Navigation Contract v1.2** and **NikaS Integration Panel Template v2.2**, with the primary acceptance viewport **iPhone Pro Max portrait**:
 
 - symmetric Header: 52 px side rails / centred title / matching 44 px Menu and Refresh plaques, reduced to 48 px rails on narrow mobile;
 - the visible center title plaque captures the validated source base panel once and returns to the same Дом / Действия / Инфраструктура route;
@@ -53,8 +53,7 @@ Dashboard **v0.7.44** follows **NIKAS Specialized Panel UI Standard v2.2**, **Na
 - Station has one hero with station state, robot position and charge context, followed by the three operation rows;
 - confirmed station Start/Stop controls remain independent of presets, and the active station operation also exposes unified **Стоп** on Overview;
 - Service groups the three consumables into one card, with derived manufacturer-life percentages and exact remaining hours/minutes; no unverified reset command is exposed;
-- Service keeps volume and DND in a local draft, with compact **Отменить / Применить** actions; Cancel discards only the draft, while Apply requires confirmation and entity-state readback;
-- the same Service settings card groups child lock with volume and DND; child lock keeps its own immediate confirmation/readback and is not part of the draft;
+- Service keeps volume, DND and child lock in one local draft, with compact **Отменить / Применить** actions; Cancel discards the whole draft, while Apply uses one confirmation and requires entity-state readback for every changed setting;
 - missing tank or dust-bin readings say **Нет данных**, without asserting that a physical sensor is absent;
 - Diagnostics owns device fault detail, normalized/raw context, an explicit **Данные станции** summary and separate integration/UI versions; confirmed active faults remain visible on Overview;
 - fault status says **Ошибок нет** only for an explicit current zero without an error state; unknown fault data says **Нет данных**, and stale data says **Данные устарели**;

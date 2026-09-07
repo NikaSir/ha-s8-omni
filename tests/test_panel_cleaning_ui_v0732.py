@@ -90,7 +90,7 @@ class PanelCleaningUiV0732Tests(unittest.TestCase):
             detail["select_write_strategy"],
         )
         self.assertEqual(
-            ["suction", "water", "volume", "do_not_disturb"],
+            ["suction", "water", "volume", "do_not_disturb", "child_lock"],
             detail["draft_fields"],
         )
         self.assertTrue(detail["single_apply"])
@@ -102,7 +102,7 @@ class PanelCleaningUiV0732Tests(unittest.TestCase):
         user_editor = panel["navigation"]["user_preset_editor"]
         self.assertFalse(user_editor["save_writes_device"])
         self.assertEqual(["suction", "water"], user_editor["fields"])
-        self.assertEqual(["volume", "do_not_disturb"], panel["navigation"]["service_settings"]["draft_fields"])
+        self.assertEqual(["volume", "do_not_disturb", "child_lock"], panel["navigation"]["service_settings"]["draft_fields"])
         self.assertEqual(["gentle", "closed"], panel["mobile_fit"]["cleaning_presets"]["dry_quiet"])
         self.assertEqual(["strong", "high"], panel["mobile_fit"]["cleaning_presets"]["wet_max"])
 

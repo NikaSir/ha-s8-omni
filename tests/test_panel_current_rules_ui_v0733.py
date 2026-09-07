@@ -26,9 +26,9 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         )[0]
 
     def test_service_writes_share_draft_and_explicit_apply(self) -> None:
-        self.assertIn('["suction", "water", "volume", "do_not_disturb"]', self.source)
+        self.assertIn('["suction", "water", "volume", "do_not_disturb", "child_lock"]', self.source)
         self.assertIn('this._setCleaningDraft("volume", Number(volume.value))', self.bind)
-        self.assertIn('key === "do_not_disturb"', self.bind)
+        self.assertIn('["do_not_disturb", "child_lock"].includes(key)', self.bind)
         self.assertIn('data-apply-cleaning', self.service)
         self.assertIn("Неприменённые изменения", self.service)
         self.assertNotIn('this._call("number", "set_value", "volume"', self.bind)
@@ -59,10 +59,10 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         self.assertIn('!["unknown", "unavailable"].includes(targetState)', self.bootstrap)
 
     def test_child_modules_are_cache_busted_with_release_version(self) -> None:
-        self.assertIn('import "./s8-omni-panel.js?v=1.0.0b97";', self.bootstrap)
-        self.assertIn('import "./s8-omni-cleaning-presets.js?v=1.0.0b97";', self.bootstrap)
-        self.assertIn('import "./s8-omni-service-settings.js?v=1.0.0b97";', self.bootstrap)
-        self.assertIn('import "./s8-omni-preset-live-highlight.js?v=1.0.0b97";', self.bootstrap)
+        self.assertIn('import "./s8-omni-panel.js?v=1.0.0b98";', self.bootstrap)
+        self.assertIn('import "./s8-omni-cleaning-presets.js?v=1.0.0b98";', self.bootstrap)
+        self.assertIn('import "./s8-omni-service-settings.js?v=1.0.0b98";', self.bootstrap)
+        self.assertIn('import "./s8-omni-preset-live-highlight.js?v=1.0.0b98";', self.bootstrap)
 
     def test_live_preset_highlight_runs_after_stable_dom_patch(self) -> None:
         self.assertIn("syncSelectedPresetDom", self.live_highlight)
@@ -74,15 +74,18 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         self.assertIn('button.closest(".user-preset-shell")', self.live_highlight)
         self.assertIn('button.closest(".preset-option")', self.live_highlight)
 
-    def test_child_lock_is_confirmed_and_read_back(self) -> None:
-        self.assertIn("блокировку от детей?", self.bind)
-        self.assertIn('await this._callConfirmed("switch"', self.bind)
+    def test_child_lock_uses_the_confirmed_service_draft(self) -> None:
+        self.assertIn('["do_not_disturb", "child_lock"].includes(key)', self.bind)
+        self.assertIn('["suction", "water", "volume", "do_not_disturb", "child_lock"]', self.source)
+        self.assertIn('Блокировка от детей: ${draft[key] ? "Вкл" : "Выкл"}', self.bind)
+        self.assertNotIn("блокировку от детей?", self.bind)
 
     def test_service_owns_volume_dnd_and_apply(self) -> None:
         self.assertIn("Голосовые уведомления", self.service)
         self.assertIn("Не беспокоить", self.service)
         self.assertIn('data-volume', self.service)
         self.assertIn('data-toggle="do_not_disturb"', self.service)
+        self.assertIn('data-toggle="child_lock"', self.service)
         self.assertIn('data-apply-cleaning', self.service)
 
     def test_selected_preset_commits_after_confirmed_readback(self) -> None:
@@ -133,12 +136,12 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         constants = (ROOT / "custom_components" / "s8_omni" / "const.py").read_text(encoding="utf-8")
         manifest = json.loads((ROOT / "custom_components" / "s8_omni" / "manifest.json").read_text(encoding="utf-8"))
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
-        self.assertEqual("0.7.44", standard["ui_version"])
-        self.assertIn('const UI_VERSION = "v0.7.44"', self.source)
-        self.assertIn('VERSION = "v1.00_b097"', constants)
-        self.assertIn('DASHBOARD_VERSION = "v0.7.44"', constants)
-        self.assertEqual("1.0.0b97", manifest["version"])
-        self.assertEqual("v0.7.44", panel["dashboard_version"])
+        self.assertEqual("0.7.45", standard["ui_version"])
+        self.assertIn('const UI_VERSION = "v0.7.45"', self.source)
+        self.assertIn('VERSION = "v1.00_b098"', constants)
+        self.assertIn('DASHBOARD_VERSION = "v0.7.45"', constants)
+        self.assertEqual("1.0.0b98", manifest["version"])
+        self.assertEqual("v0.7.45", panel["dashboard_version"])
 
 
 if __name__ == "__main__":

@@ -105,10 +105,15 @@ class Node {
   panel._busyCommands.clear();
   connected = true;
   await root.dispatch('click', child);
-  assert.equal(calls.length, 1);
-  assert.deepEqual(calls[0].slice(0, 3), ['switch', 'turn_on', 'child_lock']);
+  assert.equal(calls.length, 0);
   assert.equal(panel._cleaningDraft.volume, 65);
-  assert.equal(Object.hasOwn(panel._cleaningDraft, 'child_lock'), false);
+  assert.equal(panel._cleaningDraft.child_lock, true);
+  apply.disabled = false;
+  await root.dispatch('click', apply);
+  assert.equal(calls.length, 2);
+  assert.deepEqual(calls[0].slice(0, 3), ['number', 'set_value', 'volume']);
+  assert.deepEqual(calls[1].slice(0, 3), ['switch', 'turn_on', 'child_lock']);
+  assert.equal(Object.keys(panel._cleaningDraft).length, 0);
 })().catch(error => { console.error(error); process.exitCode = 1; });
 """
         result = subprocess.run(
