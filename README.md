@@ -6,13 +6,13 @@
 
 Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum and OMNI station, built from verified Tuya LAN datapoints.
 
-> Current development line: **v1.00_b077** (`1.0.0b77`). This is an early test build.
+> Current development line: **v1.00_b095** (`1.0.0b95`). This is an early test build.
 
 ## Scope
 
 - Local Tuya LAN communication, protocol 3.3 by default.
 - Robot status, battery, cleaning metrics and consumable lifetimes.
-- Atomic Start, verified Pause and state-confirmed Pause → `chargego` Return-to-base commands derived from real-device traces.
+- Atomic Start, verified Pause and state-confirmed Pause → `chargego` → release-Pause Return-to-base commands derived from real-device traces.
 - Suction, water level, volume, Do Not Disturb and child lock controls.
 - Real OMNI station telemetry: dust collection, roller cleaning and roller drying.
 - Confirmed station Start/Stop entities for dust collection, mop washing and mop drying; starts are allowed only while the robot is docked.
@@ -28,11 +28,11 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 
 `ha-s8-omni` owns its full appliance UI instead of exposing a loose collection of Lovelace entities as the primary experience.
 
-Dashboard **v0.7.41** follows **NIKAS Specialized Panel UI Standard v2.2**, **Navigation Contract v1.2** and **NikaS Integration Panel Template v2.2**, with the primary acceptance viewport **iPhone Pro Max portrait**:
+Dashboard **v0.7.42** follows **NIKAS Specialized Panel UI Standard v2.2**, **Navigation Contract v1.2** and **NikaS Integration Panel Template v2.2**, with the primary acceptance viewport **iPhone Pro Max portrait**:
 
 - symmetric Header: 52 px side rails / centred title / matching 44 px Menu and Refresh plaques, reduced to 48 px rails on narrow mobile;
 - the visible center title plaque captures the validated source base panel once and returns to the same Дом / Действия / Инфраструктура route;
-- every view keeps the icon-only Home Assistant **Menu** in the Header; the **Настройки уборки** drill-down places its explicit Back control inside the work area;
+- every view keeps the icon-only Home Assistant **Menu** in the Header; user-preset editors open within the panel;
 - Refresh calls the public Home Assistant `button` entity owned by `ha-s8-omni`; the frontend does not write Tuya DP directly;
 - the mobile type scale stays within the accepted **12–25 px** range on iPhone-width layouts;
 - **full-width fixed bottom Tab Bar** is the sole primary navigation between Overview, Cleaning, Station, Maintenance and Diagnostics;
@@ -44,16 +44,19 @@ Dashboard **v0.7.41** follows **NIKAS Specialized Panel UI Standard v2.2**, **Na
 - daily-use cards use compact Russian state labels such as **Зарядка**, **Уборка**, **Пауза**, **Возврат**, **Сбор пыли** and **Промывка**; Diagnostics retains the underlying normalized/raw values;
 - the Overview scene reserves a separate station-text safe zone so station state never overlaps the OMNI illustration;
 - while cleaning, **Пауза** becomes the primary action and the **Уборка** tile shows the running state instead of appearing accidentally disabled;
-- the root **Уборка** tab is deliberately read-only and starts with **Текущая уборка** time/area metrics;
-- **Всасывание** and **Подача воды** share one compact two-section profile surface;
-- the standalone **Настроить уборку** card is visually separated from those information cards and shows secondary context for **Громкость** and **Не беспокоить**;
-- Start/Pause/Home are not repeated on the root Cleaning tab; daily actions stay on Overview;
-- suction, water, volume and DND share one draft on the drill-down; **Применить** shows a confirmation summary and clears values only after the public Home Assistant entities read back the requested state;
-- drill-down Back returns to the Cleaning root view while the bottom Tab Bar remains available for switching root sections;
-- Station view uses a compact three-column summary (**Робот / Заряд / Операция**) instead of three tall rows, keeps the three OMNI operation rows compact, and targets a typical iPhone Pro Max state without required vertical scrolling;
-- Station view keeps independent dust collection / roller cleaning / drying state, uses a prominent active-operation indicator and provides confirmed Start/Stop controls;
-- Maintenance view keeps exact remaining minutes, derives the matching manufacturer-life percentage and never exposes an unverified reset command;
-- Diagnostics keeps normalized and raw state context;
+- Cleaning keeps two full-width preset groups, **Сухая уборка** and **Влажная уборка**, each with **Тихий / Макс / Польз.**;
+- current cleaning time/area use a compact metric strip; a factually docked or idle robot shows a compact not-running state instead of a large empty statistics card;
+- suction/water descriptions use the same order and explicit labels; the duplicate generic **Настроить уборку** entry is removed;
+- each **Польз.** editor saves suction/water locally per device and preset kind; saving never sends a device command;
+- applying any preset is a separate confirmed action through public Home Assistant entities; selection follows verified suction/water readback;
+- Start/Pause/Home are not repeated on Cleaning; daily transport actions stay on Overview;
+- Station has one hero with station state, robot position and charge context, followed by the three operation rows;
+- confirmed station Start/Stop controls remain independent of presets, and the active station operation also exposes unified **Стоп** on Overview;
+- Service groups the three consumables into one card, with derived manufacturer-life percentages and exact remaining hours/minutes; no unverified reset command is exposed;
+- Service keeps volume and DND in a local draft, with compact **Отменить / Применить** actions; Cancel discards only the draft, while Apply requires confirmation and entity-state readback;
+- child lock remains a separate confirmed immediate action with readback;
+- missing tank or dust-bin readings say **Нет данных**, without asserting that a physical sensor is absent;
+- Diagnostics keeps normalized/raw context, an explicit **Данные станции** summary and separate integration/UI versions;
 - loading keeps Header and Bottom Tab Bar visible rather than rendering a blank page;
 - no duplicate large S8 OMNI title appears inside the hero card;
 - Map / Rooms remains reserved until a stable public integration API exists.
@@ -100,13 +103,9 @@ See [`docs/LIFECYCLE.md`](docs/LIFECYCLE.md).
 
 ### Production frontend bundle
 
-The production panel is shipped as one self-contained JavaScript file:
+Home Assistant registers `s8-omni-panel-bootstrap.js` with both dashboard and integration versions in the URL. The bootstrap imports the stable core `s8-omni-panel.js` and the current cleaning-presets, service-settings and preset-highlight modules. Every child import includes the integration version so iPhone browsers fetch the matching modules after an update.
 
-`custom_components/s8_omni/frontend/s8-omni-panel.js`
-
-Home Assistant registers only that file through `module_url`, using `?v=<dashboard version>` for cache busting. The production bundle does **not** import previous UI versions at runtime. Historical UI implementations belong in Git history/tags/releases, not in the browser dependency chain.
-
-CI validates JavaScript syntax and rejects historical frontend imports or extra versioned production panel files.
+The core panel stays self-contained and imports no historical frontend implementation. Historical versions belong in Git history, not in the browser dependency chain. CI checks syntax for every shipped frontend module and validates the core panel contract.
 
 User-facing screens avoid protocol/DP implementation wording; raw Tuya and integration-contract details remain in Diagnostics and documentation.
 
@@ -161,9 +160,8 @@ The Local Key field uses a password-style input. Never paste Local Keys, cloud c
 
 ## Current limitations
 
-- `Stop` is intentionally not exposed yet. The observed physical/API behavior is not sufficiently unambiguous for a safe standalone implementation.
+- A general robot-cleaning `vacuum.stop` command is not exposed. The verified station-specific Stop commands are available separately.
 - Map/brush/filter reset commands are not implemented yet because their write semantics have not been verified end-to-end.
-- Station DP 134/135/136 are read-only in this build.
 - DND schedule, cleaning timers, map operations and manual-direction control are not exposed until their payloads are verified.
 - Unknown/unavailable device state is never silently treated as normal.
 

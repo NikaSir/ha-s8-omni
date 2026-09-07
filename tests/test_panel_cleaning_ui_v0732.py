@@ -60,13 +60,13 @@ class PanelCleaningUiV0732Tests(unittest.TestCase):
         self.assertNotIn("23:59", self.source)
         self.assertNotIn("06:40", self.source)
 
-    def test_consumables_show_derived_percent_and_exact_minutes_without_reset(self) -> None:
+    def test_consumables_show_derived_percent_and_exact_duration_without_reset(self) -> None:
         self.assertIn("RESOURCE_LIFE_MINUTES", self.source)
         self.assertIn("filter_life: 9000", self.source)
         self.assertIn("side_brush_life: 12000", self.source)
         self.assertIn("main_brush_life: 18000", self.source)
         self.assertIn("Math.floor((minutes / limit) * 100)", self.source)
-        self.assertIn("Осталось ${life.minutes} мин", self.source)
+        self.assertIn("Осталось ${this._formatResourceTime(life.minutes)}", self.source)
         self.assertNotIn("data-reset-resource", self.source)
 
     def test_captured_station_start_and_stop_commands_are_enabled(self) -> None:
@@ -96,7 +96,13 @@ class PanelCleaningUiV0732Tests(unittest.TestCase):
         self.assertTrue(detail["single_apply"])
         self.assertTrue(detail["readback_required"])
         self.assertEqual("official_application_not_public_entity", detail["dnd_period_source"])
-        self.assertEqual("cleaning-settings", panel["mobile_fit"]["cleaning_profile_controls_location"])
+        self.assertFalse(detail["entry_visible"])
+        self.assertTrue(detail["compatibility_only"])
+        self.assertEqual("user_preset_editor", panel["mobile_fit"]["cleaning_profile_controls_location"])
+        user_editor = panel["navigation"]["user_preset_editor"]
+        self.assertFalse(user_editor["save_writes_device"])
+        self.assertEqual(["suction", "water"], user_editor["fields"])
+        self.assertEqual(["volume", "do_not_disturb"], panel["navigation"]["service_settings"]["draft_fields"])
         self.assertEqual(["gentle", "closed"], panel["mobile_fit"]["cleaning_presets"]["dry_quiet"])
         self.assertEqual(["strong", "high"], panel["mobile_fit"]["cleaning_presets"]["wet_max"])
 

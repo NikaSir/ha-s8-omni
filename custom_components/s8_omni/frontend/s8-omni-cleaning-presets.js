@@ -23,6 +23,20 @@ const WATER_NAMES = {
 const USER_PRESET_STORAGE_VERSION = 1;
 const USER_PRESET_SUCTION = ["gentle", "normal", "strong"];
 const USER_PRESET_WATER = ["low", "middle", "high"];
+const INACTIVE_CLEANING_STATES = ["idle", "charging", "charged", "sleeping"];
+
+function cleaningMetric(value) {
+  if ((typeof value !== "number" && typeof value !== "string") || String(value).trim() === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? number : null;
+}
+
+function presetDescription(preset) {
+  if (!preset) return "Не настроено";
+  const suction = { gentle: "мин.", normal: "норм.", strong: "макс." }[preset.suction];
+  const water = { closed: "выкл.", low: "мин.", middle: "сред.", high: "макс." }[preset.water];
+  return `<span>Всасывание: ${suction}</span><span>Вода: ${water}</span>`;
+}
 
 function escapePatchHtml(value) {
   return String(value ?? "")
@@ -190,6 +204,16 @@ if (Panel && !Panel.prototype.__s8CleaningPresets) {
   Panel.prototype._styles = function patchedStyles() {
     return `${originalStyles.call(this)}
       /* Approved dry/wet presets: two full-width rows. */
+      .cleaning-summary{padding:12px 14px}
+      .cleaning-summary-idle{display:flex;align-items:center;gap:9px;min-height:28px;font-size:14px;color:var(--secondary-text-color)}
+      .cleaning-summary-idle[hidden],.cleaning-summary-metrics[hidden]{display:none}
+      .cleaning-summary-idle ha-icon{--mdc-icon-size:22px;color:var(--primary-color)}
+      .cleaning-summary .section-title{margin-bottom:6px}
+      .cleaning-summary .section-title h2{font-size:18px}
+      .cleaning-summary .metric-grid{padding:0;background:transparent;border-radius:0}
+      .cleaning-summary .metric{min-height:58px;padding:8px;grid-template-columns:26px minmax(0,1fr);column-gap:8px}
+      .cleaning-summary .metric ha-icon{--mdc-icon-size:23px}
+      .cleaning-summary .metric strong{font-size:19px}
       .preset-card{padding:14px}
       .preset-groups{display:grid;grid-template-columns:1fr;gap:10px}
       .preset-group{border:1px solid color-mix(in srgb,var(--divider-color) 62%,transparent);border-radius:18px;padding:10px;min-width:0}
@@ -201,18 +225,19 @@ if (Panel && !Panel.prototype.__s8CleaningPresets) {
       .preset-group-head strong{display:block;font-size:15px;line-height:1.08;font-weight:800}
       .preset-group-head small{display:block;margin-top:2px;font-size:12px;line-height:1.1;color:var(--secondary-text-color)}
       .preset-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
-      .preset-option{min-height:76px;padding:8px 7px;border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:14px;background:color-mix(in srgb,var(--card-background-color) 94%,transparent);color:var(--primary-text-color);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;text-align:left;overflow:hidden}
+      .preset-option{min-height:76px;padding:8px 7px;border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:14px;background:color-mix(in srgb,var(--card-background-color) 94%,transparent);color:var(--primary-text-color);display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:5px;text-align:left;overflow:hidden}
       .preset-option ha-icon{--mdc-icon-size:22px;color:var(--secondary-text-color);margin-bottom:1px}
+      .preset-option-title{display:flex;align-items:center;gap:4px;min-height:23px}
       .preset-group.wet .preset-option ha-icon,.user-preset-shell ha-icon{color:var(--primary-color)}
       .preset-option strong{font-size:13px;line-height:1.05;font-weight:800;white-space:nowrap}
-      .preset-option small{font-size:12px;line-height:1.1;color:var(--secondary-text-color);white-space:normal;overflow-wrap:normal;word-break:normal}
+      .preset-option small,.user-preset-apply small{display:grid;gap:3px;font-size:12px;line-height:1.2;color:var(--secondary-text-color);white-space:normal;overflow-wrap:normal;word-break:normal}
       .preset-option:disabled{opacity:.42}
-      .user-preset-shell{min-height:76px;border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:14px;background:color-mix(in srgb,var(--card-background-color) 94%,transparent);display:grid;grid-template-rows:minmax(0,1fr) 30px;overflow:hidden}
+      .user-preset-shell{min-height:76px;border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:14px;background:color-mix(in srgb,var(--card-background-color) 94%,transparent);display:grid;grid-template-rows:minmax(0,1fr) 44px;overflow:hidden}
       .user-preset-apply,.user-preset-edit{border:0;background:transparent;color:var(--primary-text-color);font:inherit;text-align:left}
-      .user-preset-apply{padding:7px 7px 3px;display:grid;align-content:center;gap:2px}
-      .user-preset-apply strong{font-size:13px;font-weight:800}.user-preset-apply small{font-size:11.5px;color:var(--secondary-text-color);line-height:1.08}
+      .user-preset-apply{padding:8px 7px;display:grid;align-content:start;gap:5px;min-height:44px}
+      .user-preset-apply strong{font-size:13px;font-weight:800;min-height:23px;display:flex;align-items:center}
       .user-preset-apply:disabled{opacity:.45}
-      .user-preset-edit{padding:3px 7px 6px;color:var(--primary-color);font-size:11.5px;font-weight:750;border-top:1px solid color-mix(in srgb,var(--divider-color) 55%,transparent)}
+      .user-preset-edit{padding:7px;color:var(--primary-color);font-size:12px;font-weight:750;border-top:1px solid color-mix(in srgb,var(--divider-color) 55%,transparent)}
       .preset-dialog-backdrop{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:12px;background:rgba(25,32,41,.28);backdrop-filter:blur(5px)}
       .preset-dialog{width:min(520px,calc(100vw - 24px));max-width:calc(100% - 8px);box-sizing:border-box;padding:22px;border:1px solid color-mix(in srgb,var(--divider-color) 68%,transparent);border-radius:24px;background:color-mix(in srgb,var(--card-background-color) 97%,transparent);box-shadow:0 18px 48px rgba(15,28,42,.22)}
       .preset-dialog h3{margin:0 0 16px;font-size:22px;line-height:1.22;font-weight:800;color:var(--primary-text-color)}
@@ -225,55 +250,55 @@ if (Panel && !Panel.prototype.__s8CleaningPresets) {
       .preset-editor-note{margin:0 0 16px;color:var(--secondary-text-color);font-size:14px;line-height:1.35}
       .preset-editor-field{display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,42%);align-items:center;gap:12px;padding:12px 0;border-top:1px solid color-mix(in srgb,var(--divider-color) 65%,transparent)}
       .preset-editor-field span{font-size:15px;font-weight:700}.preset-editor-field select{width:100%;min-height:44px;border:1px solid var(--divider-color);border-radius:13px;padding:0 10px;background:var(--card-background-color);color:var(--primary-text-color);font-size:15px}.preset-editor-field.fixed strong{text-align:right;font-size:15px}
-      @media(max-width:390px){.preset-options{gap:5px}.preset-option,.user-preset-shell{min-height:72px}.preset-option{padding:7px 5px}.preset-option strong,.user-preset-apply strong{font-size:12.5px}.preset-option small,.user-preset-apply small,.user-preset-edit{font-size:11px}.preset-dialog{width:calc(100vw - 16px);padding:18px}.preset-dialog h3{font-size:20px}.preset-editor-field{grid-template-columns:1fr}}
+      @media(max-width:390px){.preset-options{gap:5px}.preset-option{padding:8px 5px}.user-preset-apply,.user-preset-edit{padding-inline:5px}.preset-option-title{gap:3px}.preset-option strong,.user-preset-apply strong{font-size:12.5px}.preset-dialog{width:calc(100vw - 16px);padding:18px}.preset-dialog h3{font-size:20px}.preset-editor-field{grid-template-columns:1fr}}
     `;
   };
 
   Panel.prototype._cleaning = function patchedCleaning() {
     const snap = this._snapshot();
-    const cleanTime = snap.connected ? this._stateValue("clean_time") : null;
-    const cleanArea = snap.connected ? this._stateValue("clean_area") : null;
-    const volumeObj = this._state("volume");
-    const volumeValue = snap.connected && this._available(volumeObj) ? Number(volumeObj.state) : null;
-    const dndObj = this._state("do_not_disturb");
-    const dnd = snap.connected && this._available(dndObj) ? (dndObj.state === "on" ? "Вкл" : "Выкл") : "Нет данных";
+    const cleanTime = snap.connected && !snap.unreliable ? cleaningMetric(this._stateValue("clean_time")) : null;
+    const cleanArea = snap.connected && !snap.unreliable ? cleaningMetric(this._stateValue("clean_area")) : null;
+    const knownIdle = snap.connected && !snap.unreliable && this._telemetryFreshnessState() === "current"
+      && INACTIVE_CLEANING_STATES.includes(snap.robot) && INACTIVE_CLEANING_STATES.includes(snap.composite);
+    const formattedTime = this._formatCleaningTime(cleanTime, cleanArea, snap);
+    const timeText = cleanTime === 0 && formattedTime === "—" ? "0 мин" : formattedTime;
     const presetUsable = snap.connected && this._busyCommands.size === 0;
     const disabled = presetUsable ? "" : " disabled";
     const dryUser = readUserPreset(this, "dry");
     const wetUser = readUserPreset(this, "wet");
-    const dryUserText = dryUser ? `${SUCTION_NAMES[dryUser.suction]} · Вода выкл.` : "Не настроено";
-    const wetUserText = wetUser ? `${SUCTION_NAMES[wetUser.suction]} · Вода ${WATER_NAMES[wetUser.water].toLowerCase()}` : "Не настроено";
 
     return `${this._trustBanner(snap)}
-      <section class="card">
-        <div class="section-title"><h2>Текущая уборка</h2></div>
-        <div class="metric-grid">
-          <div class="metric" data-more="clean_time"><ha-icon icon="mdi:timer-outline"></ha-icon><span>Время</span><strong>${escapePatchHtml(this._formatCleaningTime(cleanTime, cleanArea, snap))}</strong></div>
-          <div class="metric" data-more="clean_area"><ha-icon icon="mdi:ruler-square"></ha-icon><span>Площадь</span><strong>${cleanArea !== null ? `${escapePatchHtml(cleanArea)} м²` : "—"}</strong></div>
+      <section class="card cleaning-summary">
+        <div class="cleaning-summary-idle"${knownIdle ? "" : " hidden"}><ha-icon icon="mdi:robot-vacuum"></ha-icon><span>Уборка не выполняется</span></div>
+        <div class="cleaning-summary-metrics"${knownIdle ? " hidden" : ""}>
+          <div class="section-title"><h2>Текущая уборка</h2></div>
+          <div class="metric-grid">
+            <div class="metric" data-more="clean_time"><ha-icon icon="mdi:timer-outline"></ha-icon><span>Время</span><strong>${escapePatchHtml(timeText)}</strong></div>
+            <div class="metric" data-more="clean_area"><ha-icon icon="mdi:ruler-square"></ha-icon><span>Площадь</span><strong>${cleanArea !== null ? `${escapePatchHtml(cleanArea)} м²` : "—"}</strong></div>
+          </div>
         </div>
       </section>
       <section class="card preset-card">
         <div class="section-title"><h2>Предустановки уборки</h2></div>
         <div class="preset-groups">
           <div class="preset-group dry">
-            <div class="preset-group-head"><ha-icon icon="mdi:fan"></ha-icon><span><strong>Сухая уборка</strong><small>Воды нет</small></span></div>
+            <div class="preset-group-head"><ha-icon icon="mdi:fan"></ha-icon><span><strong>Сухая уборка</strong><small>Без подачи воды</small></span></div>
             <div class="preset-options">
-              <button class="preset-option" type="button" data-cleaning-preset="dry-quiet"${disabled}><ha-icon icon="mdi:fan-speed-1"></ha-icon><strong>Тихий</strong><small>Мин. всасывание</small></button>
-              <button class="preset-option" type="button" data-cleaning-preset="dry-max"${disabled}><ha-icon icon="mdi:fan-speed-3"></ha-icon><strong>Макс</strong><small>Макс. всасывание</small></button>
-              <div class="user-preset-shell"><button class="user-preset-apply" type="button" data-cleaning-preset="dry-user"${!presetUsable || !dryUser ? " disabled" : ""}><strong>Польз.</strong><small>${escapePatchHtml(dryUserText)}</small></button><button class="user-preset-edit" type="button" data-user-preset-edit="dry">Настроить</button></div>
+              <button class="preset-option" type="button" data-cleaning-preset="dry-quiet"${disabled}><span class="preset-option-title"><ha-icon icon="mdi:fan-speed-1"></ha-icon><strong>Тихий</strong></span><small>${presetDescription(PRESETS["dry-quiet"])}</small></button>
+              <button class="preset-option" type="button" data-cleaning-preset="dry-max"${disabled}><span class="preset-option-title"><ha-icon icon="mdi:fan-speed-3"></ha-icon><strong>Макс</strong></span><small>${presetDescription(PRESETS["dry-max"])}</small></button>
+              <div class="user-preset-shell"><button class="user-preset-apply" type="button" data-cleaning-preset="dry-user"${!presetUsable || !dryUser ? " disabled" : ""}><strong>Польз.</strong><small>${presetDescription(dryUser)}</small></button><button class="user-preset-edit" type="button" data-user-preset-edit="dry">Настроить</button></div>
             </div>
           </div>
           <div class="preset-group wet">
             <div class="preset-group-head"><ha-icon icon="mdi:water-outline"></ha-icon><span><strong>Влажная уборка</strong><small>Сухая + подача воды</small></span></div>
             <div class="preset-options">
-              <button class="preset-option" type="button" data-cleaning-preset="wet-quiet"${disabled}><ha-icon icon="mdi:water-outline"></ha-icon><strong>Тихий</strong><small>Мин. всасывание · Мин. воды</small></button>
-              <button class="preset-option" type="button" data-cleaning-preset="wet-max"${disabled}><ha-icon icon="mdi:water-plus-outline"></ha-icon><strong>Макс</strong><small>Макс. всасывание · Макс. воды</small></button>
-              <div class="user-preset-shell"><button class="user-preset-apply" type="button" data-cleaning-preset="wet-user"${!presetUsable || !wetUser ? " disabled" : ""}><strong>Польз.</strong><small>${escapePatchHtml(wetUserText)}</small></button><button class="user-preset-edit" type="button" data-user-preset-edit="wet">Настроить</button></div>
+              <button class="preset-option" type="button" data-cleaning-preset="wet-quiet"${disabled}><span class="preset-option-title"><ha-icon icon="mdi:water-outline"></ha-icon><strong>Тихий</strong></span><small>${presetDescription(PRESETS["wet-quiet"])}</small></button>
+              <button class="preset-option" type="button" data-cleaning-preset="wet-max"${disabled}><span class="preset-option-title"><ha-icon icon="mdi:water-plus-outline"></ha-icon><strong>Макс</strong></span><small>${presetDescription(PRESETS["wet-max"])}</small></button>
+              <div class="user-preset-shell"><button class="user-preset-apply" type="button" data-cleaning-preset="wet-user"${!presetUsable || !wetUser ? " disabled" : ""}><strong>Польз.</strong><small>${presetDescription(wetUser)}</small></button><button class="user-preset-edit" type="button" data-user-preset-edit="wet">Настроить</button></div>
             </div>
           </div>
         </div>
       </section>
-      <button class="settings-entry" type="button" data-detail="cleaning-settings"><span class="icon"><ha-icon icon="mdi:tune-variant"></ha-icon></span><span><strong>Настроить уборку</strong><span>Громкость: ${Number.isFinite(volumeValue) ? `${Math.round(volumeValue)}%` : "Нет данных"} · Не беспокоить: ${escapePatchHtml(dnd)}</span></span><ha-icon icon="mdi:chevron-right"></ha-icon></button>
       <section class="future-card"><span class="icon"><ha-icon icon="mdi:map-outline"></ha-icon></span><div><span class="eyebrow">Следующий этап</span><strong>Карта и комнаты</strong><p>Комнатная и зональная уборка появятся после завершения безопасной поддержки в интеграции.</p></div></section>`;
   };
 
