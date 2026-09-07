@@ -1,4 +1,4 @@
-const UI_VERSION = "v0.7.43";
+const UI_VERSION = "v0.7.44";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.75;
 const VIEW_SCALE_MAX = 2.00;
@@ -1038,7 +1038,7 @@ class S8OmniPanel extends HTMLElement {
       .resource-list .resource .icon{width:44px;height:44px;border-radius:13px}
       .resource-list .resource strong{color:var(--primary-text-color)}
       .resource-list .resource>span:nth-child(2){min-width:0;line-height:1.35}
-      .protection-card .section-title{margin-bottom:8px}
+      .fault-status.error strong{color:var(--error-color,#db4437)}
       .operation.ready{background:color-mix(in srgb,var(--primary-color) 4%,var(--card-background-color));border:1px solid color-mix(in srgb,var(--divider-color) 60%,transparent)}
       .operation.ready strong,.operation.active strong{color:var(--primary-text-color)}
       .operation-control{min-height:44px}
@@ -1439,17 +1439,30 @@ class S8OmniPanel extends HTMLElement {
     return `<div class="resource ${life.tone}" data-more="${key}"><span class="icon"><ha-icon icon="${icon}"></ha-icon></span><span><strong>${title}</strong><span>${escapeHtml(minutes)}</span></span><b>${escapeHtml(percent)}</b></div>`;
   }
   _maintenance() {
-    const snap = this._snapshot(); const child = this._state("child_lock"); const childUsable = snap.connected && this._controlValue("child_lock") !== null && this._busyCommands.size === 0;
-    return `${this._trustBanner(snap)}<section class="view-heading"><span class="eyebrow">S8 OMNI</span><h2>Обслуживание</h2><p>Остаточный ресурс расходников.</p></section><section class="card resource-list" aria-label="Ресурс расходников">${this._resource("filter_life","Фильтр","mdi:air-filter",snap.connected)}${this._resource("side_brush_life","Боковая щётка","mdi:fan",snap.connected)}${this._resource("main_brush_life","Основная щётка","mdi:brush",snap.connected)}</section><section class="card protection-card"><div class="section-title"><h2>Защита и ошибки</h2></div><div class="info-row" data-more="fault"><span>Состояние</span><strong>${escapeHtml(snap.connected ? (String(this._stateValue("fault","—")) === "0" ? "Ошибок нет" : `Ошибка ${this._formatEntity("fault","—")}`) : "—")}</strong></div><button class="toggle-row service-toggle-row" type="button" data-toggle="child_lock" ${childUsable ? "" : "disabled"}><span class="toggle-copy"><strong>Блокировка от детей</strong><small>Защита кнопок робота</small></span><span class="toggle ${childUsable && child?.state === "on" ? "on" : ""}"></span></button></section>`;
+    const snap = this._snapshot();
+    return `${this._trustBanner(snap)}<section class="view-heading"><span class="eyebrow">S8 OMNI</span><h2>Обслуживание</h2><p>Остаточный ресурс расходников.</p></section><section class="card resource-list" aria-label="Ресурс расходников">${this._resource("filter_life","Фильтр","mdi:air-filter",snap.connected)}${this._resource("side_brush_life","Боковая щётка","mdi:fan",snap.connected)}${this._resource("main_brush_life","Основная щётка","mdi:brush",snap.connected)}</section>`;
+  }
+
+  _faultStatus(snap) {
+    if (!snap.connected || snap.unreliable) return { text: "Нет данных", active: false };
+    const freshness = this._telemetryFreshnessState();
+    if (freshness !== "current") return { text: freshness === "stale" ? "Данные устарели" : "Нет данных", active: false };
+    const raw = this._stateValue("fault");
+    const numeric = (typeof raw === "number" || typeof raw === "string" && raw.trim() !== "") ? Number(raw) : NaN;
+    const code = Number.isSafeInteger(numeric) && numeric >= 0 ? numeric : null;
+    if (code !== null && code !== 0) return { text: `Код ошибки: ${code}`, active: true };
+    if (snap.composite === "error" || snap.robot === "error") return { text: "Требуется внимание · код не получен", active: true };
+    return { text: code === 0 ? "Ошибок нет" : "Нет данных", active: false };
   }
 
   _diagRow(label, value) { return `<div class="info-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value === null || value === undefined ? "—" : String(value))}</strong></div>`; }
   _diagnostics() {
     const snap = this._snapshot(); const attrs = snap.attrs || {};
+    const fault = this._faultStatus(snap);
     const device = snap.connected ? "Доступно" : snap.connection === "disconnected" ? "Недоступно" : "Не подтверждено";
     const stationData = snap.unreliable || !Array.isArray(attrs.missing_station_dps) ? "Нет данных"
       : snap.missingStationDps.length ? `Нет DP: ${snap.missingStationDps.join(", ")}` : "Получены";
-    return `<section class="view-heading"><span class="eyebrow">Технический экран</span><h2>Диагностика</h2><p>Нормализованные и raw-значения интеграции.</p></section><div class="diagnostic-strip"><div><span>Локальная связь</span><strong>${escapeHtml(this._connectionLabel())}</strong></div><div><span>Устройство</span><strong>${device}</strong></div><div><span>Возраст данных</span><strong>${snap.age === null ? "—" : escapeHtml(this._formatDuration(snap.age))}</strong></div></div><section class="card"><div class="section-title"><h2>Состояния</h2></div><div class="info-list">${this._diagRow("Composite",snap.connected ? this._stateValue("composite_status") : "unavailable")}${this._diagRow("Robot status",snap.connected ? this._stateValue("robot_status") : "unavailable")}${this._diagRow("Station status",snap.connected ? this._stateValue("station_status") : "unavailable")}${this._diagRow("Данные станции",stationData)}</div></section><section class="card"><div class="section-title"><h2>Tuya Raw</h2></div><div class="info-list">${this._diagRow("DP5 status",attrs.raw_status)}${this._diagRow("DP4 mode",attrs.mode)}${this._diagRow("DP41 work_mode",snap.connected ? this._stateValue("work_mode") : "unavailable")}${this._diagRow("DP1 power_go",attrs.power_go)}${this._diagRow("DP2 pause",attrs.pause)}${this._diagRow("DP28 fault",attrs.fault)}${this._diagRow("DP134 dp_dust",attrs.dp_dust)}${this._diagRow("DP135 dp_roll_clean",attrs.dp_roll_clean)}${this._diagRow("DP136 dp_roll_hot",attrs.dp_roll_hot)}</div></section><section class="card"><div class="section-title"><h2>Панель</h2></div><div class="info-list">${this._diagRow("Версия интеграции",this._panel?.config?.integration_version || "—")}${this._diagRow("Версия UI",UI_VERSION)}${this._diagRow("Bundle","standalone")}${this._diagRow("Route","/dashboard-s8-omni")}</div></section>`;
+    return `<section class="view-heading"><span class="eyebrow">Технический экран</span><h2>Диагностика</h2><p>Нормализованные и raw-значения интеграции.</p></section><div class="diagnostic-strip"><div><span>Локальная связь</span><strong>${escapeHtml(this._connectionLabel())}</strong></div><div><span>Устройство</span><strong>${device}</strong></div><div><span>Возраст данных</span><strong>${snap.age === null ? "—" : escapeHtml(this._formatDuration(snap.age))}</strong></div></div><section class="card"><div class="section-title"><h2>Состояния</h2></div><div class="info-list"><div class="info-row fault-status${fault.active ? " error" : ""}" data-more="fault"><span>Ошибки</span><strong>${escapeHtml(fault.text)}</strong></div>${this._diagRow("Composite",snap.connected ? this._stateValue("composite_status") : "unavailable")}${this._diagRow("Robot status",snap.connected ? this._stateValue("robot_status") : "unavailable")}${this._diagRow("Station status",snap.connected ? this._stateValue("station_status") : "unavailable")}${this._diagRow("Данные станции",stationData)}</div></section><section class="card"><div class="section-title"><h2>Tuya Raw</h2></div><div class="info-list">${this._diagRow("DP5 status",attrs.raw_status)}${this._diagRow("DP4 mode",attrs.mode)}${this._diagRow("DP41 work_mode",snap.connected ? this._stateValue("work_mode") : "unavailable")}${this._diagRow("DP1 power_go",attrs.power_go)}${this._diagRow("DP2 pause",attrs.pause)}${this._diagRow("DP28 fault",attrs.fault)}${this._diagRow("DP134 dp_dust",attrs.dp_dust)}${this._diagRow("DP135 dp_roll_clean",attrs.dp_roll_clean)}${this._diagRow("DP136 dp_roll_hot",attrs.dp_roll_hot)}</div></section><section class="card"><div class="section-title"><h2>Панель</h2></div><div class="info-list">${this._diagRow("Версия интеграции",this._panel?.config?.integration_version || "—")}${this._diagRow("Версия UI",UI_VERSION)}${this._diagRow("Bundle","standalone")}${this._diagRow("Route","/dashboard-s8-omni")}</div></section>`;
   }
 
   _body() {

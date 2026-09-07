@@ -59,10 +59,10 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         self.assertIn('!["unknown", "unavailable"].includes(targetState)', self.bootstrap)
 
     def test_child_modules_are_cache_busted_with_release_version(self) -> None:
-        self.assertIn('import "./s8-omni-panel.js?v=1.0.0b96";', self.bootstrap)
-        self.assertIn('import "./s8-omni-cleaning-presets.js?v=1.0.0b96";', self.bootstrap)
-        self.assertIn('import "./s8-omni-service-settings.js?v=1.0.0b96";', self.bootstrap)
-        self.assertIn('import "./s8-omni-preset-live-highlight.js?v=1.0.0b96";', self.bootstrap)
+        self.assertIn('import "./s8-omni-panel.js?v=1.0.0b97";', self.bootstrap)
+        self.assertIn('import "./s8-omni-cleaning-presets.js?v=1.0.0b97";', self.bootstrap)
+        self.assertIn('import "./s8-omni-service-settings.js?v=1.0.0b97";', self.bootstrap)
+        self.assertIn('import "./s8-omni-preset-live-highlight.js?v=1.0.0b97";', self.bootstrap)
 
     def test_live_preset_highlight_runs_after_stable_dom_patch(self) -> None:
         self.assertIn("syncSelectedPresetDom", self.live_highlight)
@@ -133,12 +133,12 @@ class PanelCurrentRulesUiV0733Tests(unittest.TestCase):
         constants = (ROOT / "custom_components" / "s8_omni" / "const.py").read_text(encoding="utf-8")
         manifest = json.loads((ROOT / "custom_components" / "s8_omni" / "manifest.json").read_text(encoding="utf-8"))
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
-        self.assertEqual("0.7.43", standard["ui_version"])
-        self.assertIn('const UI_VERSION = "v0.7.43"', self.source)
-        self.assertIn('VERSION = "v1.00_b096"', constants)
-        self.assertIn('DASHBOARD_VERSION = "v0.7.43"', constants)
-        self.assertEqual("1.0.0b96", manifest["version"])
-        self.assertEqual("v0.7.43", panel["dashboard_version"])
+        self.assertEqual("0.7.44", standard["ui_version"])
+        self.assertIn('const UI_VERSION = "v0.7.44"', self.source)
+        self.assertIn('VERSION = "v1.00_b097"', constants)
+        self.assertIn('DASHBOARD_VERSION = "v0.7.44"', constants)
+        self.assertEqual("1.0.0b97", manifest["version"])
+        self.assertEqual("v0.7.44", panel["dashboard_version"])
 
 
 if __name__ == "__main__":

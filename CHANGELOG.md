@@ -1,10 +1,18 @@
-## v1.00_b096 / UI v0.7.43
+## v1.00_b097 / UI v0.7.44
 
 - Preserves unavailable, unknown, missing, empty and malformed setting states as unknown instead of treating them as volume zero or switch off. Draft comparison uses valid typed values without truthiness or numeric coercion.
 - Requires available matching Home Assistant target data with current connected telemetry for setting confirmation. A dispatched write must be followed by a change or advancing timestamp on that target; another entity's update cannot confirm it. An already satisfied valid setting needs no write.
 - Keeps service drafts and the command error after a failed service call or unconfirmed response; valid zero/off readbacks still apply normally. Malformed Service readings remain unavailable for editing.
 - Adds production-bootstrap command regression scenarios with synthetic HA states and time, run by repository CI. Preserves the approved cleaning presets, service layout, station controls and physical illumination behavior.
 - Bumps all child-module cache keys. Hardware/Home Assistant and iPhone acceptance remain separate from these automated checks; raw protocol parsing is unchanged.
+
+## v1.00_b096 / UI v0.7.43
+
+- Groups child lock with volume and Do Not Disturb in the Service settings card, removing the separate Protection and Errors card.
+- Keeps child lock as an immediate confirmed action with readback, independent of the volume/DND draft and Cancel/Apply.
+- Moves device fault detail to Diagnostics while preserving active-fault visibility on Overview.
+- Shows `Ошибок нет` only for an explicit current zero without an error state; unknown fault data says `Нет данных`, and stale data says `Данные устарели`.
+- Updates frontend cache keys and version metadata without changing verified robot or station commands.
 
 ## v1.00_b095 / UI v0.7.42
 
