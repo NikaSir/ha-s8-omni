@@ -1,3 +1,13 @@
+## v1.00_b095 / UI v0.7.42
+
+- Keeps the approved two-by-three dry/wet preset layout and save-only user editors, with separate confirmed application and live readback selection.
+- Compacts cleaning statistics, clarifies suction/water descriptions and removes the duplicate generic cleaning-settings entry.
+- Replaces repeated station summaries with one hero containing robot/charge context; verified station Start/Stop behavior is preserved.
+- Groups the three consumable rows into one card and formats exact remaining usage time in hours/minutes.
+- Compacts Service volume/DND controls with explicit draft status and Cancel/Apply; child-lock confirmation/readback remains separate.
+- Uses `Нет данных` for missing resource readings and positive station-data wording only for explicit complete reports; Diagnostics labels integration and UI versions separately.
+- Updates all frontend child-import cache keys and version metadata without changing the verified robot command protocol or canonical NikaS shell rules.
+
 ## v1.00_b077 / UI v0.7.41
 
 - Migrates the «Пылесос» panel to NikaS Standard v2.2, Navigation Contract v1.2 and host-bound Shell v2.1.

@@ -97,14 +97,21 @@ if (Panel && !Panel.prototype.__s8ServiceSettingsB094) {
       .preset-option.selected,.user-preset-shell.selected{border-color:color-mix(in srgb,var(--primary-color) 72%,var(--divider-color));background:color-mix(in srgb,var(--primary-color) 13%,var(--card-background-color));box-shadow:0 0 0 2px color-mix(in srgb,var(--primary-color) 18%,transparent)}
       .preset-option.selected strong,.user-preset-shell.selected .user-preset-apply strong{color:var(--primary-color)}
       .service-settings-block{margin-top:12px}
+      .service-settings-card .slider-row{padding-top:0}
+      .service-volume-hint{display:block;margin-top:3px;color:var(--secondary-text-color);font-size:12px}
+      .service-apply-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;border-top:1px solid var(--divider-color);padding-top:12px;margin-top:2px}
+      .service-apply-status{flex:1 1 160px;font-size:13px;font-weight:600;color:var(--secondary-text-color)}
+      .service-apply-status.has-changes{color:var(--primary-text-color)}
+      .service-apply-actions{display:flex;gap:8px;margin-left:auto}
+      .service-apply-actions button{min-height:44px;padding:0 14px}
+      .service-cancel-button{border:1px solid var(--divider-color);border-radius:14px;background:transparent;color:var(--primary-text-color);font-size:13px;font-weight:700}
+      .service-cancel-button:disabled{color:var(--disabled-text-color)}
     `;
   };
 
   const oldCleaning = Panel.prototype._cleaning;
   Panel.prototype._cleaning = function serviceCleaning() {
-    let markup = oldCleaning.call(this);
-    markup = markup.replace(/Громкость:[^<]*· Не беспокоить:[^<]*/g, "Всасывание и подача воды");
-    return markSelected(markup, currentPreset(this));
+    return markSelected(oldCleaning.call(this), currentPreset(this));
   };
 
   Panel.prototype._cleaningSettings = function serviceCleaningSettings() {
@@ -129,7 +136,7 @@ if (Panel && !Panel.prototype.__s8ServiceSettingsB094) {
     const dndValue = Object.prototype.hasOwnProperty.call(this._cleaningDraft, "do_not_disturb") ? this._cleaningDraft.do_not_disturb : rawDnd;
     const dndUsable = rawDnd !== null && !busy;
     const hasDraft = this._hasCleaningDraft();
-    return `${base}<div class="service-settings-block"><section class="card"><div class="section-title"><div><span class="eyebrow">Звук</span><h2>Громкость</h2></div></div><div class="slider-row"><div class="slider-head"><span><strong>Голосовые уведомления</strong></span><strong data-volume-label>${volumeValue === null ? "—" : `${Math.round(volumeValue)}%`}</strong></div><input type="range" min="0" max="100" step="1" value="${volumeValue === null ? 0 : volumeValue}" data-volume ${volumeValue === null || busy ? "disabled" : ""}></div></section><section class="card"><div class="section-title"><div><span class="eyebrow">Поведение</span><h2>Автоматизация</h2></div></div><button class="toggle-row" type="button" data-toggle="do_not_disturb" ${dndUsable ? "" : "disabled"}><span><strong>Не беспокоить</strong><small>Без звука, расписания и возобновления уборки; период задаётся в приложении.</small></span><span class="toggle ${dndValue === true ? "on" : ""}"></span></button></section><section class="card apply-card"><div><strong>${hasDraft ? "Изменения готовы" : "Настройки без изменений"}</strong><small>${hasDraft ? "Параметры будут записаны после подтверждения и проверены по данным устройства." : "Сначала измените один или несколько параметров."}</small></div><button class="apply-button" type="button" data-apply-cleaning ${hasDraft && !busy ? "" : "disabled"}>Применить</button></section></div>`;
+    return `${base}<div class="service-settings-block"><section class="card service-settings-card"><div class="slider-row"><div class="slider-head"><span><strong>Громкость</strong><small class="service-volume-hint">Голосовые уведомления</small></span><strong data-volume-label>${volumeValue === null ? "—" : `${Math.round(volumeValue)}%`}</strong></div><input type="range" aria-label="Громкость голосовых уведомлений" min="0" max="100" step="1" value="${volumeValue === null ? 0 : volumeValue}" data-volume ${rawVolume === null || busy ? "disabled" : ""}></div><button class="toggle-row" type="button" data-toggle="do_not_disturb" aria-pressed="${dndValue === true}" ${dndUsable ? "" : "disabled"}><span><strong>Не беспокоить</strong><small>В заданные часы отключаются звук, уборка по расписанию и возобновление уборки. Период задаётся в штатном приложении.</small></span><span class="toggle ${dndValue === true ? "on" : ""}"></span></button><div class="service-apply-bar"><span class="service-apply-status ${hasDraft ? "has-changes" : ""}" data-service-draft-status role="status">${hasDraft ? "Неприменённые изменения" : "Нет изменений"}</span><div class="service-apply-actions"><button class="service-cancel-button" type="button" data-cancel-service-draft ${hasDraft && !busy ? "" : "disabled"}>Отменить</button><button class="apply-button" type="button" data-apply-cleaning ${hasDraft && snap.connected && !busy ? "" : "disabled"}>Применить</button></div></div></section></div>`;
   };
 
   const oldCallConfirmed = Panel.prototype._callConfirmed;
@@ -145,6 +152,12 @@ if (Panel && !Panel.prototype.__s8ServiceSettingsB094) {
     if (!root || root.__s8PresetSelectionB094) return;
     root.__s8PresetSelectionB094 = true;
     root.addEventListener("click", (event) => {
+      const cancelDraftButton = event.target?.closest?.("[data-cancel-service-draft]");
+      if (cancelDraftButton && root.contains(cancelDraftButton) && !cancelDraftButton.disabled && !this._busyCommands.size) {
+        this._cleaningDraft = {};
+        this._queueLivePatch();
+        return;
+      }
       const presetButton = event.target?.closest?.("[data-cleaning-preset]");
       if (presetButton && root.contains(presetButton) && !presetButton.disabled) {
         const key = presetButton.dataset.cleaningPreset;
@@ -155,6 +168,21 @@ if (Panel && !Panel.prototype.__s8ServiceSettingsB094) {
           this._queueLivePatch();
         }
       }
+    });
+    root.addEventListener("input", (event) => {
+      const volumeInput = event.target?.closest?.("[data-volume]");
+      if (!volumeInput || !root.contains(volumeInput) || volumeInput.disabled) return;
+      const hasDraft = this._hasCleaningDraft();
+      const busy = this._busyCommands.size > 0;
+      const status = root.querySelector("[data-service-draft-status]");
+      if (status) {
+        status.textContent = hasDraft ? "Неприменённые изменения" : "Нет изменений";
+        status.classList.toggle("has-changes", hasDraft);
+      }
+      const cancel = root.querySelector("[data-cancel-service-draft]");
+      if (cancel) cancel.disabled = !hasDraft || busy;
+      const apply = root.querySelector("[data-apply-cleaning]");
+      if (apply) apply.disabled = !hasDraft || busy || !this._snapshot().connected;
     });
 
     const shadow = this.shadowRoot;

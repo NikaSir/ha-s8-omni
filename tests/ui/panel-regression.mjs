@@ -1,0 +1,199 @@
+// Run with `node tests/ui/panel-regression.mjs` after installing Playwright and Chromium.
+// Loads the real bootstrap and all child modules; no runtime methods are replaced.
+import assert from "node:assert/strict";
+import {createRequire} from "node:module";
+import {resolve} from "node:path";
+import {createFixtureServer} from "./fixture-server.mjs";
+
+const require = createRequire(import.meta.url);
+let playwright;
+try { playwright = require("playwright"); }
+catch (error) {
+  if (!process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES) throw error;
+  playwright = require(resolve(process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES,"playwright"));
+}
+const server = createFixtureServer();
+await new Promise(resolve => server.listen(0,"127.0.0.1",resolve));
+let browser;
+try {
+  browser = await playwright.chromium.launch({
+    headless:true,
+    ...(process.env.S8_UI_BROWSER_EXECUTABLE ? {executablePath:process.env.S8_UI_BROWSER_EXECUTABLE} : {}),
+  });
+} catch (error) {
+  await new Promise(resolve => server.close(resolve));
+  throw error;
+}
+const page = await browser.newPage({viewport:{width:390,height:844}});
+page.setDefaultTimeout(10_000);
+const failures = [];
+let acceptConfirmation = false;
+const confirmations = [];
+page.on("pageerror",error => { failures.push(error.message); console.error(error.stack || error.message); });
+page.on("dialog",async dialog => {
+  confirmations.push(dialog.message());
+  if (acceptConfirmation) await dialog.accept();
+  else await dialog.dismiss();
+});
+const active = page.locator("[data-stable-view]:not([hidden])");
+const calls = () => page.evaluate(() => window.fixture.calls);
+const countCalls = async count => assert.equal((await calls()).length,count);
+const patch = async () => page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+const navigate = async view => {
+  await page.locator(`nav [data-view="${view}"]`).click();
+  await page.waitForFunction(view => window.fixture.panel._view === view,view);
+  await patch();
+};
+const inputVolume = async value => {
+  await active.locator("[data-volume]").evaluate((input,value) => {
+    input.value = String(value);
+    input.dispatchEvent(new Event("input",{bubbles:true}));
+    input.dispatchEvent(new Event("change",{bubbles:true}));
+  },value);
+  await patch();
+};
+const report = label => console.log(`PASS ${label}`);
+
+try {
+  await page.goto(`http://127.0.0.1:${server.address().port}`);
+  await page.waitForFunction(() => window.fixture?.panel?._registryLoaded && window.fixture.panel._stableMounted);
+  await patch();
+
+  await navigate("maintenance");
+  assert.match(await active.locator('[data-more="side_brush_life"]').innerText(),/40 ч 19 мин/);
+  await inputVolume(72);
+  await countCalls(0);
+  assert.equal(await active.locator("[data-volume]").inputValue(),"72");
+  assert.equal(await active.locator("[data-apply-cleaning]").isEnabled(),true);
+  await active.locator("[data-cancel-service-draft]").click();
+  await patch();
+  await countCalls(0);
+  assert.equal(await active.locator("[data-volume]").inputValue(),"50");
+  assert.equal(await active.locator("[data-apply-cleaning]").isEnabled(),false);
+  report("volume edit/cancel changes only the local draft");
+
+  await active.locator('[data-toggle="do_not_disturb"]').click();
+  await patch();
+  await countCalls(0);
+  await active.locator("[data-apply-cleaning]").click();
+  await countCalls(0);
+  assert.match(confirmations.at(-1),/Не беспокоить/);
+  assert.equal(await active.locator("[data-apply-cleaning]").isEnabled(),true);
+  acceptConfirmation = true;
+  await page.evaluate(() => { window.fixture.autoReadback = false; });
+  await active.locator("[data-apply-cleaning]").click();
+  await page.waitForFunction(() => window.fixture.readbacks.length === 1);
+  await countCalls(1);
+  assert.deepEqual((await calls())[0],{domain:"switch",service:"turn_on",data:{entity_id:"switch.fixture_do_not_disturb"}});
+  assert.equal(await page.evaluate(() => window.fixture.panel._controlValue("do_not_disturb")),false);
+  assert.equal(await page.evaluate(() => window.fixture.panel._hasCleaningDraft()),true);
+  await page.evaluate(() => window.fixture.flushReadbacks());
+  await page.waitForFunction(() => !window.fixture.panel._hasCleaningDraft() && window.fixture.panel._busyCommands.size === 0);
+  await patch();
+  assert.equal(await active.locator("[data-apply-cleaning]").isEnabled(),false);
+  report("DND requires confirmation and keeps its draft until device readback");
+
+  await page.evaluate(() => {
+    window.fixture.sliderBeforePatch = window.fixture.panel.shadowRoot.querySelector('[data-stable-view]:not([hidden]) [data-volume]');
+  });
+  await inputVolume(66);
+  await page.evaluate(() => {
+    window.fixture.setState("volume","55");
+    window.fixture.setState("battery","99");
+  });
+  await patch();
+  assert.equal(await page.evaluate(() => window.fixture.sliderBeforePatch === window.fixture.panel.shadowRoot.querySelector('[data-stable-view]:not([hidden]) [data-volume]')),true);
+  assert.equal(await active.locator("[data-volume]").inputValue(),"66");
+  await active.locator("[data-cancel-service-draft]").click();
+  await patch();
+  assert.equal(await active.locator("[data-volume]").inputValue(),"55");
+  await inputVolume(67);
+  assert.equal(await active.locator("[data-apply-cleaning]").isEnabled(),true);
+  await active.locator("[data-cancel-service-draft]").click();
+  await countCalls(1);
+  report("live telemetry preserves slider DOM, input binding and unsaved edits");
+
+  await navigate("cleaning");
+  assert.equal(await active.locator(".preset-group.dry").count(),1);
+  assert.equal(await active.locator(".preset-group.wet").count(),1);
+  assert.equal(await active.locator("[data-cleaning-preset]").count(),6);
+  assert.equal(await active.locator('[data-detail="cleaning-settings"]').count(),0);
+  assert.match(await active.locator(".future-card").innerText(),/Карта и комнаты/);
+  await active.locator('[data-user-preset-edit="wet"]').click();
+  await page.locator("[data-user-suction]").selectOption("normal");
+  await page.locator("[data-user-water]").selectOption("high");
+  await page.locator("[data-user-save]").click();
+  await patch();
+  await countCalls(1);
+  assert.equal(await page.evaluate(() => window.fixture.panel._controlValue("suction")),"gentle");
+  assert.equal(await page.evaluate(() => window.fixture.panel._controlValue("water")),"closed");
+  assert.equal(await page.evaluate(() => Object.keys(localStorage).some(key => key.startsWith("nikas.s8_omni.user_preset.") && key.endsWith(".wet"))),true);
+  await active.locator('[data-cleaning-preset="wet-user"]').click();
+  await page.locator("[data-preset-cancel]").click();
+  await patch();
+  await countCalls(1);
+  await active.locator('[data-cleaning-preset="wet-user"]').click();
+  await page.locator("[data-preset-apply]").click();
+  await page.waitForFunction(() => window.fixture.calls.length === 2 && window.fixture.readbacks.length === 1);
+  await page.evaluate(() => window.fixture.flushReadbacks());
+  await page.waitForFunction(() => window.fixture.calls.length === 3 && window.fixture.readbacks.length === 1);
+  // One acknowledged field is not enough to highlight a two-field preset.
+  assert.equal(await active.locator(".user-preset-shell.selected").count(),0);
+  await page.evaluate(() => window.fixture.flushReadbacks());
+  await page.waitForFunction(() => window.fixture.panel._busyCommands.size === 0);
+  await patch();
+  assert.deepEqual((await calls()).slice(1),[
+    {domain:"select",service:"select_option",data:{entity_id:"select.fixture_suction",option:"normal"}},
+    {domain:"select",service:"select_option",data:{entity_id:"select.fixture_water",option:"high"}},
+  ]);
+  assert.equal(await active.locator('.user-preset-shell.selected [data-cleaning-preset="wet-user"]').count(),1);
+  await page.evaluate(() => window.fixture.setState("battery","98"));
+  await patch();
+  assert.equal(await active.locator('.user-preset-shell.selected [data-cleaning-preset="wet-user"]').count(),1);
+  report("user preset save/cancel sends nothing; apply/readback preserves selected highlight");
+
+  await page.evaluate(() => {
+    window.fixture.setState("robot_status","cleaning");
+    window.fixture.setState("composite_status","cleaning",{robot_on_dock:false,station_operations:[],missing_station_dps:[]});
+    window.fixture.setState("clean_time","120");
+    window.fixture.setState("clean_area","2");
+  });
+  await patch();
+  assert.match(await active.locator('[data-more="clean_area"]').innerText(),/2 м²/);
+  await page.evaluate(() => {
+    window.fixture.setState("robot_status","charged");
+    window.fixture.setState("composite_status","charged",{robot_on_dock:true,station_operations:[],missing_station_dps:[]});
+  });
+  await patch();
+  assert.match(await active.innerText(),/Уборка не выполняется/);
+  await active.locator('[data-user-preset-edit="dry"]').click();
+  assert.equal(await page.locator('[data-preset-dialog="editor"]').count(),1);
+  await page.locator("[data-preset-cancel]").click();
+  await countCalls(3);
+  report("cleaning status changes reconcile metric structure without losing preset handlers");
+
+  await navigate("station");
+  assert.equal((await active.innerText()).match(/Ожидание/g)?.length,1);
+  assert.equal(await active.locator("[data-station-command]").count(),3);
+  report("station idle summary is not duplicated and retains all three operation controls");
+
+  for (const view of ["overview","cleaning","station","maintenance","diagnostics"]) {
+    await navigate(view);
+    const layout = await page.evaluate(() => {
+      const shadow = window.fixture.panel.shadowRoot;
+      const visible = shadow.querySelector('[data-stable-view]:not([hidden])');
+      const rect = visible.getBoundingClientRect();
+      const header = shadow.querySelector(".app-header").getBoundingClientRect();
+      const nav = shadow.querySelector("nav").getBoundingClientRect();
+      return {left:rect.left,right:rect.right,width:innerWidth,headerTop:header.top,navBottom:nav.bottom,height:innerHeight};
+    });
+    assert.ok(layout.left >= -1 && layout.right <= layout.width+1,`${view}: content exceeds horizontal viewport`);
+    assert.ok(layout.headerTop >= -1 && layout.navBottom <= layout.height+1,`${view}: shell exceeds host`);
+  }
+  report("five workspaces stay inside the mobile host at 100% scale");
+  assert.deepEqual(failures,[],"uncaught errors from the real bootstrap");
+  console.log("All browser UI regressions passed.");
+} finally {
+  await browser.close();
+  await new Promise(resolve => server.close(resolve));
+}

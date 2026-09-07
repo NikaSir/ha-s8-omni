@@ -37,7 +37,10 @@ jobs:
       - name: Compile Python sources
         run: python -m compileall -q custom_components scripts tests
       - name: Validate bundled JavaScript syntax
-        run: node --check custom_components/s8_omni/frontend/s8-omni-panel.js
+        run: |
+          for module in custom_components/s8_omni/frontend/*.js; do
+            node --check "$module"
+          done
       - name: Enforce NikaS v2.2 contract
         run: python scripts/check_nikas_ui_standard.py
       - name: Run regression tests
@@ -50,7 +53,7 @@ jobs:
           for forbidden in ("100vh", "100dvh", "/dashboard-house-v11"):
               assert forbidden not in source, forbidden
           for required in (
-              'const UI_VERSION = "v0.7.41"',
+              'const UI_VERSION = "v0.7.42"',
               "/dashboard-house-v13/home",
               "/dashboard-rooms-v11/rooms",
               "createNikasShellScrollBoundaryGuard",
@@ -70,3 +73,23 @@ jobs:
             echo "$forbidden"
             exit 1
           fi
+
+  browser-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install pinned browser test dependency
+        shell: bash
+        run: |
+          s8_ui_test_deps="${RUNNER_TEMP}/s8-ui-browser-tests"
+          npm install --prefix "$s8_ui_test_deps" --no-save --package-lock=false --ignore-scripts playwright@1.62.0
+          echo "NODE_PATH=$s8_ui_test_deps/node_modules" >> "$GITHUB_ENV"
+          node "$s8_ui_test_deps/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Exercise production bootstrap in Chromium
+        run: node tests/ui/panel-regression.mjs

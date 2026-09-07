@@ -6,7 +6,7 @@ The S8 OMNI integration owns and ships its canonical Home Assistant UI.
 
 - Panel: `/dashboard-s8-omni`
 
-Dashboard version: `v0.7.41`.
+Dashboard version: `v0.7.42`.
 
 The panel is registered through Home Assistant's custom-panel API. No Lovelace YAML, LocalTuya command, cloud request or direct Tuya DP write is required by the frontend.
 
@@ -34,7 +34,7 @@ On mobile widths up to 480 CSS px:
 48 px | minmax(0, 1fr) | 48 px
 ```
 
-The two side slots remain symmetric, so `S8 OMNI` stays centered against the viewport rather than the free space between controls. Menu and Refresh remain at least 44×44 px touch targets and use matching plaques. The center title is also a visible semantic 44 px button with `S8 OMNI` and the exact version-only second line. It captures the validated source base-panel route once and returns through explicit Home Assistant navigation.
+The two side slots remain symmetric, so `Пылесос` stays centered against the viewport rather than the free space between controls. Menu and Refresh remain at least 44×44 px touch targets and use matching plaques. The center title is also a visible semantic 52 px-high button with `Пылесос` and the exact `UI v0.7.42` second line. It captures the validated source base-panel route once and returns through explicit Home Assistant navigation.
 
 On the five root views:
 
@@ -49,7 +49,7 @@ The hero card does not repeat S8 OMNI as another large title. The Header identif
 
 At the primary iPhone Pro Max portrait width, the panel must not depend on horizontal overflow or clipped labels.
 
-Dashboard `v0.7.41` applies these mobile rules:
+Dashboard `v0.7.42` applies these mobile rules:
 
 - Header side controls reduce from 52 px to 48 px while preserving symmetric geometry;
 - the three frequent actions remain **three equal columns**;
@@ -81,27 +81,22 @@ It intentionally does not duplicate cleaning time/area, suction/water configurat
 
 ### Cleaning
 
-Cleaning owns the active cleaning workflow:
+Cleaning owns:
 
-- Start / Pause / Home;
-- factual cleaning time and area;
-- one entry point to **Настройки уборки**;
-- reserved future Map / Rooms workflow.
+- compact factual cleaning time and area, with an explicit not-running state when the robot is confirmed docked or idle;
+- two full-width groups, **Сухая уборка** and **Влажная уборка**, each containing **Тихий / Макс / Польз.**;
+- separate editors for the two user presets;
+- the visible **Карта и комнаты** next-stage reminder.
 
-It does not repeat the large composite system hero.
+It does not repeat the composite hero, transport actions or a generic **Настроить уборку** entry. Quiet/maximum preset meanings are unchanged: dry uses minimum/maximum suction with water closed; wet uses minimum suction/low water or maximum suction/high water.
 
-### Cleaning settings
+### User-preset settings and application
 
-Second-level screen, not a sixth root tab. It is the only editable cleaning-profile screen:
+**Настроить** on a user preset opens its suction/water editor. Saving stores that preset locally per integration entry and dry/wet kind; it never sends a command to the robot. Dry presets keep water closed, while wet presets require an enabled water level.
 
-- suction;
-- water;
-- volume;
-- Do Not Disturb.
+Selecting a preset is a separate application workflow: show the confirmation summary, write verified public Home Assistant entities, then read the requested values back. The selected preset highlight follows confirmed live suction/water values. Canceling an editor or application dialog does not issue a write.
 
-All four values share one local draft. **Применить** first shows the complete change summary, then writes only confirmed public Home Assistant entities and verifies each new value by reading entity state back. Polling updates may refresh factual telemetry but cannot overwrite an unsaved draft value.
-
-On this child screen an inline Back control inside the working area returns to root **Cleaning**; the Header keeps the system Menu. The full-width Bottom Tab Bar remains visible; choosing another root tab exits the child workflow and opens that section.
+The old `cleaning-settings` view remains as an internal compatibility path, with no entry from the current Cleaning screen. It is not the primary profile-editing workflow.
 
 ### Station
 
@@ -115,19 +110,22 @@ Station owns station-specific detail:
 - drying;
 - explicit missing/unknown station telemetry.
 
+A single station hero contains station status plus robot/charge context; the same operation is not repeated in a second summary card.
+
 Station exposes separate confirmed **Запустить / Остановить** controls for dust collection, mop washing and drying. Start is enabled only while the robot is factually docked. When one station operation is active, Overview also exposes the verified unified **Стоп** action; these immediate commands remain separate from cleaning-profile settings.
 
 ### Maintenance
 
-Maintenance owns factual consumable/service information:
+Maintenance owns:
 
-- filter resource in minutes;
-- side-brush resource in minutes;
-- main-brush resource in minutes;
-- fault state;
-- child lock.
+- one card with filter, side-brush and main-brush resource rows;
+- fault state and child lock;
+- volume and Do Not Disturb settings;
+- local service draft status and **Отменить / Применить** actions.
 
-Derived percentages identify the same manufacturer lifetime counters while exact remaining minutes remain visible. No unverified reset command is shown.
+Resource percentages use the manufacturer lifetime counters. Remaining usage time is formatted without rounding away minutes: for example, `2419` minutes becomes **40 ч 19 мин**. This is usage time, not a calendar replacement estimate. No unverified reset command is shown.
+
+Volume and DND changes stay in a local draft until Apply is confirmed, and each write requires entity-state readback. Cancel discards only the draft. Child lock remains separate: its own confirmation writes immediately and checks readback. DND wording explains that its restrictions apply during the configured hours; the period itself is configured in the official application.
 
 ### Diagnostics
 
@@ -136,7 +134,7 @@ Diagnostics contains technical state:
 - local Tuya LAN connection health;
 - availability and telemetry age;
 - normalized composite/robot/station state;
-- missing station DP list;
+- **Данные станции** summary; **Получены** requires an explicit complete station-data report, while missing or unconfirmed data stays explicit;
 - raw DP5/DP4/DP1/DP2/DP28;
 - raw DP134/135/136;
 - integration/dashboard versions;
@@ -180,31 +178,18 @@ A blank white screen is not an accepted loading state.
 
 ## Production frontend bundle
 
-Dashboard `v0.5.3` introduced frontend bundling hardening; `v0.5.4` preserves it.
+Home Assistant registers the stable `s8-omni-panel-bootstrap.js` module with dashboard and integration versions in its query string. The bootstrap imports:
 
-Production runtime consists of exactly one integration-owned JavaScript entry point:
+- `s8-omni-panel.js` — self-contained core panel and fixed shell;
+- `s8-omni-cleaning-presets.js` — current preset UI and application workflow;
+- `s8-omni-service-settings.js` — service controls and selection bookkeeping;
+- `s8-omni-preset-live-highlight.js` — point updates of the confirmed selected preset.
 
-```text
-Home Assistant
-    ↓
-/s8_omni/frontend/s8-omni-panel.js?v=v0.5.4
-    ↓
-<s8-omni-panel>
-```
+Each child import is also cache-busted with the integration version (`1.0.0b95`). This prevents a refreshed bootstrap from loading an older child module from browser cache.
 
-The registered bundle is **self-contained**. It does not import historical UI files at runtime.
+The core panel does not import previous UI implementations. Historical frontend versions belong in Git history, not in the browser dependency chain.
 
-Historical frontend implementations belong in Git history/tags/releases. They are not browser dependencies and are not required to be present in browser cache.
-
-The stable production filename is `s8-omni-panel.js`; `DASHBOARD_VERSION` is appended as a query parameter for cache busting.
-
-CI verifies:
-
-- JavaScript syntax;
-- the stable production bundle exists;
-- `module_url` references the stable bundle;
-- the production bundle contains no relative `import` statement;
-- versioned historical panel files are not shipped in the active production frontend directory.
+CI verifies syntax for every shipped frontend module, regression behavior, version agreement and the NikaS core-panel contract.
 
 ## Canonical bottom Tab Bar geometry
 
@@ -239,7 +224,6 @@ Header, child-navigation and Bottom Tab Bar elements are navigation/global-panel
 
 ## Current deferred capabilities
 
-- station write controls;
 - DND start/end time (DP33 payload);
 - scheduled cleaning (DP32 payload);
 - map and room payload parsing;
