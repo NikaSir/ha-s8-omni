@@ -6,13 +6,15 @@ const FIXED_PRESETS = {
   "wet-quiet": { suction: "gentle", water: "low" },
   "wet-max": { suction: "strong", water: "high" },
 };
+const FIXED_PRESET_KEYS = Object.keys(FIXED_PRESETS);
+const PRESET_KEYS = [...Object.keys(FIXED_PRESETS), "dry-user", "wet-user"];
 
 function entryKey(panel) {
   return String(panel?._panel?.config?.entry_id || panel?._config?.entry_id || panel?.config?.entry_id || "default");
 }
 
-function selectedKey(panel) {
-  return `nikas.s8_omni.selected_preset.v1.${entryKey(panel)}`;
+function selectedKeyForEntry(entry) {
+  return `nikas.s8_omni.selected_preset.v1.${entry}`;
 }
 
 function userKey(entry, kind) {
@@ -41,14 +43,26 @@ function valuesFor(panel, key) {
   return null;
 }
 
-function selectedPreset(panel) {
-  let key = null;
-  try { key = window.localStorage.getItem(selectedKey(panel)); } catch (_error) {}
-  const values = key ? valuesFor(panel, key) : null;
-  if (!values) return null;
+function presetMatches(panel, key) {
+  const values = valuesFor(panel, key);
+  if (!values) return false;
   const suctionOk = panel._controlValuesEqual("suction", panel._controlValue("suction"), values.suction);
   const waterOk = panel._controlValuesEqual("water", panel._controlValue("water"), values.water);
-  return suctionOk && waterOk ? key : null;
+  return suctionOk && waterOk;
+}
+
+function selectedPreset(panel) {
+  try {
+    const keys = [selectedKeyForEntry(entryKey(panel)), selectedKeyForEntry("default")];
+    for (const storageKey of [...new Set(keys)]) {
+      const selected = window.localStorage.getItem(storageKey);
+      if (selected && presetMatches(panel, selected)) return selected;
+    }
+  } catch (_error) {}
+  const fixedMatches = FIXED_PRESET_KEYS.filter((key) => presetMatches(panel, key));
+  if (fixedMatches.length === 1) return fixedMatches[0];
+  const matches = PRESET_KEYS.filter((key) => presetMatches(panel, key));
+  return matches.length === 1 ? matches[0] : null;
 }
 
 function syncSelectedPresetDom(panel) {

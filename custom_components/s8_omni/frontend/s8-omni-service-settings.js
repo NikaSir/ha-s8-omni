@@ -19,12 +19,17 @@ const SERVICE_WORK_MODE_NAMES = {
   mop_work: "Влажная",
 };
 const SELECTED_PRESET_VERSION = 1;
+const FIXED_PRESET_KEYS = ["dry-quiet", "dry-max", "wet-quiet", "wet-max"];
+const PRESET_KEYS = ["dry-quiet", "dry-max", "wet-quiet", "wet-max", "dry-user", "wet-user"];
 
 function entryKey(panel) {
   return String(panel?._panel?.config?.entry_id || panel?._config?.entry_id || panel?.config?.entry_id || "default");
 }
+function selectedKeyForEntry(entry) {
+  return `nikas.s8_omni.selected_preset.v${SELECTED_PRESET_VERSION}.${entry}`;
+}
 function selectedKey(panel) {
-  return `nikas.s8_omni.selected_preset.v${SELECTED_PRESET_VERSION}.${entryKey(panel)}`;
+  return selectedKeyForEntry(entryKey(panel));
 }
 function userKeyForEntry(entry, kind) {
   return `nikas.s8_omni.user_preset.v1.${entry}.${kind}`;
@@ -62,9 +67,17 @@ function presetMatches(panel, key) {
     && panel._controlValuesEqual("water", panel._controlValue("water"), preset.water);
 }
 function currentPreset(panel) {
-  let key = null;
-  try { key = window.localStorage.getItem(selectedKey(panel)); } catch (_error) {}
-  return key && presetMatches(panel, key) ? key : null;
+  try {
+    const keys = [selectedKey(panel), selectedKeyForEntry("default")];
+    for (const storageKey of [...new Set(keys)]) {
+      const selected = window.localStorage.getItem(storageKey);
+      if (selected && presetMatches(panel, selected)) return selected;
+    }
+  } catch (_error) {}
+  const fixedMatches = FIXED_PRESET_KEYS.filter((key) => presetMatches(panel, key));
+  if (fixedMatches.length === 1) return fixedMatches[0];
+  const matches = PRESET_KEYS.filter((key) => presetMatches(panel, key));
+  return matches.length === 1 ? matches[0] : null;
 }
 function storeSelected(panel, key) {
   try { window.localStorage.setItem(selectedKey(panel), key); } catch (_error) {}

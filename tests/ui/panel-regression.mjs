@@ -184,6 +184,27 @@ try {
   assert.equal(await active.locator("[data-cleaning-preset]").count(),6);
   assert.equal(await active.locator('[data-detail="cleaning-settings"]').count(),0);
   assert.match(await active.locator(".future-card").innerText(),/Карта и комнаты/);
+  await page.evaluate(() => {
+    localStorage.setItem("nikas.s8_omni.user_preset.v1.default.wet", JSON.stringify({suction:"normal",water:"high"}));
+    window.fixture.setState("suction","normal");
+    window.fixture.setState("water","high");
+  });
+  await patch();
+  assert.equal(await active.locator('.user-preset-shell.selected [data-cleaning-preset="wet-user"]').count(),1);
+  await page.evaluate(() => {
+    localStorage.setItem("nikas.s8_omni.selected_preset.v1.default","wet-user");
+    window.fixture.setState("battery","99");
+  });
+  await patch();
+  assert.equal(await active.locator('.user-preset-shell.selected [data-cleaning-preset="wet-user"]').count(),1);
+  await page.evaluate(() => {
+    localStorage.removeItem("nikas.s8_omni.selected_preset.v1.default");
+    localStorage.removeItem("nikas.s8_omni.user_preset.v1.default.wet");
+    window.fixture.setState("suction","gentle");
+    window.fixture.setState("water","closed");
+  });
+  await patch();
+  report("current user preset highlight survives missing and legacy selection metadata");
   await active.locator('[data-user-preset-edit="wet"]').click();
   await page.locator("[data-user-suction]").selectOption("normal");
   await page.locator("[data-user-water]").selectOption("high");

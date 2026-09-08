@@ -6,7 +6,7 @@
 
 Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum and OMNI station, built from verified Tuya LAN datapoints.
 
-> Stable release: **v1.0.2** (`1.0.2`).
+> Stable release: **v1.0.3** (`1.0.3`).
 
 ## Scope
 
@@ -28,7 +28,7 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 
 `ha-s8-omni` owns its full appliance UI instead of exposing a loose collection of Lovelace entities as the primary experience.
 
-Dashboard **v1.0.2** follows **NIKAS Specialized Panel UI Standard v2.2**, **Navigation Contract v1.2** and **NikaS Integration Panel Template v2.2**, with the primary acceptance viewport **iPhone Pro Max portrait**:
+Dashboard **v1.0.3** follows **NIKAS Specialized Panel UI Standard v2.2**, **Navigation Contract v1.2** and **NikaS Integration Panel Template v2.2**, with the primary acceptance viewport **iPhone Pro Max portrait**:
 
 - symmetric Header: 52 px side rails / centred title / matching 44 px Menu and Refresh plaques, reduced to 48 px rails on narrow mobile;
 - the visible center title plaque captures the validated source base panel once and returns to the same Дом / Действия / Инфраструктура route;
