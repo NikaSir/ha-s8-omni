@@ -30,7 +30,8 @@ vm.runInContext(fs.readFileSync('custom_components/s8_omni/frontend/s8-omni-pane
   const started = Date.now();
   const pending = panel._refresh();
   assert.equal(panel._refreshPending, true);
-  assert.match(panel._header(), /refresh loading/);
+  assert.match(panel._header(), /refresh is-refreshing/);
+  assert.doesNotMatch(panel._header(), /refresh loading/);
   assert.match(panel._header(), /aria-busy="true" disabled/);
   await panel._refresh(); assert.equal(calls, 1);
   if (mode !== 'fast') {
@@ -40,7 +41,7 @@ vm.runInContext(fs.readFileSync('custom_components/s8_omni/frontend/s8-omni-pane
   assert.equal(await pending, mode !== 'error');
   assert.ok(Date.now() - started >= 700);
   assert.equal(panel._refreshPending, false);
-  assert.doesNotMatch(panel._header(), /refresh loading/);
+  assert.doesNotMatch(panel._header(), /refresh is-refreshing/);
   panel._busyCommands.add('other');
   await panel._refresh(); assert.equal(calls, 1);
   assert.match(panel._header(), /aria-busy="false" disabled/);
