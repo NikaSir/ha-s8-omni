@@ -114,6 +114,8 @@ try {
     assert.equal(await refresh.getAttribute("aria-busy"), "false");
     assert.equal(await refresh.isEnabled(), true);
     assert.doesNotMatch(await refresh.getAttribute("class"), /is-refreshing/);
+    assert.equal(await refresh.locator("ha-icon").getAttribute("icon"), outcome === "error" ? "mdi:alert-circle-outline" : "mdi:check");
+    assert.equal(await refresh.evaluate(el => getComputedStyle(el).color), outcome === "error" ? "rgb(229, 57, 53)" : "rgb(67, 160, 71)");
     if (outcome === "error") assert.match(await active.innerText(), /Synthetic refresh failure/);
     await page.evaluate(() => {
       window.fixture.panel._commandError = null;
