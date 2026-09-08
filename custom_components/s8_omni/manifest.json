@@ -1,16 +1,21 @@
 {
   "domain": "s8_omni",
   "name": "NikaS S8 OMNI",
-  "codeowners": [],
+  "codeowners": [
+    "@NikaSir"
+  ],
   "config_flow": true,
+  "documentation": "https://github.com/NikaSir/ha-s8-omni",
   "dependencies": [
     "frontend",
     "http",
     "panel_custom"
   ],
+  "integration_type": "device",
   "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/NikaSir/ha-s8-omni/issues",
   "requirements": [
     "tinytuya>=1.17.0"
   ],
-  "version": "1.0.0b98"
+  "version": "1.0.0"
 }

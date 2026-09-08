@@ -1,9 +1,9 @@
 # NikaS specialized-panel compliance — S8 OMNI
 
-**Audit date:** 2026-09-03  
-**Standard:** NikaS Specialized Panel UI Standard v2.2 / Navigation Contract v1.2  
-**Runtime:** `custom_components/s8_omni/frontend/s8-omni-panel.js` UI v0.7.41  
-**Manifest:** integration `1.0.0b77`
+**Audit date:** 2026-09-08
+**Standard:** NikaS Specialized Panel UI Standard v2.2 / Navigation Contract v1.2
+**Runtime:** `custom_components/s8_omni/frontend/s8-omni-panel.js` UI v1.0.0
+**Manifest:** integration `1.0.0`
 
 | Area | Result | Evidence |
 |---|---|---|
@@ -16,7 +16,7 @@
 | Stable DOM and gestures | PASS | Existing point-patch updates, pinch/zoom and two-finger reset behavior remain intact. |
 | Data truth and command safety | PASS | Entity-registry discovery, explicit unknown/unavailable states, confirmations and readback are preserved. |
 | S8 command protocol | PASS | No device service, station-command or Tuya protocol implementation was changed. |
-| Version coherence | PASS | Runtime, constants, manifest, panel metadata and profile agree on UI v0.7.41 / b077. |
+| Version coherence | PASS | Runtime, constants, manifest, panel metadata and profile agree on UI v1.0.0 / integration v1.0.0. |
 
 ## Field acceptance
 

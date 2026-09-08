@@ -39,4 +39,4 @@ Before merge, verify:
 
 ## Publication workflow
 
-Changes receive an explicit UI/integration version where applicable, a changelog entry and automated checks. NikaS work is published through commits, branches, pull requests and the accepted `main` state. GitHub Releases and automatic release tags are not created.
+Changes receive an explicit UI/integration version where applicable, a changelog entry and automated checks. Routine NikaS development is published through commits, branches, pull requests and the accepted `main` state without release tags. An explicitly approved stable public release follows the repository-specific immutable tag and GitHub Release procedure in [`RELEASES.md`](RELEASES.md); tags are never created automatically.

@@ -1,3 +1,11 @@
+## v1.0.0 / UI v1.0.0
+
+- Publishes the first stable S8 OMNI release from the physically accepted `1.0.0b98` command and panel baseline.
+- Keeps the verified robot Start, Pause, Continue and Return-to-base sequences, confirmed station Start/Stop controls, and approved five-view panel unchanged.
+- Keeps unknown and stale telemetry fail-closed, with device writes blocked when current local state cannot be confirmed.
+- Adds the public Home Assistant/HACS manifest metadata, official HACS repository validation and a current release acceptance checklist.
+- Retains Map/Rooms, schedules, manual movement and consumable resets as explicit future work until their exact S8 write contracts are captured and physically verified.
+
 ## v1.00_b098 / UI v0.7.45
 
 - Moves child lock directly beside Do Not Disturb in the shared Service settings card.
