@@ -91,8 +91,12 @@ try {
     await patch();
     const refresh = page.locator("[data-refresh]");
     assert.equal(await refresh.getAttribute("aria-busy"), "true");
-    assert.match(await refresh.getAttribute("class"), /loading/);
+    assert.match(await refresh.getAttribute("class"), /is-refreshing/);
     assert.equal(await refresh.isEnabled(), false);
+    assert.deepEqual(await refresh.evaluate(element => {
+      const bounds = element.getBoundingClientRect();
+      return {width: Math.round(bounds.width),height: Math.round(bounds.height)};
+    }), {width: 44,height: 44});
     assert.equal(await refresh.locator("ha-icon").evaluate(el => getComputedStyle(el).animationName), "spin");
     await page.evaluate(() => {
       window.fixture.panel.shadowRoot.querySelector("[data-refresh]").click();
@@ -109,7 +113,7 @@ try {
     await patch();
     assert.equal(await refresh.getAttribute("aria-busy"), "false");
     assert.equal(await refresh.isEnabled(), true);
-    assert.doesNotMatch(await refresh.getAttribute("class"), /loading/);
+    assert.doesNotMatch(await refresh.getAttribute("class"), /is-refreshing/);
     if (outcome === "error") assert.match(await active.innerText(), /Synthetic refresh failure/);
     await page.evaluate(() => {
       window.fixture.panel._commandError = null;

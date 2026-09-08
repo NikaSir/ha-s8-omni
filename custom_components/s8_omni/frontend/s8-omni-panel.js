@@ -1,4 +1,4 @@
-const UI_VERSION = "v1.0.1";
+const UI_VERSION = "v1.0.2";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.75;
 const VIEW_SCALE_MAX = 2.00;
@@ -1017,7 +1017,7 @@ class S8OmniPanel extends HTMLElement {
       *{box-sizing:border-box;min-width:0}button,input,select{font:inherit}button{-webkit-tap-highlight-color:transparent}h1,h2,h3,p{margin:0}
       main{min-height:0;padding-bottom:calc(82px + env(safe-area-inset-bottom))}
       .app-header{position:sticky;top:0;z-index:60;display:grid;grid-template-columns:48px minmax(0,1fr) 48px;align-items:center;gap:8px;min-height:calc(64px + env(safe-area-inset-top));padding:max(8px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) 8px max(12px,env(safe-area-inset-left));background:color-mix(in srgb,var(--primary-background-color) 97%,transparent);border-bottom:1px solid color-mix(in srgb,var(--divider-color) 70%,transparent);backdrop-filter:blur(18px) saturate(130%)}
-      .header-action{width:48px;height:48px;border:0;border-radius:15px;display:grid;place-items:center;background:var(--card-background-color);color:var(--primary-text-color);box-shadow:0 3px 12px rgba(0,0,0,.07)}.header-action.refresh{color:var(--primary-color)}.header-action:disabled{opacity:.38}.header-action ha-icon{--mdc-icon-size:28px}.header-action.loading ha-icon{animation:spin .8s linear infinite}
+      .header-action{width:48px;height:48px;border:0;border-radius:15px;display:grid;place-items:center;background:var(--card-background-color);color:var(--primary-text-color);box-shadow:0 3px 12px rgba(0,0,0,.07)}.header-action.refresh{color:var(--primary-color)}.header-action:disabled{opacity:.38}.header-action ha-icon{--mdc-icon-size:28px}.header-action.is-refreshing ha-icon{animation:spin .8s linear infinite}
       .header-title{text-align:center;display:flex;flex-direction:column;gap:2px;overflow:hidden}.header-title strong{font-size:22px;line-height:1.05;white-space:nowrap}.header-title span{color:var(--secondary-text-color);font-size:12px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .content{width:min(100%,900px);margin:0 auto;padding:12px 10px 18px}.card{background:var(--card-background-color);border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:22px;padding:15px;margin-bottom:12px;box-shadow:0 6px 18px rgba(0,0,0,.04)}.eyebrow{display:block;color:var(--secondary-text-color);font-size:12px;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
       .hero{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--card-background-color) 62%,color-mix(in srgb,var(--primary-color) 7%,var(--card-background-color)) 100%)}.hero::after{content:"";position:absolute;width:205px;height:205px;right:-70px;top:-92px;border-radius:50%;background:color-mix(in srgb,var(--primary-color) 7%,transparent);pointer-events:none}.hero-top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:10px;position:relative;z-index:2}.hero h1{margin-top:5px;font-size:25px;line-height:1.02;letter-spacing:-.035em}.hero-hint{margin-top:6px;color:var(--secondary-text-color);font-size:13px;line-height:1.28}.connection-indicator{justify-self:end;display:grid;grid-template-columns:10px minmax(0,1fr);align-items:center;column-gap:11px;min-height:58px;padding:12px 14px;border-radius:18px;background:var(--card-background-color);border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);box-shadow:0 4px 14px rgba(0,0,0,.055);white-space:nowrap}.connection-lamp{display:block;width:10px;height:10px;border-radius:50%;background:var(--disabled-text-color)}.connection-copy{display:flex;flex-direction:column;gap:3px;min-width:0}.connection-copy strong{font-size:15.5px;line-height:1.05;font-weight:700;color:var(--disabled-text-color)}.connection-copy small{font-size:12.5px;line-height:1.05;font-weight:550;color:var(--secondary-text-color)}.connection-indicator.local .connection-lamp{background:var(--success-color,#43a047)}.connection-indicator.local .connection-copy strong{color:var(--success-color,#43a047)}.connection-indicator.offline .connection-lamp{background:var(--error-color,#db4437)}.connection-indicator.offline .connection-copy strong{color:var(--error-color,#db4437)}.connection-indicator.unknown .connection-lamp{background:var(--disabled-text-color)}.connection-copy small.stale{color:var(--warning-color,#f6a623);font-weight:600}.connection-copy small.no-data{color:var(--secondary-text-color)}
@@ -1245,7 +1245,7 @@ class S8OmniPanel extends HTMLElement {
   }
 
   _header() {
-    return `<header class="app-header"><button class="header-action" type="button" data-header-primary aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button><button class="header-title" type="button" data-header-home aria-label="Вернуться в исходную базовую панель NikaS"><strong>Пылесос</strong><span>UI v${UI_VERSION.replace(/^v/, "")}</span></button><button class="header-action refresh${this._refreshPending ? " loading" : ""}" type="button" data-refresh aria-label="${this._refreshPending ? "Обновление…" : "Обновить"}" aria-busy="${this._refreshPending}" ${this._entityId("refresh") && !this._refreshPending && this._busyCommands.size === 0 ? "" : "disabled"}><ha-icon icon="mdi:refresh"></ha-icon></button></header>`;
+    return `<header class="app-header"><button class="header-action" type="button" data-header-primary aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button><button class="header-title" type="button" data-header-home aria-label="Вернуться в исходную базовую панель NikaS"><strong>Пылесос</strong><span>UI v${UI_VERSION.replace(/^v/, "")}</span></button><button class="header-action refresh${this._refreshPending ? " is-refreshing" : ""}" type="button" data-refresh aria-label="${this._refreshPending ? "Обновление…" : "Обновить"}" aria-busy="${this._refreshPending}" ${this._entityId("refresh") && !this._refreshPending && this._busyCommands.size === 0 ? "" : "disabled"}><ha-icon icon="mdi:refresh"></ha-icon></button></header>`;
   }
 
   async _refresh() {
@@ -1255,7 +1255,7 @@ class S8OmniPanel extends HTMLElement {
     const button = this.shadowRoot?.querySelector("[data-refresh]");
     if (button) {
       button.disabled = true;
-      button.classList.add("loading");
+      button.classList.add("is-refreshing");
       button.setAttribute("aria-busy", "true");
       button.setAttribute("aria-label", "Обновление…");
     }

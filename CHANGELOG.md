@@ -1,3 +1,8 @@
+## v1.0.2 / UI v1.0.2
+
+- Isolates the Refresh busy marker from the panel-wide loading-screen class so the Header button remains a 44 × 44 px plaque while its icon spins.
+- Adds a browser geometry regression for the active Refresh state. Device commands and the approved panel layout are unchanged.
+
 ## v1.0.1 / UI v1.0.1
 
 - Preserves Refresh loading state across live header patches, with immediate busy feedback and at least 700 ms of indication, extending through the Home Assistant service response.
