@@ -1,3 +1,9 @@
+## v1.0.3 / UI v1.0.3
+
+- Restores the active cleaning-preset highlight when legacy selection metadata is stored under the default panel key or is missing after an upgrade.
+- Infers the current preset from exact live suction/water values and gives the built-in preset priority when a user preset has identical values.
+- Adds browser coverage for the retained user preset and legacy selection path. Device commands and preset values are unchanged.
+
 ## v1.0.2 / UI v1.0.2
 
 - Isolates the Refresh busy marker from the panel-wide loading-screen class so the Header button remains a 44 × 44 px plaque while its icon spins.
