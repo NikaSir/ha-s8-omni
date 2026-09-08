@@ -1,4 +1,4 @@
-const UI_VERSION = "v1.0.3";
+const UI_VERSION = "v1.0.4";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.75;
 const VIEW_SCALE_MAX = 2.00;
@@ -370,6 +370,8 @@ class S8OmniPanel extends HTMLElement {
     this._queueRender();
   }
   disconnectedCallback() {
+    clearTimeout(this._refreshResultTimer);
+    this._refreshResult = null;
     if (this._resizeBound) {
       window.removeEventListener("resize", this._onRealViewportResize);
       window.visualViewport?.removeEventListener("resize", this._onRealViewportResize);
@@ -1143,6 +1145,7 @@ class S8OmniPanel extends HTMLElement {
       .app-header{grid-template-columns:52px minmax(0,1fr) 52px;gap:8px;min-height:calc(62px + env(safe-area-inset-top));padding:env(safe-area-inset-top) max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left))}
       .header-action{width:44px;height:44px;justify-self:center;border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:16px;background:var(--card-background-color);box-shadow:0 7px 20px rgba(23,45,76,.08);color:var(--primary-text-color)}
       .header-action.refresh{color:var(--primary-color)}.header-action ha-icon{--mdc-icon-size:25px}
+      .header-action.refresh.refresh-success{color:#43a047}.header-action.refresh.refresh-error{color:#e53935}
       .header-title strong{font-size:21px;font-weight:800}.header-title span{font-size:12px;font-weight:560;color:var(--secondary-text-color)}
       .work-viewport.is-native{overflow-x:hidden;overflow-y:auto;overscroll-behavior-x:none;overscroll-behavior-y:none;touch-action:pan-y;-webkit-overflow-scrolling:touch}
       .work-viewport.is-native .work-canvas{position:relative;left:auto;top:auto;min-height:100%;touch-action:pan-y;-webkit-user-select:auto;user-select:auto;will-change:auto}
@@ -1245,27 +1248,41 @@ class S8OmniPanel extends HTMLElement {
   }
 
   _header() {
-    return `<header class="app-header"><button class="header-action" type="button" data-header-primary aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button><button class="header-title" type="button" data-header-home aria-label="Вернуться в исходную базовую панель NikaS"><strong>Пылесос</strong><span>UI v${UI_VERSION.replace(/^v/, "")}</span></button><button class="header-action refresh${this._refreshPending ? " is-refreshing" : ""}" type="button" data-refresh aria-label="${this._refreshPending ? "Обновление…" : "Обновить"}" aria-busy="${this._refreshPending}" ${this._entityId("refresh") && !this._refreshPending && this._busyCommands.size === 0 ? "" : "disabled"}><ha-icon icon="mdi:refresh"></ha-icon></button></header>`;
+    const result = this._refreshPending ? "" : this._refreshResult;
+    const icon = result === "success" ? "mdi:check" : result === "error" ? "mdi:alert-circle-outline" : "mdi:refresh";
+    const label = this._refreshPending ? "Обновление…" : result === "success" ? "Запрос обновления выполнен" : result === "error" ? "Не удалось обновить данные" : "Обновить";
+    return `<header class="app-header"><button class="header-action" type="button" data-header-primary aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button><button class="header-title" type="button" data-header-home aria-label="Вернуться в исходную базовую панель NikaS"><strong>Пылесос</strong><span>UI v${UI_VERSION.replace(/^v/, "")}</span></button><button class="header-action refresh${this._refreshPending ? " is-refreshing" : result ? ` refresh-${result}` : ""}" type="button" data-refresh aria-label="${label}" aria-busy="${this._refreshPending}" ${this._entityId("refresh") && !this._refreshPending && this._busyCommands.size === 0 ? "" : "disabled"}><ha-icon icon="${icon}"></ha-icon></button></header>`;
   }
 
   async _refresh() {
     if (this._refreshPending || this._busyCommands.size || !this._entityId("refresh")) return;
     this._refreshPending = true;
+    clearTimeout(this._refreshResultTimer);
+    this._refreshResult = null;
     const startedAt = Date.now();
     const button = this.shadowRoot?.querySelector("[data-refresh]");
     if (button) {
       button.disabled = true;
       button.classList.add("is-refreshing");
+      button.classList.remove("refresh-success", "refresh-error");
+      button.querySelector("ha-icon")?.setAttribute("icon", "mdi:refresh");
       button.setAttribute("aria-busy", "true");
       button.setAttribute("aria-label", "Обновление…");
     }
     this._queueLivePatch();
+    let updated = false;
     try {
-      return await this._call("button", "press", "refresh");
+      updated = (await this._call("button", "press", "refresh")) === true;
+      return updated;
     } finally {
       const remaining = 700 - (Date.now() - startedAt);
       if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
       this._refreshPending = false;
+      this._refreshResult = updated ? "success" : "error";
+      this._refreshResultTimer = setTimeout(() => {
+        this._refreshResult = null;
+        this._queueLivePatch();
+      }, 1400);
       this._queueLivePatch();
     }
   }

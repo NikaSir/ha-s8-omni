@@ -42,6 +42,11 @@ vm.runInContext(fs.readFileSync('custom_components/s8_omni/frontend/s8-omni-pane
   assert.ok(Date.now() - started >= 700);
   assert.equal(panel._refreshPending, false);
   assert.doesNotMatch(panel._header(), /refresh is-refreshing/);
+  assert.equal(panel._refreshResult, mode === 'error' ? 'error' : 'success');
+  assert.match(panel._header(), mode === 'error' ? /mdi:alert-circle-outline/ : /mdi:check/);
+  await new Promise(resolve => setTimeout(resolve, 1450));
+  assert.equal(panel._refreshResult, null);
+  assert.match(panel._header(), /mdi:refresh/);
   panel._busyCommands.add('other');
   await panel._refresh(); assert.equal(calls, 1);
   assert.match(panel._header(), /aria-busy="false" disabled/);

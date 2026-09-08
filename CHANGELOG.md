@@ -1,3 +1,9 @@
+## v1.0.4 / UI v1.0.4
+
+- Show a green check for 1.4 seconds after a successful Home Assistant refresh request, or a red error icon after failure, then restore the refresh arrow.
+- Preserve the result across live state updates and clear the previous result when a new refresh starts.
+- The check confirms the HA request result; it does not independently prove fresh device telemetry.
+
 ## v1.0.3 / UI v1.0.3
 
 - Restores the active cleaning-preset highlight when legacy selection metadata is stored under the default panel key or is missing after an upgrade.
