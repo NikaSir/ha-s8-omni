@@ -1,3 +1,9 @@
+## v1.0.1 / UI v1.0.1
+
+- Preserves Refresh loading state across live header patches, with immediate busy feedback and at least 700 ms of indication, extending through the Home Assistant service response.
+- Blocks repeat refresh requests during the entire indication interval and restores availability from current panel state rather than an unconditional timer.
+- Adds fast, delayed and failed refresh regression scenarios. Device commands and approved layout are unchanged.
+
 ## v1.0.0 / UI v1.0.0
 
 - Publishes the first stable S8 OMNI release from the physically accepted `1.0.0b98` command and panel baseline.

@@ -1,4 +1,4 @@
-const UI_VERSION = "v1.0.0";
+const UI_VERSION = "v1.0.1";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.75;
 const VIEW_SCALE_MAX = 2.00;
@@ -350,6 +350,7 @@ class S8OmniPanel extends HTMLElement {
     this._returnRoute = null;
     this._scrollBoundaryCleanup = null;
     this._busyCommands = new Set();
+    this._refreshPending = false;
     this._commandError = null;
     this._cleaningDraft = {};
     this._onRealViewportResize = () => requestAnimationFrame(() => this._clampAndApplyTransform(false));
@@ -1244,7 +1245,29 @@ class S8OmniPanel extends HTMLElement {
   }
 
   _header() {
-    return `<header class="app-header"><button class="header-action" type="button" data-header-primary aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button><button class="header-title" type="button" data-header-home aria-label="Вернуться в исходную базовую панель NikaS"><strong>Пылесос</strong><span>UI v${UI_VERSION.replace(/^v/, "")}</span></button><button class="header-action refresh" type="button" data-refresh aria-label="Обновить" ${this._entityId("refresh") && this._busyCommands.size === 0 ? "" : "disabled"}><ha-icon icon="mdi:refresh"></ha-icon></button></header>`;
+    return `<header class="app-header"><button class="header-action" type="button" data-header-primary aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button><button class="header-title" type="button" data-header-home aria-label="Вернуться в исходную базовую панель NikaS"><strong>Пылесос</strong><span>UI v${UI_VERSION.replace(/^v/, "")}</span></button><button class="header-action refresh${this._refreshPending ? " loading" : ""}" type="button" data-refresh aria-label="${this._refreshPending ? "Обновление…" : "Обновить"}" aria-busy="${this._refreshPending}" ${this._entityId("refresh") && !this._refreshPending && this._busyCommands.size === 0 ? "" : "disabled"}><ha-icon icon="mdi:refresh"></ha-icon></button></header>`;
+  }
+
+  async _refresh() {
+    if (this._refreshPending || this._busyCommands.size || !this._entityId("refresh")) return;
+    this._refreshPending = true;
+    const startedAt = Date.now();
+    const button = this.shadowRoot?.querySelector("[data-refresh]");
+    if (button) {
+      button.disabled = true;
+      button.classList.add("loading");
+      button.setAttribute("aria-busy", "true");
+      button.setAttribute("aria-label", "Обновление…");
+    }
+    this._queueLivePatch();
+    try {
+      return await this._call("button", "press", "refresh");
+    } finally {
+      const remaining = 700 - (Date.now() - startedAt);
+      if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
+      this._refreshPending = false;
+      this._queueLivePatch();
+    }
   }
 
   _trustBanner(snap) {
@@ -1484,7 +1507,7 @@ class S8OmniPanel extends HTMLElement {
   _bind() {
     this.shadowRoot.querySelector("[data-header-primary]")?.addEventListener("click", () => this._toggleMenu());
     this.shadowRoot.querySelector("[data-header-home]")?.addEventListener("click", () => this._navigateParent());
-    this.shadowRoot.querySelector("[data-refresh]")?.addEventListener("click", async (event) => { const b = event.currentTarget; if (!this._entityId("refresh") || b.disabled) return; b.disabled = true; b.classList.add("loading"); try { await this._call("button","press","refresh"); } finally { setTimeout(() => { b.disabled = false; b.classList.remove("loading"); }, 700); } });
+    this.shadowRoot.querySelector("[data-refresh]")?.addEventListener("click", () => this._refresh());
     this.shadowRoot.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => this._switchWorkspace(b.dataset.view, null)));
     this._bindStableContent(this.shadowRoot.querySelector("[data-stable-view]"));
     this._bindWorkspaceGestures();
