@@ -73,6 +73,52 @@ try {
   await page.waitForFunction(() => window.fixture?.panel?._registryLoaded && window.fixture.panel._stableMounted);
   await patch();
 
+  // Exercise real click binding and live DOM reconciliation with synthetic HA.
+  for (const outcome of ["fast", "slow", "error"]) {
+    await page.evaluate(outcome => {
+      const panel = window.fixture.panel;
+      window.fixture.refreshCalls = 0;
+      panel._hass.callService = async () => {
+        window.fixture.refreshCalls++;
+        if (outcome !== "fast") await new Promise(resolve => { window.fixture.releaseRefresh = resolve; });
+        if (outcome === "error") throw new Error("Synthetic refresh failure");
+      };
+      window.fixture.refreshStartedAt = performance.now();
+      panel.shadowRoot.querySelector("[data-refresh]").click();
+      window.fixture.immediateBusy = panel.shadowRoot.querySelector("[data-refresh]").getAttribute("aria-busy");
+    }, outcome);
+    assert.equal(await page.evaluate(() => window.fixture.immediateBusy), "true");
+    await patch();
+    const refresh = page.locator("[data-refresh]");
+    assert.equal(await refresh.getAttribute("aria-busy"), "true");
+    assert.match(await refresh.getAttribute("class"), /loading/);
+    assert.equal(await refresh.isEnabled(), false);
+    assert.equal(await refresh.locator("ha-icon").evaluate(el => getComputedStyle(el).animationName), "spin");
+    await page.evaluate(() => {
+      window.fixture.panel.shadowRoot.querySelector("[data-refresh]").click();
+      window.fixture.panel._refresh();
+    });
+    assert.equal(await page.evaluate(() => window.fixture.refreshCalls), 1);
+    if (outcome !== "fast") {
+      await page.waitForTimeout(800);
+      assert.equal(await refresh.getAttribute("aria-busy"), "true");
+      await page.evaluate(() => window.fixture.releaseRefresh());
+    }
+    await page.waitForFunction(() => !window.fixture.panel._refreshPending);
+    assert.ok(await page.evaluate(() => performance.now() - window.fixture.refreshStartedAt >= 700));
+    await patch();
+    assert.equal(await refresh.getAttribute("aria-busy"), "false");
+    assert.equal(await refresh.isEnabled(), true);
+    assert.doesNotMatch(await refresh.getAttribute("class"), /loading/);
+    if (outcome === "error") assert.match(await active.innerText(), /Synthetic refresh failure/);
+    await page.evaluate(() => {
+      window.fixture.panel._commandError = null;
+      window.fixture.setState("battery", "100"); // Restore the standard HA fixture.
+    });
+    await patch();
+    report(`refresh ${outcome}: stable animation, minimum duration and duplicate guard`);
+  }
+
   await navigate("maintenance");
   assert.match(await active.locator('[data-more="side_brush_life"]').innerText(),/40 ч 19 мин/);
   await inputVolume(72);
