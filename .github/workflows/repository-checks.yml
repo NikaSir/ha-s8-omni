@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  validate:
+  repository-checks:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -104,3 +104,29 @@ jobs:
         uses: hacs/action@main
         with:
           category: integration
+
+  validate:
+    if: ${{ always() }}
+    needs: [repository-checks, hacs-validation]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require repository checks and HACS to pass
+        shell: bash
+        env:
+          S8_JOB_RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PYGATE'
+          import json
+          import os
+          import sys
+
+          required = {"repository-checks", "hacs-validation"}
+          results = json.loads(os.environ["S8_JOB_RESULTS"])
+          if set(results) != required:
+              sys.exit("Required CI job results are missing or unexpected")
+          failed = {name: results[name].get("result") for name in sorted(required)
+                    if results[name].get("result") != "success"}
+          if failed:
+              sys.exit(f"Required CI jobs did not succeed: {failed}")
+          print("Repository checks and HACS succeeded; device acceptance remains separate.")
+          PYGATE
