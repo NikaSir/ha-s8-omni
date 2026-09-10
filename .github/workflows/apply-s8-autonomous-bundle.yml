@@ -40,8 +40,8 @@ jobs:
         run: node --check custom_components/s8_omni/frontend/s8-omni-production.js
       - name: Check patch whitespace
         run: git diff --check
-      - name: Remove one-shot migration machinery
-        run: git rm -f --ignore-unmatch scripts/apply_autonomous_bundle_patch.py .github/workflows/apply-s8-autonomous-bundle.yml
+      - name: Remove one-shot patcher
+        run: git rm -f --ignore-unmatch scripts/apply_autonomous_bundle_patch.py
       - name: Commit final migration
         shell: bash
         run: |
