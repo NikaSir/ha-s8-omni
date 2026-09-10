@@ -18,6 +18,10 @@ def replace_exact(relative: str, old: str, new: str, count: int = 1) -> None:
     path.write_text(text.replace(old, new), encoding="utf-8")
 
 
+def replace_version_literals(relative: str, count: int) -> None:
+    replace_exact(relative, "1.0.4", "1.0.5", count=count)
+
+
 def update_json(relative: str, mutate) -> None:
     path = ROOT / relative
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -72,6 +76,20 @@ def main() -> None:
 
     update_json(".nikas-ui-standard.json", standard)
 
+    def panel_contract(data: dict) -> None:
+        panel = data["panel"]
+        panel["dashboard_version"] = "v1.0.5"
+        panel["navigation"]["header_center_lines"] = ["Пылесос", "UI v1.0.5"]
+        frontend = panel["frontend"]
+        frontend["module"] = "s8-omni-production.js"
+        frontend["registration_module"] = "s8-omni-production.js"
+        frontend["bundle"] = "generated_autonomous"
+        frontend["runtime_historical_imports"] = False
+        frontend["extension_delivery"] = "build_time_only"
+        frontend["extension_cache_busting"] = "build_source_release_version_only"
+
+    update_json("panel.json", panel_contract)
+
     replace_exact(
         "tests/ui/fixture.html",
         'import "/frontend/s8-omni-panel-bootstrap.js";',
@@ -102,6 +120,15 @@ def main() -> None:
         '"__s8CleaningPresetPatch",',
         '"__s8CleaningPresets",',
     )
+    replace_version_literals("tests/test_panel_current_rules_ui_v0733.py", 10)
+    replace_version_literals("tests/test_panel_dynamic_actions_ui_v0723.py", 5)
+    replace_version_literals("tests/test_panel_overview_ui_v0727.py", 2)
+    replace_version_literals("tests/test_release_metadata_v100.py", 11)
+    replace_exact(
+        "tests/test_station_stop_b081.py",
+        "self.assertIn('s8-omni-panel-bootstrap.js', INIT)",
+        "self.assertIn('s8-omni-production.js', INIT)",
+    )
 
     replace_exact(
         "README.md",
@@ -113,6 +140,12 @@ def main() -> None:
         "Dashboard **v1.0.4** follows **NIKAS Specialized Panel UI Standard v2.2**",
         "Dashboard **v1.0.5** follows **NIKAS Specialized Panel UI Standard v2.2**",
     )
+    replace_exact(
+        "README.md",
+        "Home Assistant registers `s8-omni-panel-bootstrap.js` with both dashboard and integration versions in the URL. The bootstrap imports the stable core `s8-omni-panel.js` and the current cleaning-presets, service-settings and preset-highlight modules. Every child import includes the integration version so iPhone browsers fetch the matching modules after an update.\n\nThe core panel stays self-contained and imports no historical frontend implementation. Historical versions belong in Git history, not in the browser dependency chain. CI checks syntax for every shipped frontend module and validates the core panel contract.",
+        "Home Assistant registers one generated `s8-omni-production.js` with both dashboard and integration versions in the URL. It is built deterministically from the stable core plus the cleaning-presets, service-settings, preset-highlight and button-compatibility sources. Those modules are build-time inputs and are not loaded by the browser at runtime.\n\nCI rebuilds the production file byte-for-byte, rejects runtime imports, checks syntax for the shipped frontend sources and executes command-readback/browser regressions against the registered production entrypoint. Historical versions belong in Git history, not in the browser dependency chain.",
+    )
+
     changelog = ROOT / "CHANGELOG.md"
     existing = changelog.read_text(encoding="utf-8")
     entry = (
