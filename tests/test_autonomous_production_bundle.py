@@ -23,7 +23,7 @@ class AutonomousProductionBundleTests(unittest.TestCase):
         self.assertIsNone(re.search(r"(?m)^\s*import\s", source))
         for marker in (
             'const UI_VERSION = "v1.0.5"',
-            "__s8CleaningPresetPatch",
+            "__s8CleaningPresets",
             "__s8ServiceSettingsB094",
             "__s8PresetLiveHighlightB093",
             "__s8ButtonUnknownCompatibilityPatch",

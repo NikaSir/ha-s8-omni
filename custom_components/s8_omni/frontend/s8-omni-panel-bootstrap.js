@@ -1,7 +1,7 @@
-import "./s8-omni-panel.js?v=1.0.4";
-import "./s8-omni-cleaning-presets.js?v=1.0.4";
-import "./s8-omni-service-settings.js?v=1.0.4";
-import "./s8-omni-preset-live-highlight.js?v=1.0.4";
+import "./s8-omni-panel.js?v=1.0.5";
+import "./s8-omni-cleaning-presets.js?v=1.0.5";
+import "./s8-omni-service-settings.js?v=1.0.5";
+import "./s8-omni-preset-live-highlight.js?v=1.0.5";
 
 const Panel = customElements.get("s8-omni-panel");
 if (Panel && !Panel.prototype.__s8ButtonUnknownCompatibilityPatch) {

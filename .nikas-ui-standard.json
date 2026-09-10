@@ -8,11 +8,18 @@
   "role": "specialized",
   "artifact_kind": "production",
   "runtime_files": [
-    "custom_components/s8_omni/frontend/s8-omni-panel.js"
+    "custom_components/s8_omni/frontend/s8-omni-production.js"
   ],
-  "production_entrypoint": "custom_components/s8_omni/frontend/s8-omni-panel.js",
-  "build_source_files": [],
-  "ui_version": "1.0.4",
+  "production_entrypoint": "custom_components/s8_omni/frontend/s8-omni-production.js",
+  "build_source_files": [
+    "scripts/build_s8_production.py",
+    "custom_components/s8_omni/frontend/s8-omni-panel.js",
+    "custom_components/s8_omni/frontend/s8-omni-cleaning-presets.js",
+    "custom_components/s8_omni/frontend/s8-omni-service-settings.js",
+    "custom_components/s8_omni/frontend/s8-omni-preset-live-highlight.js",
+    "custom_components/s8_omni/frontend/s8-omni-panel-bootstrap.js"
+  ],
+  "ui_version": "1.0.5",
   "web_component": "s8-omni-panel",
   "bundle_contract": {
     "autonomous": true,

@@ -1,3 +1,10 @@
+## v1.0.5 / UI v1.0.5
+
+- Replaces the runtime bootstrap import chain with one deterministic autonomous `s8-omni-production.js`.
+- Preserves the existing cleaning presets, service settings, live preset highlighting and unknown-state button compatibility in isolated build scopes.
+- Registers only the generated production bundle in Home Assistant and runs command-readback/browser regressions against that exact entrypoint.
+- Adds byte-for-byte build verification; source modules remain build-time inputs and are no longer runtime dependencies.
+
 ## v1.0.4 / UI v1.0.4
 
 - Show a green check for 1.4 seconds after a successful Home Assistant refresh request, or a red error icon after failure, then restore the refresh arrow.

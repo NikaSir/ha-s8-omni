@@ -6,7 +6,7 @@
 
 Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum and OMNI station, built from verified Tuya LAN datapoints.
 
-> Stable release: **v1.0.4** (`1.0.4`).
+> Stable release: **v1.0.5** (`1.0.5`).
 
 ## Scope
 
@@ -28,7 +28,7 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 
 `ha-s8-omni` owns its full appliance UI instead of exposing a loose collection of Lovelace entities as the primary experience.
 
-Dashboard **v1.0.4** follows **NIKAS Specialized Panel UI Standard v2.2**, **Navigation Contract v1.2** and **NikaS Integration Panel Template v2.2**, with the primary acceptance viewport **iPhone Pro Max portrait**:
+Dashboard **v1.0.5** follows **NIKAS Specialized Panel UI Standard v2.2**, **Navigation Contract v1.2** and **NikaS Integration Panel Template v2.2**, with the primary acceptance viewport **iPhone Pro Max portrait**:
 
 - symmetric Header: 52 px side rails / centred title / matching 44 px Menu and Refresh plaques, reduced to 48 px rails on narrow mobile;
 - the visible center title plaque captures the validated source base panel once and returns to the same Дом / Действия / Инфраструктура route;
@@ -103,9 +103,9 @@ See [`docs/LIFECYCLE.md`](docs/LIFECYCLE.md).
 
 ### Production frontend bundle
 
-Home Assistant registers `s8-omni-panel-bootstrap.js` with both dashboard and integration versions in the URL. The bootstrap imports the stable core `s8-omni-panel.js` and the current cleaning-presets, service-settings and preset-highlight modules. Every child import includes the integration version so iPhone browsers fetch the matching modules after an update.
+Home Assistant registers one generated `s8-omni-production.js` with both dashboard and integration versions in the URL. It is built deterministically from the stable core plus the cleaning-presets, service-settings, preset-highlight and button-compatibility sources. Those modules are build-time inputs and are not loaded by the browser at runtime.
 
-The core panel stays self-contained and imports no historical frontend implementation. Historical versions belong in Git history, not in the browser dependency chain. CI checks syntax for every shipped frontend module and validates the core panel contract.
+CI rebuilds the production file byte-for-byte, rejects runtime imports, checks syntax for the shipped frontend sources and executes command-readback/browser regressions against the registered production entrypoint. Historical versions belong in Git history, not in the browser dependency chain.
 
 User-facing screens avoid protocol/DP implementation wording; raw Tuya and integration-contract details remain in Diagnostics and documentation.
 
