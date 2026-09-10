@@ -123,7 +123,7 @@ def main() -> None:
     replace_version_literals("tests/test_panel_current_rules_ui_v0733.py", 10)
     replace_version_literals("tests/test_panel_dynamic_actions_ui_v0723.py", 5)
     replace_version_literals("tests/test_panel_overview_ui_v0727.py", 2)
-    replace_version_literals("tests/test_release_metadata_v100.py", 11)
+    replace_version_literals("tests/test_release_metadata_v100.py", 12)
     replace_exact(
         "tests/test_station_stop_b081.py",
         "self.assertIn('s8-omni-panel-bootstrap.js', INIT)",
