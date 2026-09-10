@@ -31,8 +31,11 @@ def main() -> None:
         'PANEL_MODULE = f"{PANEL_STATIC_URL}/s8-omni-panel-bootstrap.js?v={DASHBOARD_VERSION}-{VERSION}"',
         'PANEL_MODULE = f"{PANEL_STATIC_URL}/s8-omni-production.js?v={DASHBOARD_VERSION}-{VERSION}"',
     )
-    replace_exact("custom_components/s8_omni/const.py", 'VERSION = "v1.0.4"', 'VERSION = "v1.0.5"')
-    replace_exact("custom_components/s8_omni/const.py", 'DASHBOARD_VERSION = "v1.0.4"', 'DASHBOARD_VERSION = "v1.0.5"')
+    replace_exact(
+        "custom_components/s8_omni/const.py",
+        'VERSION = "v1.0.4"\nDASHBOARD_VERSION = "v1.0.4"',
+        'VERSION = "v1.0.5"\nDASHBOARD_VERSION = "v1.0.5"',
+    )
     replace_exact(
         "custom_components/s8_omni/frontend/s8-omni-panel.js",
         'const UI_VERSION = "v1.0.4";',
@@ -100,7 +103,11 @@ def main() -> None:
         '"__s8CleaningPresets",',
     )
 
-    replace_exact("README.md", "> Stable release: **v1.0.4** (`1.0.4`).", "> Stable release: **v1.0.5** (`1.0.5`).")
+    replace_exact(
+        "README.md",
+        "> Stable release: **v1.0.4** (`1.0.4`).",
+        "> Stable release: **v1.0.5** (`1.0.5`).",
+    )
     replace_exact(
         "README.md",
         "Dashboard **v1.0.4** follows **NIKAS Specialized Panel UI Standard v2.2**",
