@@ -36,6 +36,8 @@ jobs:
           PY
       - name: Compile Python sources
         run: python -m compileall -q custom_components scripts tests
+      - name: Verify autonomous production bundle
+        run: python scripts/build_s8_production.py --check
       - name: Validate bundled JavaScript syntax
         run: |
           for module in custom_components/s8_omni/frontend/*.js; do
@@ -49,11 +51,11 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          source = Path("custom_components/s8_omni/frontend/s8-omni-panel.js").read_text(encoding="utf-8")
+          source = Path("custom_components/s8_omni/frontend/s8-omni-production.js").read_text(encoding="utf-8")
           for forbidden in ("100vh", "100dvh", "/dashboard-house-v11"):
               assert forbidden not in source, forbidden
           for required in (
-              'const UI_VERSION = "v1.0.4"',
+              'const UI_VERSION = "v1.0.5"',
               "/dashboard-house-v13/home",
               "/dashboard-rooms-v11/rooms",
               "createNikasShellScrollBoundaryGuard",
@@ -91,7 +93,7 @@ jobs:
           npm install --prefix "$s8_ui_test_deps" --no-save --package-lock=false --ignore-scripts playwright@1.62.0
           echo "NODE_PATH=$s8_ui_test_deps/node_modules" >> "$GITHUB_ENV"
           node "$s8_ui_test_deps/node_modules/playwright/cli.js" install --with-deps chromium
-      - name: Exercise production bootstrap in Chromium
+      - name: Exercise autonomous production bundle in Chromium
         run: node tests/ui/panel-regression.mjs
 
   hacs-validation:

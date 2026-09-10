@@ -1,4 +1,4 @@
-// Execute the registered production bootstrap and all its native ES imports.
+// Execute the single registered autonomous production bundle.
 // Only browser/HA boundaries and elapsed time are synthetic; no control,
 // confirmation, draft, or production event-handler methods are substituted.
 import assert from "node:assert/strict";
@@ -9,7 +9,7 @@ globalThis.customElements = {
   get: key => registry.get(key), define: (key, value) => registry.set(key, value),
 };
 globalThis.window = {localStorage: {getItem: () => null, setItem: () => {}}, confirm: () => true};
-await import("../../custom_components/s8_omni/frontend/s8-omni-panel-bootstrap.js");
+await import("../../custom_components/s8_omni/frontend/s8-omni-production.js");
 const Panel = customElements.get("s8-omni-panel");
 assert.ok(Panel);
 

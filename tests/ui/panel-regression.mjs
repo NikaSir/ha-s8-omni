@@ -1,5 +1,5 @@
 // Run with `node tests/ui/panel-regression.mjs` after installing Playwright and Chromium.
-// Loads the real bootstrap and all child modules; no runtime methods are replaced.
+// Loads the real autonomous production bundle; no runtime methods are replaced.
 import assert from "node:assert/strict";
 import {createRequire} from "node:module";
 import {resolve} from "node:path";

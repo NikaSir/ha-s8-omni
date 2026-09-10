@@ -14,7 +14,7 @@ class StationStopB081Tests(unittest.TestCase):
     def test_button_module_accepts_first_unknown_state(self) -> None:
         self.assertIn('domain === "button"', BOOTSTRAP)
         self.assertIn('targetState !== "unavailable"', BOOTSTRAP)
-        self.assertIn('s8-omni-panel-bootstrap.js', INIT)
+        self.assertIn('s8-omni-production.js', INIT)
 
     def test_station_readback_accepts_tuya_bool_or_integer(self) -> None:
         self.assertIn("def _dp_bool_matches", BUTTON)
