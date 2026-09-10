@@ -159,26 +159,6 @@ def main() -> None:
         raise SystemExit("CHANGELOG already contains v1.0.5")
     changelog.write_text(entry + existing, encoding="utf-8")
 
-    workflow = ".github/workflows/repository-checks.yml"
-    replace_exact(
-        workflow,
-        "      - name: Validate bundled JavaScript syntax\n",
-        "      - name: Verify autonomous production bundle\n"
-        "        run: python scripts/build_s8_production.py --check\n"
-        "      - name: Validate bundled JavaScript syntax\n",
-    )
-    replace_exact(
-        workflow,
-        'source = Path("custom_components/s8_omni/frontend/s8-omni-panel.js").read_text(encoding="utf-8")',
-        'source = Path("custom_components/s8_omni/frontend/s8-omni-production.js").read_text(encoding="utf-8")',
-    )
-    replace_exact(workflow, 'const UI_VERSION = "v1.0.4"', 'const UI_VERSION = "v1.0.5"')
-    replace_exact(
-        workflow,
-        "      - name: Exercise production bootstrap in Chromium",
-        "      - name: Exercise autonomous production bundle in Chromium",
-    )
-
 
 if __name__ == "__main__":
     main()
