@@ -1,4 +1,4 @@
-const UI_VERSION = "v1.0.6";
+const UI_VERSION = "v1.0.7";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.75;
 const VIEW_SCALE_MAX = 2.00;
@@ -1449,12 +1449,13 @@ class S8OmniPanel extends HTMLElement {
   }
 
   _operation(key, label, icon, snap) {
-    const obj = this._state(key); const usable = snap.connected && this._available(obj); const active = usable && obj.state === "on";
+    const obj = this._state(key); const telemetryUsable = snap.connected && this._available(obj); const active = telemetryUsable && obj.state === "on";
     const commandKey = `${active ? "stop" : "start"}_${key}`; const command = this._state(commandKey);
     const docked = snap.onDock === true || ["charging", "charged"].includes(snap.robot);
-    const commandUsable = usable && command && command.state !== "unavailable" && this._busyCommands.size === 0 && (active || docked);
+    const commandUsable = snap.connected && command && command.state !== "unavailable" && this._busyCommands.size === 0 && (active || docked);
     const commandLabel = active ? "Остановить" : "Запустить";
-    return `<div class="operation ${active ? "active" : commandUsable ? "ready" : ""}" data-more="${key}"><span class="icon"><ha-icon icon="${icon}"></ha-icon></span><span><strong>${label}</strong><span>${!usable ? "Нет данных" : active ? "Работает" : docked ? "Готово к запуску" : "Робот не на базе"}</span></span><button class="operation-control ${active ? "stop" : "start"}" type="button" data-station-command="${commandKey}" data-station-label="${label}" ${commandUsable ? "" : "disabled"}>${commandLabel}</button></div>`;
+    const operationStatus = active ? "Работает" : docked ? "Готово к запуску" : snap.onDock === false ? "Робот не на базе" : "Нет данных";
+    return `<div class="operation ${active ? "active" : commandUsable ? "ready" : ""}" data-more="${key}"><span class="icon"><ha-icon icon="${icon}"></ha-icon></span><span><strong>${label}</strong><span>${operationStatus}</span></span><button class="operation-control ${active ? "stop" : "start"}" type="button" data-station-command="${commandKey}" data-station-label="${label}" ${commandUsable ? "" : "disabled"}>${commandLabel}</button></div>`;
   }
 
   _station() {

@@ -273,6 +273,33 @@ try {
   assert.equal(await active.locator("[data-station-command]").count(),3);
   report("station idle summary is not duplicated and retains all three operation controls");
 
+  await page.evaluate(() => {
+    for (const key of ["dust_collection","roller_cleaning","roller_drying"]) {
+      window.fixture.setState(key,"unavailable");
+    }
+    window.fixture.setState("station_status","unknown");
+    window.fixture.setState("composite_status","charged",{
+      robot_on_dock:true,
+      station_operations:[],
+      missing_station_dps:[134,135,136],
+    });
+  });
+  await patch();
+  assert.equal(await active.locator('[data-station-command^="start_"]:enabled').count(),3);
+  assert.equal((await active.innerText()).match(/Готово к запуску/g)?.length,3);
+  await page.evaluate(() => {
+    window.fixture.setState("robot_status","idle");
+    window.fixture.setState("composite_status","idle",{
+      robot_on_dock:false,
+      station_operations:[],
+      missing_station_dps:[134,135,136],
+    });
+  });
+  await patch();
+  assert.equal(await active.locator("[data-station-command]:enabled").count(),0);
+  assert.equal(await active.locator(".operation").filter({hasText:"Робот не на базе"}).count(),3);
+  report("missing inactive station telemetry permits starts only while docked");
+
   for (const view of ["overview","cleaning","station","maintenance","diagnostics"]) {
     await navigate(view);
     const layout = await page.evaluate(() => {

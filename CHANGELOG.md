@@ -1,3 +1,9 @@
+## v1.0.7 / UI v1.0.7
+
+- Allow the three verified station Start commands when the local snapshot is current and the robot is factually docked, even if Tuya omits inactive DP134/135/136.
+- Keep station state unknown while telemetry is absent and expose Stop only for an explicitly active operation.
+- Preserve the backend DP5 dock guard and the existing post-command DP readback confirmation.
+
 ## v1.0.6 / UI v1.0.6
 
 - Keep the connection/status indicator compact at 168–240 px on panel widths above 520 px instead of stretching it across 42% of the Overview card.
