@@ -1,6 +1,12 @@
-## v1.0.7 / UI v1.0.7
+## v1.0.8 / UI v1.0.8
 
 - Return the panel title to `/home/overview`, independent of the entry route and saved browser state.
+
+## v1.0.7 / UI v1.0.7
+
+- Allow the three verified station Start commands when the local snapshot is current and the robot is factually docked, even if Tuya omits inactive DP134/135/136.
+- Keep station state unknown while telemetry is absent and expose Stop only for an explicitly active operation.
+- Preserve the backend DP5 dock guard and the existing post-command DP readback confirmation.
 
 ## v1.0.6 / UI v1.0.6
 
