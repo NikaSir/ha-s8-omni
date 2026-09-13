@@ -75,6 +75,10 @@ jobs:
             echo "$forbidden"
             exit 1
           fi
+      - name: Verify pinned standard documents
+        run: |
+          python scripts/check_standard_documents.py
+          python tests/test_standard_document_sync.py
 
   browser-regression:
     runs-on: ubuntu-latest
