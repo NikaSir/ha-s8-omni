@@ -73,6 +73,14 @@ try {
   await page.waitForFunction(() => window.fixture?.panel?._registryLoaded && window.fixture.panel._stableMounted);
   await patch();
 
+  await page.setViewportSize({width:1024,height:768});
+  await patch();
+  const desktopConnectionWidth = await active.locator(".connection-indicator").evaluate(element => element.getBoundingClientRect().width);
+  assert.ok(desktopConnectionWidth <= 240,`desktop connection indicator is ${desktopConnectionWidth}px wide`);
+  await page.setViewportSize({width:390,height:844});
+  await patch();
+  report("desktop connection indicator remains compact");
+
   // Exercise real click binding and live DOM reconciliation with synthetic HA.
   for (const outcome of ["fast", "slow", "error"]) {
     await page.evaluate(outcome => {
