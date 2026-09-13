@@ -6,7 +6,7 @@
 
 Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum and OMNI station, built from verified Tuya LAN datapoints.
 
-> Stable release: **v1.0.6** (`1.0.6`).
+> Stable release: **v1.0.7** (`1.0.7`).
 
 ## Scope
 

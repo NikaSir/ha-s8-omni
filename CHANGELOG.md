@@ -1,3 +1,7 @@
+## v1.0.7 / UI v1.0.7
+
+- Return the panel title to `/home/overview`, independent of the entry route and saved browser state.
+
 ## v1.0.6 / UI v1.0.6
 
 - Keep the connection/status indicator compact at 168–240 px on panel widths above 520 px instead of stretching it across 42% of the Overview card.

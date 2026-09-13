@@ -1,10 +1,10 @@
 {
   "version": "2.2",
-  "navigation_contract_version": "1.2",
+  "navigation_contract_version": "1.3",
   "standard_path": "docs/NIKAS_SPECIALIZED_PANEL_UI_STANDARD.md",
-  "standard_sha256": "2a15e5c2483f0fa959faff54cd29144ddb8c392e6da4546bd4c5034bf652c2c7",
+  "standard_sha256": "e150c4ce087635c0cbc25031a6ce1b8489ba0902da3745335af88457484963dc",
   "navigation_contract_path": "docs/NIKAS_PANEL_NAVIGATION_CONTRACT.md",
-  "navigation_contract_sha256": "79923d2de82ef59ab76e37491f75ba7eb7e7c4c23e62d75142744159cae64229",
+  "navigation_contract_sha256": "04c81cb498de3bd9ac35b7e70ed8a90fa4376ed3a31bcedb1fe5cc3cb53e05a6",
   "role": "specialized",
   "artifact_kind": "production",
   "runtime_files": [
@@ -19,7 +19,7 @@
     "custom_components/s8_omni/frontend/s8-omni-preset-live-highlight.js",
     "custom_components/s8_omni/frontend/s8-omni-panel-bootstrap.js"
   ],
-  "ui_version": "1.0.6",
+  "ui_version": "1.0.7",
   "web_component": "s8-omni-panel",
   "bundle_contract": {
     "autonomous": true,
@@ -41,11 +41,7 @@
     "button_marker": "data-header-home",
     "version_marker": "<span>UI v${UI_VERSION.replace(/^v/, \"\")}</span>",
     "focus_marker": ".header-title:focus-visible",
-    "pressed_marker": ".header-title:active",
-    "explicit_precedence_marker": "[\"return_to\", \"from\"]",
-    "capture_once_marker": "if (!this._returnRoute) this._returnRoute = s8ResolveReturnRoute(this)",
-    "timestamp_required_marker": "handedOffRaw !== null",
-    "future_timestamp_rejection_marker": "handedOffAge >= 0"
+    "pressed_marker": ".header-title:active"
   },
   "forbidden_runtime_markers": [
     "history.back("
@@ -114,5 +110,11 @@
     "selection_is_independent": true,
     "update_mode": "point-patch",
     "accessible_status_required": true
+  },
+  "header_navigation": {
+    "contract_version": "1.3",
+    "mode": "declared-parent",
+    "main_parent_route": "/home/overview",
+    "ambient_return_authority": false
   }
 }

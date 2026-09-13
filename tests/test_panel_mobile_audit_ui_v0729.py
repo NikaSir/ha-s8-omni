@@ -60,8 +60,8 @@ class PanelMobileAuditUiV0729Tests(unittest.TestCase):
         self.assertIn(".state-hero .connection-copy strong,.state-hero .connection-copy small{display:block", self.source)
 
     def test_header_center_returns_to_parent(self) -> None:
-        self.assertIn('data-header-home aria-label="Вернуться в исходную базовую панель NikaS"', self.source)
-        self.assertIn("s8SafeReturnRoute(this._returnRoute)", self.source)
+        self.assertIn('data-header-home aria-label="Вернуться на главную панель"', self.source)
+        self.assertIn("const path = SAFE_DEFAULT_ROUTE", self.source)
         self.assertIn('new Event("location-changed")', self.source)
         self.assertIn('this.shadowRoot.querySelector("[data-header-home]")', self.source)
 

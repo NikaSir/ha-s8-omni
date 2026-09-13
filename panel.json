@@ -3,13 +3,13 @@
     "id": "s8_omni",
     "title": "Пылесос",
     "path": "/dashboard-s8-omni",
-    "parent_path": "/dashboard-actions/home",
-    "parent_route": "/dashboard-actions/home",
+    "parent_path": "/home/overview",
+    "parent_route": "/home/overview",
     "icon": "mdi:robot-vacuum",
     "owner": "ha-s8-omni",
     "expose_in_generated_ui": true,
     "preferred_view": "overview",
-    "dashboard_version": "v1.0.6",
+    "dashboard_version": "v1.0.7",
     "template": "NikaS Integration Panel Template v2.2",
     "frontend": {
       "module": "s8-omni-production.js",
@@ -111,16 +111,16 @@
       "header_allowed_source_roots": [
         "/dashboard-house-v13/home",
         "/dashboard-rooms-v11/rooms",
-        "/dashboard-actions/home",
+        "/home/overview",
         "/dashboard-infrastructure/overview"
       ],
-      "header_safe_fallback": "/dashboard-actions/home",
+      "header_safe_fallback": "/home/overview",
       "header_title_touch_height_px": 52,
       "header_title_visible_surface": true,
       "header_title_focus_visible": true,
       "header_center_lines": [
         "Пылесос",
-        "UI v1.0.6"
+        "UI v1.0.7"
       ],
       "primary_navigation": "full_width_fixed_bottom_tab_bar",
       "bottom_tab_min_height_px": 52,
