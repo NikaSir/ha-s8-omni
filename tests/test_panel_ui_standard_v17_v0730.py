@@ -15,33 +15,20 @@ class PanelUiStandardV22V0731Tests(unittest.TestCase):
         cls.source = SOURCE.read_text(encoding="utf-8")
         cls.panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
 
-    def test_source_route_allowlist_and_precedence(self) -> None:
-        self.assertIn('const SOURCE_ROUTE_KEY = "nikas.specialized.source_route.v1"', self.source)
-        self.assertIn('const RETURN_ROUTE_KEY = "nikas.s8_omni.return_route.v1"', self.source)
-        self.assertIn('const SOURCE_ROUTE_AT_KEY = "nikas.specialized.source_route_at.v1"', self.source)
-        self.assertIn('const SAFE_DEFAULT_ROUTE = "/dashboard-actions/home"', self.source)
-        self.assertIn('return "/dashboard-house-v13/home"', self.source)
-        self.assertIn('return "/dashboard-rooms-v11/rooms"', self.source)
-        self.assertIn('return "/dashboard-actions/home"', self.source)
-        self.assertIn('return "/dashboard-infrastructure/overview"', self.source)
-        self.assertNotIn('"/dashboard-house"', self.source)
-        resolver = self.source.split("function s8ResolveReturnRoute", 1)[1].split(
-            "function s8SameTreeShape", 1
-        )[0]
-        for marker in ('["return_to", "from"]', "handedOff", "saved", "document.referrer", "configured"):
-            self.assertIn(marker, resolver)
-        self.assertLess(resolver.index("explicit\n"), resolver.index("handedOff\n"))
-        self.assertLess(resolver.index("handedOff\n"), resolver.index("saved\n"))
-        self.assertIn("handedOffRaw !== null", resolver)
-        self.assertIn("handedOffAtRaw !== null", resolver)
-        self.assertIn("handedOffAge >= 0", resolver)
+    def test_title_has_fixed_hierarchical_parent(self) -> None:
+        self.assertIn('const SAFE_DEFAULT_ROUTE = "/home/overview"', self.source)
+        resolver = self.source.split("function s8ResolveReturnRoute", 1)[1].split("function s8SameTreeShape", 1)[0]
+        self.assertIn("return SAFE_DEFAULT_ROUTE", resolver)
+        for marker in ("return_to", "document.referrer", "sessionStorage", "handedOff"):
+            self.assertNotIn(marker, resolver)
         self.assertNotIn("history.back", self.source)
 
-    def test_route_is_captured_once_and_navigation_is_explicit(self) -> None:
-        self.assertIn("this._returnRoute = null", self.source)
-        self.assertIn("if (!this._returnRoute) this._returnRoute = s8ResolveReturnRoute(this)", self.source)
-        self.assertIn("window.history.pushState(null, \"\", path)", self.source)
-        self.assertIn('window.dispatchEvent(new Event("location-changed"))', self.source)
+    def test_navigation_is_explicit(self) -> None:
+        navigate = self.source.split("_navigateParent() {", 1)[1].split("_styles()", 1)[0]
+        self.assertIn("const path = SAFE_DEFAULT_ROUTE", navigate)
+        self.assertNotIn("this._returnRoute", navigate)
+        self.assertIn('window.history.pushState(null, "", path)', navigate)
+        self.assertIn('window.dispatchEvent(new Event("location-changed"))', navigate)
 
     def test_center_title_is_visible_semantic_plaque(self) -> None:
         self.assertIn('button class="header-title" type="button" data-header-home', self.source)

@@ -46,7 +46,9 @@ jobs:
       - name: Enforce NikaS v2.2 contract
         run: python scripts/check_nikas_ui_standard.py
       - name: Run regressions including production command-readback chain
-        run: python -m unittest discover -s tests -p 'test_*.py'
+        run: |
+          node tests/test_title_parent.cjs
+          python -m unittest discover -s tests -p 'test_*.py'
       - name: Verify host-bound Shell v2.1 markers
         run: |
           python - <<'PY'
@@ -55,7 +57,7 @@ jobs:
           for forbidden in ("100vh", "100dvh", "/dashboard-house-v11"):
               assert forbidden not in source, forbidden
           for required in (
-              'const UI_VERSION = "v1.0.7"',
+              'const UI_VERSION = "v1.0.8"',
               "/dashboard-house-v13/home",
               "/dashboard-rooms-v11/rooms",
               "createNikasShellScrollBoundaryGuard",

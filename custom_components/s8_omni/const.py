@@ -1,13 +1,13 @@
 DOMAIN = "s8_omni"
-VERSION = "v1.0.7"
-DASHBOARD_VERSION = "v1.0.7"
+VERSION = "v1.0.8"
+DASHBOARD_VERSION = "v1.0.8"
 
 PANEL_ID = "s8_omni"
 PANEL_PATH = "dashboard-s8-omni"
 PANEL_TITLE = "Пылесос"
 PANEL_ICON = "mdi:robot-vacuum"
 PANEL_STATIC_URL = "/s8_omni/frontend"
-PANEL_PARENT_PATH = "/dashboard-actions/home"
+PANEL_PARENT_PATH = "/home/overview"
 
 CONF_DEVICE_ID = "device_id"
 CONF_LOCAL_KEY = "local_key"
