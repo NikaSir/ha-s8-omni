@@ -85,7 +85,15 @@ class S8OmniStationOperationButton(S8OmniEntity, ButtonEntity):
 
     @property
     def available(self):
-        return super().available and self.coordinator.data is not None and self.desc.dp in self.coordinator.data
+        if self.desc.value:
+            # Tuya can omit inactive station DPs from an otherwise current poll.
+            # Starting remains safe because async_press independently verifies DP5.
+            return super().available and self.coordinator.data is not None
+        return (
+            super().available
+            and self.coordinator.data is not None
+            and _dp_bool_matches(self.coordinator.data.get(self.desc.dp), True)
+        )
 
     async def async_press(self) -> None:
         if self.desc.value and str(self.dp(DP_STATUS)) not in {"charging", "charge_done"}:
