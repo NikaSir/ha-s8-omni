@@ -1,4 +1,4 @@
-const UI_VERSION = "v1.0.5";
+const UI_VERSION = "v1.0.6";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.75;
 const VIEW_SCALE_MAX = 2.00;
@@ -1225,6 +1225,7 @@ class S8OmniPanel extends HTMLElement {
       .state-hero .hero-metrics small{font-size:12px}
       .state-hero .battery-bar i{background:#079fd1}
       @media(max-width:520px){.header-title{min-width:0;width:100%;padding-inline:8px}.header-title strong{font-size:21px}.header-title span{font-size:13px}.state-hero .state-scene{height:264px}.state-hero .hero-top{grid-template-columns:minmax(0,1fr) minmax(168px,44%)}.state-hero>.hero-primary{padding:13px}.state-hero .hero-metrics strong{font-size:16px}}
+      @media(min-width:521px){.state-hero .hero-top{grid-template-columns:minmax(0,1fr) minmax(168px,max-content)}.state-hero .connection-indicator{width:auto;min-width:168px;max-width:240px}}
 
       /* NikaS Shell v2.1 authoritative host-bound geometry. */
       :host{display:block;position:relative;inline-size:100%;block-size:100%;min-inline-size:0;min-block-size:0;max-height:100%;overflow:hidden;overscroll-behavior:none;container:nikas-panel / inline-size}

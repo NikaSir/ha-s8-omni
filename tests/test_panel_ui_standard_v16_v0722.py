@@ -91,6 +91,20 @@ class PanelUiStandardV16V0722Tests(unittest.TestCase):
             self.source,
         )
 
+    def test_desktop_connection_indicator_is_capped_without_changing_mobile_grid(self) -> None:
+        self.assertIn(
+            "@media(min-width:521px){.state-hero .hero-top{grid-template-columns:minmax(0,1fr) minmax(168px,max-content)}",
+            self.source,
+        )
+        self.assertIn(
+            ".state-hero .connection-indicator{width:auto;min-width:168px;max-width:240px}",
+            self.source,
+        )
+        self.assertIn(
+            "@media(max-width:520px){.header-title{min-width:0;width:100%",
+            self.source,
+        )
+
     def test_resource_strip_is_a_separate_hero_row(self) -> None:
         hero = self.source.split("  _hero() {", 1)[1].split("  _quickActions() {", 1)[0]
         self.assertIn(

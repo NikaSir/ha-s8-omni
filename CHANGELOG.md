@@ -1,3 +1,9 @@
+## v1.0.6 / UI v1.0.6
+
+- Keep the connection/status indicator compact at 168–240 px on panel widths above 520 px instead of stretching it across 42% of the Overview card.
+- Preserve the approved phone layout and its 44% status column unchanged.
+- Add a 1024 px browser regression for the desktop indicator width.
+
 ## v1.0.5 / UI v1.0.5
 
 - Replaces the runtime bootstrap import chain with one deterministic autonomous `s8-omni-production.js`.
