@@ -1,0 +1,239 @@
+# S8 OMNI protocol research status — 2026-09-04
+
+## Current conclusion
+
+Research has moved beyond generic APK analysis. The actual S8 OMNI Tuya schema and legacy RobotProtocol generation are now known from saved diagnostics of product ID `ouh93tro69lmgafr`.
+
+## Verified on the actual S8
+
+### Scalar/local functions already physically verified in the integration
+
+```text
+DP1   power_go
+DP2   pause
+DP4   mode
+DP5   status (report only)
+DP6   clean_time
+DP7   clean_area
+DP8   battery/electricity_left
+DP9   suction
+DP10  cistern
+DP17  edge brush life
+DP19  roller brush life
+DP21  filter life
+DP25  DND master switch
+DP26  volume
+DP27  break_clean
+DP28  fault
+DP39  customize_mode_switch
+DP41  work_mode
+DP47  child_lock
+DP134 station dust collection
+DP135 station roller wash
+DP136 station drying
+```
+
+### S8 cloud schema resolved but not all writes physically verified
+
+```text
+DP3   switch_charge
+DP11  seek
+DP12  direction_control
+DP13  reset_map
+DP14  path_data Raw
+DP15  command_trans Raw
+DP16  request = get_map|get_path|get_both
+DP18  reset_edge_brush
+DP20  reset_roll_brush
+DP22  reset_filter
+DP32  device_timer Raw
+DP33  disturb_time_set Raw
+DP35  voice_data Raw
+```
+
+`DP145` is excluded from the active hypotheses: it is absent from both the recovered S8 cloud schema and repeated normal LAN snapshots.
+
+## Verified RobotProtocol generation
+
+Actual DP15 retained the Base64 value:
+
+```text
+qgABFxeqAAITABOqAAIbABuqAAMpAAApqgADFQAAFQ==
+```
+
+which is a concatenation of five valid V0 frames:
+
+```text
+AA 00 01 17 17
+AA 00 02 13 00 13
+AA 00 02 1B 00 1B
+AA 00 03 29 00 00 29
+AA 00 03 15 00 00 15
+```
+
+This establishes that the S8 stack uses the legacy `AA 00` RobotProtocol generation.
+
+The **direction of this saved DP15 status snapshot is not proven**. Public Tuya tests show that pure V0 App→Robot queries such as `requestRoomClean0x15` and `requestVirtualWall0x13` have no payload (`AA 00 01 ...`). The S8 snapshot instead carries zero-count payloads in `0x13`, `0x1B`, `0x29` and `0x15`. Therefore the canonical classification is:
+
+```text
+S8_LEGACY_COMPLEX_STATE_BUNDLE
+direction = NOT_PROVEN_FROM_STATUS_SNAPSHOT
+```
+
+Structurally, the retained `0x15` frame decodes as `cleanTimes=0`, `roomCount=0`, `roomIds=[]`; `0x29` begins with `cleanTimes=0`, `zoneCount=0`.
+
+## Leading complex SET commands for this S8 firmware
+
+| Action | DP | RobotProtocol SET | S8 scalar-mode hypothesis | Status counterpart |
+|---|---:|---:|---|---|
+| Selected rooms | 15 | `0x14` | `part` **candidate only** | `part_clean` / counterpart `0x15` |
+| Zone | 15 | `0x28` | `zone` | `zone_clean` / counterpart `0x29` |
+| Spot / where-to-clean | 15 | `0x16` | `pose` | counterpart `0x17` |
+| Virtual wall | 15 | `0x12` | n/a | counterpart `0x13` |
+| Restricted area | 15 | `0x1A` | n/a | counterpart `0x1B` |
+
+The newer generic Tuya generations (`0x56`, `0x3A`, `0x3E`, `0x38`) remain reference material but are not the leading candidates for the actual S8 anymore.
+
+### Important mode caveat
+
+Tuya's public laser-vacuum contract distinguishes:
+
+```text
+part        = partial cleaning
+select_room = selective room cleaning
+```
+
+and the public SweepRobotTemplate (including its 2024 snapshot) uses `select_room` for `0x14` room cleaning. The actual S8 schema does **not** expose `select_room`; it only exposes `part`, and reports `part_clean`.
+
+Therefore `DP4=part` for selected-room cleaning is a strong S8-specific hypothesis, but it is **not yet S8 write-verified**. The outbound Smart Life capture remains authoritative.
+
+## Write-order reference from Tuya
+
+The public SweepRobotTemplate explicitly documents that complex-task DPs must not be merged and that the device expects:
+
+```text
+commands -> mode -> switch/pause
+```
+
+For its room-clean path the template calls:
+
+```text
+command_trans = encodeRoomClean0x14(...)
+mode          = select_room
+switch_go     = true
+```
+
+as separate writes. This strongly constrains the expected S8 ordering, while the actual S8 mode value and any use of DP2 still require capture.
+
+## Room ID / bitmap relationship
+
+Tuya's public map utilities show that the byte room IDs transported in `0x14/0x15` are derived from map bitmap pixel values.
+
+For map version 1:
+
+```text
+roomHexId = (roomId << 2) | 0b00
+```
+
+For map versions 2/3:
+
+```text
+roomHexId = (roomId << 3) | 0b111
+```
+
+Examples:
+
+```text
+roomId 3 -> map v1 0x0C ; map v2/v3 0x1F
+roomId 4 -> map v1 0x10 ; map v2/v3 0x27
+```
+
+This gives a direct bridge from the first captured `0x14` room byte to the corresponding room-segment pixel code once the S8 map version is known.
+
+## Close external schema reference
+
+Cecotec Conga X70 (`j9a3cjk1xuzjakgp`) publicly exposes an unusually close Tuya schema: the same old `smart/zone/pose/part/chargego` mode family, `DP15=command_trans`, `DP16=request`, `DP32=device_timer`, `DP33=disturb_time_set`, `DP35=voice_data`, and the same broad DP1..39 layout.
+
+This is `FAMILY_REFERENCE_ONLY`; no donor command is authorized for S8. See `docs/CLOSE_SCHEMA_REFERENCE_CONGA_X70.md`.
+
+## Other actual S8 Raw transports
+
+### Timer — DP32
+
+Actual report uses legacy `0x31`; matching SET generation is `0x30`.
+
+Observed timer decodes to:
+
+```text
+timezone +3
+one enabled timer
+week mask 0x7F
+20:30
+whole house
+clean mode raw 0
+fan raw 2
+water raw 3
+2 passes
+```
+
+### DND — DP33
+
+Actual report uses legacy `0x33`; matching SET generation is `0x32`.
+
+Observed schedule:
+
+```text
+23:59 -> 06:40
+```
+
+This supersedes the previous generic `0x40/0x41` leading hypothesis for S8.
+
+### Voice — DP35
+
+Actual payload is extended `AB` frame `0x35`, with:
+
+```text
+language ID 0
+status 3
+progress 100
+```
+
+matching legacy/extended voice SET `0x34`.
+
+## Remaining unknowns before enabling room/zone/spot writes
+
+Only a narrow set of facts remains:
+
+1. exact outbound SET frame generated by Smart Life for one room;
+2. exact S8 scalar mode used after `0x14` (`part` is the current candidate);
+3. actual ordering of DP15 versus DP4/DP1/DP2;
+4. whether repeated selection of the same room produces an identical DP15 payload;
+5. actual room IDs from the current S8 map;
+6. actual S8 map version and therefore the active roomId↔roomHexId mapping;
+7. map origin/scale for zone and spot coordinates.
+
+The preferred capture sequence is:
+
+```text
+same room -> stop
+same room -> stop
+different room -> stop
+one zone -> stop
+one point -> stop
+```
+
+A non-empty legacy `0x15` is directly decodable by `scripts/s8_legacy_payload_decode.py`. An outbound `0x14` is handled by `scripts/s8_room_capture_analyzer.py`, which also derives map-v1 and map-v2/v3 roomHexId candidates. Multiple captures can be compared automatically with `scripts/s8_room_capture_compare.py` to prove which bytes remain invariant and which byte tracks the selected room.
+
+## Research tooling in this branch
+
+- `scripts/tuya_robot_protocol.py` — generic AA/AB decoder/encoder and schema inspector.
+- `scripts/tuya_robot_log_extract.py` — Base64/hex log extraction including concatenated frame streams.
+- `scripts/s8_legacy_payload_decode.py` — decoder for actual S8 DP15/32/33/35 evidence plus legacy room/zone state payloads.
+- `scripts/s8_legacy_candidate_frames.py` — **offline-only** room/zone/spot SET candidate builder.
+- `scripts/s8_room_capture_analyzer.py` — outbound room SET/order decoder plus bitmap room-ID candidates.
+- `scripts/s8_room_capture_compare.py` — compares repeated/different room captures byte-by-byte.
+- `scripts/s8_raw_dp_monitor.py` — read-only raw LAN DP monitor.
+- `research/s8_apk/frida_smartlife_publish_dps.js` — panel-side TX interception.
+- `research/s8_apk/capture_smartlife_s8_panel.sh` — focused `Godzilla/MiniApp` cache capture.
+
+No new complex command is enabled in the production Home Assistant integration by this research branch.
