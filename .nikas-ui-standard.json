@@ -19,7 +19,7 @@
     "custom_components/s8_omni/frontend/s8-omni-preset-live-highlight.js",
     "custom_components/s8_omni/frontend/s8-omni-panel-bootstrap.js"
   ],
-  "ui_version": "1.0.8",
+  "ui_version": "1.0.9",
   "web_component": "s8-omni-panel",
   "bundle_contract": {
     "autonomous": true,
