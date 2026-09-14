@@ -111,12 +111,20 @@ jobs:
         with:
           category: integration
 
-  validate:
-    if: ${{ always() }}
-    needs: [repository-checks, hacs-validation]
+  hassfest:
     runs-on: ubuntu-latest
     steps:
-      - name: Require repository checks and HACS to pass
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Validate integration with Hassfest
+        uses: home-assistant/actions/hassfest@master
+
+  validate:
+    if: ${{ always() }}
+    needs: [repository-checks, hacs-validation, hassfest]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require repository checks, HACS, and Hassfest to pass
         shell: bash
         env:
           S8_JOB_RESULTS: ${{ toJSON(needs) }}
@@ -126,7 +134,7 @@ jobs:
           import os
           import sys
 
-          required = {"repository-checks", "hacs-validation"}
+          required = {"repository-checks", "hacs-validation", "hassfest"}
           results = json.loads(os.environ["S8_JOB_RESULTS"])
           if set(results) != required:
               sys.exit("Required CI job results are missing or unexpected")
@@ -134,5 +142,5 @@ jobs:
                     if results[name].get("result") != "success"}
           if failed:
               sys.exit(f"Required CI jobs did not succeed: {failed}")
-          print("Repository checks and HACS succeeded; device acceptance remains separate.")
+          print("Repository checks, HACS, and Hassfest succeeded; device acceptance remains separate.")
           PYGATE
