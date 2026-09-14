@@ -42,3 +42,23 @@ The repository uses the normal GitHub source archive; `hacs.json` does not enabl
 ## Post-release development
 
 New protocol work starts from a new prerelease line. Map/Rooms, schedules, manual movement, consumable resets and other complex writes remain excluded until an outbound official-application capture and physical readback prove their exact S8 contract.
+
+## Verified beta delivery snapshot — 2026-09-14
+
+- Published GitHub prerelease: [`v1.0.9-b1`](https://github.com/NikaSir/ha-s8-omni/releases/tag/v1.0.9-b1).
+- Source commit: `088959f35439dcfd5ed87e62a3e878e560774329`.
+- The tag matches the integration manifest version after removing the tag's `v` prefix.
+- HACS and Hassfest checks on this exact commit completed successfully.
+- Delivery uses the standard GitHub source archive. `hacs.json` does not require a separately uploaded ZIP asset.
+- **Target Home Assistant installation and device acceptance remain unverified.** A published beta and green CI are not evidence of a successful installed update.
+
+## Beta acceptance in Home Assistant
+
+1. Open this custom Integration repository in HACS and enable beta/prerelease versions in its version selection.
+2. Confirm the selected version is `v1.0.9-b1`, install it, and restart Home Assistant as required.
+3. Confirm the loaded integration version and panel UI version against the selected release; reopen the panel from a cold client/cache.
+4. Verify the fixed header and bottom menu, device selectors, black Refresh button and completion feedback, scrolling, pinch zoom and reset. Verify telemetry updates without a full panel redraw.
+5. Record the installed version, Home Assistant/HACS versions, device/client, checks performed and any errors. Do not mark acceptance complete without this evidence.
+6. Publish stable only after user acceptance and version-consistent checks. Preserve existing published beta/stable tags and releases; use a new reviewed version for corrections.
+
+This repository-specific beta policy reflects the approved publication decision and takes precedence over older blanket no-Releases wording in shared documentation. Shared pinned standards are not modified here.
