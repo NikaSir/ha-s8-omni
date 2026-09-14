@@ -15,7 +15,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github/workflows/repository-checks.yml"
-REQUIRED = ("repository-checks", "hacs-validation")
+REQUIRED = ("repository-checks", "hacs-validation", "hassfest")
 
 
 class RequiredHacsGateTests(unittest.TestCase):
@@ -28,7 +28,7 @@ class RequiredHacsGateTests(unittest.TestCase):
 
     def gate(self):
         self.assertIn("repository-checks", self.jobs,
-                      "Required validate must aggregate repository-checks and HACS")
+                      "Required validate must aggregate repository-checks, HACS, and Hassfest")
         self.assertIn("validate", self.jobs)
         return self.jobs["validate"]
 
@@ -65,6 +65,7 @@ class RequiredHacsGateTests(unittest.TestCase):
                 self.assertEqual(name.group(1), job_id)
         self.assertIn("python -m unittest discover -s tests", self.jobs["repository-checks"])
         self.assertIn("uses: hacs/action@", self.jobs["hacs-validation"])
+        self.assertIn("uses: home-assistant/actions/hassfest@", self.jobs["hassfest"])
         self.assertIn("node tests/ui/panel-regression.mjs", self.jobs["browser-regression"])
 
     def test_both_successful_dependencies_pass(self):
