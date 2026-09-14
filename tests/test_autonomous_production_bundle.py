@@ -22,7 +22,7 @@ class AutonomousProductionBundleTests(unittest.TestCase):
         source = PRODUCTION.read_text(encoding="utf-8")
         self.assertIsNone(re.search(r"(?m)^\s*import\s", source))
         for marker in (
-            'const UI_VERSION = "v1.0.9"',
+            'const UI_VERSION = "v1.0.10"',
             "__s8CleaningPresets",
             "__s8ServiceSettingsB094",
             "__s8PresetLiveHighlightB093",
@@ -35,7 +35,7 @@ class AutonomousProductionBundleTests(unittest.TestCase):
         expected = "custom_components/s8_omni/frontend/s8-omni-production.js"
         self.assertEqual(standard["runtime_files"], [expected])
         self.assertEqual(standard["production_entrypoint"], expected)
-        self.assertEqual(standard["ui_version"], "1.0.9")
+        self.assertEqual(standard["ui_version"], "1.0.10")
         self.assertTrue(standard["bundle_contract"]["autonomous"])
         self.assertFalse(standard["bundle_contract"]["runtime_imports"])
 
