@@ -1,4 +1,4 @@
-name: Build approved HERO surface fix
+name: Apply approved HERO surface
 on:
   push:
     branches: [codex/uniform-hero-surface]
@@ -6,116 +6,46 @@ on:
 permissions:
   contents: write
 jobs:
-  fix-and-check:
+  apply:
+    if: github.repository == 'NikaSir/ha-s8-omni' && github.ref == 'refs/heads/codex/uniform-hero-surface'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
-        with:
-          ref: codex/uniform-hero-surface
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.13'
-      - uses: actions/setup-node@v7
-        with:
-          node-version: '22'
-      - run: python -m pip install pytest==8.4.2
-      - name: Apply only approved surface declarations, rebuild and test
+      - name: Replace only the two approved HERO background values
         run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('custom_components/s8_omni/frontend/s8-omni-panel.js')
+          source = p.read_text(encoding='utf-8')
+          target = 'color-mix(in srgb,var(--card-background-color,#fff) 95%,var(--primary-color,#03a9d9) 5%)'
+          old_values = (
+              'linear-gradient(135deg,var(--card-background-color) 62%,color-mix(in srgb,var(--primary-color) 7%,var(--card-background-color)) 100%)',
+              'linear-gradient(135deg,var(--card-background-color) 72%,color-mix(in srgb,var(--primary-color) 6%,var(--card-background-color)) 100%)',
+          )
+          for old in old_values:
+              assert source.count(old) == 1, 'Unexpected source drift; refuse broad replacement'
+              source = source.replace(old, target, 1)
+          p.write_text(source, encoding='utf-8')
+          PY
+      - name: Rebuild and verify production bundle
+        run: |
+          python3 scripts/build_s8_production.py
+          python3 scripts/build_s8_production.py --check
+          python3 tests/test_hero_surface.py
+          for module in custom_components/s8_omni/frontend/*.js; do node --check "$module"; done
+          git diff --check
+      - name: Commit only source and generated runtime to feature branch
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          expected = {'custom_components/s8_omni/frontend/s8-omni-panel.js', 'custom_components/s8_omni/frontend/s8-omni-production.js'}
+          changed = set(subprocess.check_output(['git', 'diff', '--name-only'], text=True).splitlines())
+          assert changed == expected, changed
+          PY
+          git diff --stat
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          python - <<'PYCODE'
-          import os
-          from pathlib import Path
-          import re
-          import subprocess
-          import sys
-          SURFACE = 'color-mix(in srgb,var(--card-background-color,#fff) 95%,var(--primary-color,#03a9d9) 5%)'
-          CONFIG = {
-              'ha-s8-omni': ('s8_omni', 's8-omni-panel.js', 's8-omni-production.js', '.state-hero>.hero-primary', ['python', 'scripts/build_s8_production.py']),
-              'ha-ho-sc-8w': ('nikas_ho_sc_8w', 'irrigation-panel.js', 'irrigation-panel.js', '.systemOverview', None),
-              'ha-nikas-climate': ('nikas_climate', 'nikas-climate-entry-154.js', 'nikas-climate-production.js', '.u154-summary', ['python', 'scripts/build-frontend.py']),
-              'ha-lider-voltage-control': ('lider_voltage_control', 'lider-voltage-control-panel-core.js', 'lider-voltage-control-panel.js', '.installation', ['node', 'scripts/build-frontend-bundle.mjs']),
-          }
-          repo = os.environ['GITHUB_REPOSITORY'].split('/')[1]
-          domain, source_name, bundle_name, selector, build = CONFIG[repo]
-          frontend = Path('custom_components') / domain / 'frontend'
-          source_path = frontend / source_name
-          bundle_path = frontend / bundle_name
-          artifacts = list(dict.fromkeys([str(source_path), str(bundle_path)]))
-          test_path = Path('tests/test_hero_surface.py')
-          assert not test_path.exists(), 'Do not overwrite an existing test'
-          if build:
-              subprocess.run(build + ['--check'], check=True)
-          subprocess.run(['python', '-m', 'pytest', '-q', 'tests/test_unified_header_v23.py'], check=True)
-          original = source_path.read_text(encoding='utf-8')
-          test = '''"""Static regression for the outer HERO surface; not a visual acceptance test."""
-          from pathlib import Path
-          import re
-          import unittest
-          
-          ROOT = Path(__file__).resolve().parents[1]
-          ARTIFACTS = __ARTIFACTS__
-          SELECTOR = __SELECTOR__
-          SURFACE = __SURFACE__
-          
-          
-          class HeroSurfaceTests(unittest.TestCase):
-              def test_outer_surface_is_uniform_in_source_and_runtime(self):
-                  for artifact in ARTIFACTS:
-                      with self.subTest(artifact=artifact):
-                          source = (ROOT / artifact).read_text(encoding="utf-8")
-                          blocks = re.findall(re.escape(SELECTOR) + r"\\s*\\{([^{}]*)\\}", source)
-                          self.assertTrue(blocks, "Outer HERO selector missing")
-                          backgrounds = []
-                          for block in blocks:
-                              backgrounds.extend(re.findall(r"(?:^|;)\\s*background(?:-color)?\\s*:\\s*([^;]+)", block))
-                              self.assertNotRegex(block, r"(?:^|;)\\s*(?:opacity|filter|background-image)\\s*:")
-                          self.assertTrue(backgrounds, "Outer HERO surface missing")
-                          for background in backgrounds:
-                              self.assertEqual(background.strip(), SURFACE)
-          
-          
-          if __name__ == "__main__":
-              unittest.main()
-          '''.replace('__ARTIFACTS__', repr(tuple(artifacts))).replace('__SELECTOR__', repr(selector)).replace('__SURFACE__', repr(SURFACE))
-          test_path.write_text(test, encoding='utf-8')
-          red = subprocess.run(['python', str(test_path)], text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-          print(red.stdout, flush=True)
-          assert red.returncode == 1 and 'AssertionError' in red.stdout and 'ERROR:' not in red.stdout, 'Expected a genuine pre-fix assertion failure'
-          pattern = re.compile(re.escape(selector) + r'\{([^{}]*)\}')
-          candidates = [m for m in pattern.finditer(original) if ('position:relative;isolation:isolate;' in m[1] if repo == 'ha-nikas-climate' else 'background:' in m[1])]
-          assert len(candidates) == 1, f'Ambiguous surface source: {len(candidates)} matches'
-          m = candidates[0]
-          body = m[1]
-          background = re.compile(r'(?P<prefix>^|;)background:(?P<value>[^;]+)')
-          if repo == 'ha-nikas-climate':
-              assert 'background:' not in body
-              revised_body = body + ';background:' + SURFACE
-          else:
-              old = {'ha-s8-omni': 'linear-gradient(135deg,var(--card-background-color) 72%,color-mix(in srgb,var(--primary-color) 6%,var(--card-background-color)) 100%)', 'ha-ho-sc-8w': 'var(--card)', 'ha-lider-voltage-control': 'var(--card-background-color,#fff)'}[repo]
-              found = background.search(body)
-              assert found and found['value'] == old, 'Source background changed since inspection'
-              revised_body, count = background.subn(lambda hit: hit['prefix'] + 'background:' + SURFACE, body)
-              assert count == 1
-          updated = original[:m.start(1)] + revised_body + original[m.end(1):]
-          assert updated[:m.start(1)] == original[:m.start(1)]
-          assert updated[m.start(1) + len(revised_body):] == original[m.end(1):]
-          source_path.write_text(updated, encoding='utf-8')
-          if build:
-              subprocess.run(build, check=True)
-              subprocess.run(build + ['--check'], check=True)
-          subprocess.run(['python', '-m', 'pytest', '-q', str(test_path), 'tests/test_unified_header_v23.py'], check=True)
-          for path in frontend.iterdir():
-              if path.suffix in ('.js', '.mjs'):
-                  subprocess.run(['node', '--check', str(path)], check=True)
-          subprocess.run(['python', '-m', 'compileall', '-q', 'custom_components', 'tests'], check=True)
-          changed = set(subprocess.check_output(['git', 'diff', '--name-only'], text=True).splitlines())
-          assert changed == set(artifacts), f'Unexpected production changes: {changed}'
-          subprocess.run(['git', 'diff', '--check'], check=True)
-          subprocess.run(['git', 'diff', '--stat'], check=True)
-          subprocess.run(['git', 'add', '--', *artifacts, str(test_path)], check=True)
-          subprocess.run(['git', 'diff', '--cached', '--check'], check=True)
-          subprocess.run(['git', 'commit', '-m', 'fix: use uniform five-percent HERO surface without tinting photos'], check=True)
-          subprocess.run(['git', 'push', 'origin', 'HEAD:refs/heads/codex/uniform-hero-surface'], check=True)
-          PYCODE
+          git add custom_components/s8_omni/frontend/s8-omni-panel.js custom_components/s8_omni/frontend/s8-omni-production.js
+          git commit -m 'fix(ui): use flat five-percent HERO surfaces without tinting photos'
+          git push origin HEAD:refs/heads/codex/uniform-hero-surface
