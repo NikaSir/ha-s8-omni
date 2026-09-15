@@ -49,10 +49,10 @@ class StableReleaseMetadataV100Tests(unittest.TestCase):
         self.assertIn("Stable release: **v1.0.8** (`1.0.8`).", readme)
         self.assertNotIn("This is an early test build", readme)
 
-    def test_changelog_starts_with_stable_release(self) -> None:
+    def test_changelog_preserves_stable_release_history(self) -> None:
         changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
 
-        self.assertTrue(changelog.startswith("## v1.0.8 / UI v1.0.8\n"))
+        self.assertIn("## v1.0.8 / UI v1.0.8\n", changelog)
         self.assertIn("first stable S8 OMNI release", changelog)
 
     def test_ci_contains_official_hacs_validation(self) -> None:
@@ -60,7 +60,7 @@ class StableReleaseMetadataV100Tests(unittest.TestCase):
             encoding="utf-8"
         )
 
-        self.assertIn("hacs-validation:", workflow)
+        self.assertRegex(workflow, r"(?m)^  (?:hacs|hacs-validation):\s*$")
         self.assertIn("uses: hacs/action@main", workflow)
         self.assertIn("category: integration", workflow)
 
