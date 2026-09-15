@@ -1,0 +1,32 @@
+name: Publish authorized v1.0.9-beta003
+on:
+  push:
+    branches: [publish/hero-surface-beta003]
+    paths: [.github/workflows/publish-beta003.yml]
+permissions:
+  contents: write
+jobs:
+  publish:
+    if: github.actor == 'NikaSir' && github.ref == 'refs/heads/publish/hero-surface-beta003'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      EXPECTED_MAIN: e9a0723b99d4fc5201d440710cdd3c52c55aeaa0
+      TAG: v1.0.9-beta003
+    steps:
+      - name: Verify main and publish prerelease
+        run: |
+          set -euo pipefail
+          actual="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq .object.sha)"
+          test "$actual" = "$EXPECTED_MAIN"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; refusing duplicate publication."
+            exit 1
+          fi
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$EXPECTED_MAIN" \
+            --prerelease \
+            --title "$TAG / UI 1.0.11" \
+            --notes $'Равномерная подложка HERO: 95% фона карточки + 5% акцентного цвета, без градиента.\n\nФото, декоративный круг, компоновка и управление не изменены. UI 1.0.11: обновлены версии загрузки интерфейса.\n\nПроверены production-сборка, browser regression, HERO regression, HACS, Hassfest и итоговый CI в main. Визуальная проверка на телефоне — после установки. Stable-релиз не заменяется.'
