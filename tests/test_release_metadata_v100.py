@@ -13,7 +13,7 @@ class StableReleaseMetadataV100Tests(unittest.TestCase):
     def test_home_assistant_and_hacs_manifest_is_release_ready(self) -> None:
         manifest = json.loads((INTEGRATION / "manifest.json").read_text(encoding="utf-8"))
 
-        self.assertEqual("1.0.9-beta003", manifest["version"])
+        self.assertEqual("1.0.9-beta004", manifest["version"])
         self.assertEqual(["@NikaSir"], manifest["codeowners"])
         self.assertEqual("device", manifest["integration_type"])
         self.assertEqual("https://github.com/NikaSir/ha-s8-omni", manifest["documentation"])
@@ -28,19 +28,19 @@ class StableReleaseMetadataV100Tests(unittest.TestCase):
         panel = json.loads((ROOT / "panel.json").read_text(encoding="utf-8"))["panel"]
         standard = json.loads((ROOT / ".nikas-ui-standard.json").read_text(encoding="utf-8"))
 
-        self.assertIn('VERSION = "v1.0.9-beta003"', constants)
-        self.assertIn('DASHBOARD_VERSION = "v1.0.11"', constants)
-        self.assertIn('const UI_VERSION = "v1.0.11"', source)
-        self.assertEqual("v1.0.11", panel["dashboard_version"])
-        self.assertEqual(["Пылесос", "UI v1.0.11"], panel["navigation"]["header_center_lines"])
-        self.assertEqual("1.0.11", standard["ui_version"])
+        self.assertIn('VERSION = "v1.0.9-beta004"', constants)
+        self.assertIn('DASHBOARD_VERSION = "v1.0.12"', constants)
+        self.assertIn('const UI_VERSION = "v1.0.12"', source)
+        self.assertEqual("v1.0.12", panel["dashboard_version"])
+        self.assertEqual(["Пылесос", "UI v1.0.12"], panel["navigation"]["header_center_lines"])
+        self.assertEqual("1.0.12", standard["ui_version"])
 
     def test_every_frontend_child_import_uses_stable_release_cache_key(self) -> None:
         bootstrap = (INTEGRATION / "frontend" / "s8-omni-panel-bootstrap.js").read_text(
             encoding="utf-8"
         )
 
-        self.assertEqual(4, bootstrap.count("?v=1.0.11"))
+        self.assertEqual(4, bootstrap.count("?v=1.0.12"))
         self.assertNotIn("?v=1.0.0b", bootstrap)
 
     def test_public_readme_announces_stable_release(self) -> None:

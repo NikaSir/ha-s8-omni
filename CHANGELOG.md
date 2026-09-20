@@ -1,3 +1,10 @@
+## v1.0.9-beta004 / UI v1.0.12
+
+- Replace all eleven S8 OMNI state scenes with one consistent 1536 × 1024 high-resolution artwork set.
+- Remove the corrupted Error frame and align Base, Charging, Cleaning, Paused, Returning and station-operation compositions.
+- Keep the phone scene filled while showing the complete robot and station on wider panels over a soft image-derived backdrop.
+- Add asset-dimension/compression guards and browser coverage for phone/desktop image fitting.
+
 ## v1.0.8 / UI v1.0.8
 
 - Return the panel title to `/home/overview`, independent of the entry route and saved browser state.

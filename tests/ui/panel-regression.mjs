@@ -77,9 +77,30 @@ try {
   await patch();
   const desktopConnectionWidth = await active.locator(".connection-indicator").evaluate(element => element.getBoundingClientRect().width);
   assert.ok(desktopConnectionWidth <= 240,`desktop connection indicator is ${desktopConnectionWidth}px wide`);
+  const desktopArtwork = await active.locator(".state-scene").evaluate(scene => {
+    const image = scene.querySelector(".state-image");
+    const background = getComputedStyle(scene,"::before");
+    return {
+      fit:getComputedStyle(image).objectFit,
+      background:background.backgroundImage,
+      naturalWidth:image.naturalWidth,
+      naturalHeight:image.naturalHeight,
+    };
+  });
+  assert.equal(desktopArtwork.fit,"contain");
+  assert.notEqual(desktopArtwork.background,"none");
+  assert.deepEqual(
+    [desktopArtwork.naturalWidth,desktopArtwork.naturalHeight],
+    [1536,1024],
+  );
   await page.setViewportSize({width:390,height:844});
   await patch();
+  assert.equal(
+    await active.locator(".state-image").evaluate(image => getComputedStyle(image).objectFit),
+    "cover",
+  );
   report("desktop connection indicator remains compact");
+  report("state artwork stays complete on desktop and fills the phone scene");
 
   // Exercise real click binding and live DOM reconciliation with synthetic HA.
   for (const outcome of ["fast", "slow", "error"]) {

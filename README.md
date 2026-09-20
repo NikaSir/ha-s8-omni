@@ -1,6 +1,6 @@
 # S8 OMNI for Home Assistant
 
-> Beta candidate: **1.0.9-beta002** / UI **1.0.10**. Unified header with a black refresh icon in the light theme (theme-aware in dark mode). Device control behavior is unchanged. Publication is manual as a GitHub pre-release; this notice does not confirm publication.
+> Beta candidate: **1.0.9-beta004** / UI **1.0.12**. Rebuilt high-resolution state artwork and crop-safe responsive HERO presentation. Device control behavior is unchanged. Publication is manual as a GitHub pre-release; this notice does not confirm publication.
 
 <p align="center">
   <img src="custom_components/s8_omni/brand/icon@2x.png" width="180" alt="S8 OMNI integration icon">
