@@ -1,0 +1,29 @@
+name: Release tag contract
+
+on:
+  push:
+    tags: ['**']
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Exact proposed tag for the selected source ref
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  release-tag-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Require literal manifest version
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.event.release.tag_name || github.ref_name }}
+        run: python scripts/check_release_tag.py --tag "$RELEASE_TAG"
