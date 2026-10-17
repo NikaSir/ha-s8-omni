@@ -1,3 +1,8 @@
+## Repository audit maintenance — 2026-10-17
+
+- Include the HERO regression in the required validate gate while preserving the separately required browser regression, HACS and Hassfest.
+- Product/UI versions and equipment commands are unchanged; target-device acceptance remains separate.
+
 ## v1.0.9-beta004 / UI v1.0.12
 
 - Replace all eleven S8 OMNI state scenes with one consistent 1536 × 1024 high-resolution artwork set.

@@ -15,7 +15,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github/workflows/repository-checks.yml"
-REQUIRED = ("repository-checks", "hacs-validation", "hassfest")
+REQUIRED = ("repository-checks", "hacs-validation", "hassfest", "hero-surface")
 
 
 class RequiredHacsGateTests(unittest.TestCase):
@@ -37,7 +37,7 @@ class RequiredHacsGateTests(unittest.TestCase):
         script = re.search(r"^        run: \|\n((?:          .*\n|\n)+)", gate, re.M)
         self.assertIsNotNone(script, "Aggregate must have an executable run script")
         env = os.environ.copy()
-        env["S8_JOB_RESULTS"] = json.dumps(results)
+        env["NIKAS_JOB_RESULTS"] = json.dumps(results)
         return subprocess.run(
             ["bash", "--noprofile", "--norc", "-e", "-o", "pipefail", "-c",
              textwrap.dedent(script.group(1))],
@@ -54,7 +54,7 @@ class RequiredHacsGateTests(unittest.TestCase):
         self.assertIsNotNone(needs)
         self.assertEqual([name.strip() for name in needs.group(1).split(",")], list(REQUIRED))
         self.assertRegex(gate, r"(?m)^    if: \$\{\{ always\(\) \}\}$")
-        self.assertRegex(gate, r"(?m)^          S8_JOB_RESULTS: \$\{\{ toJSON\(needs\) \}\}$")
+        self.assertRegex(gate, r"(?m)^          NIKAS_JOB_RESULTS: \$\{\{ toJSON\(needs\) \}\}$")
         self.assertEqual(len(re.findall(r"^      - ", gate, re.M)), 1)
         self.assertNotRegex(gate, r"(?m)^        if:")
         self.assertRegex(gate, r"(?m)^        shell: bash$")
