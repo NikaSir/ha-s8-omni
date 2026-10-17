@@ -82,6 +82,9 @@ jobs:
           python scripts/check_standard_documents.py
           python tests/test_standard_document_sync.py
 
+      - name: Verify required UI gate failure semantics
+        run: python3 tests/test_required_ui_gate.py
+
   browser-regression:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -119,28 +122,38 @@ jobs:
       - name: Validate integration with Hassfest
         uses: home-assistant/actions/hassfest@master
 
+  hero-surface:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Verify source and runtime HERO surfaces
+        run: python3 tests/test_hero_surface.py
+
   validate:
     if: ${{ always() }}
-    needs: [repository-checks, hacs-validation, hassfest]
+    needs: [repository-checks, hacs-validation, hassfest, hero-surface]
     runs-on: ubuntu-latest
     steps:
-      - name: Require repository checks, HACS, and Hassfest to pass
+      - name: Require every validation job including UI regressions
         shell: bash
         env:
-          S8_JOB_RESULTS: ${{ toJSON(needs) }}
+          NIKAS_JOB_RESULTS: ${{ toJSON(needs) }}
         run: |
           python3 - <<'PYGATE'
           import json
           import os
           import sys
 
-          required = {"repository-checks", "hacs-validation", "hassfest"}
-          results = json.loads(os.environ["S8_JOB_RESULTS"])
+          required = {"repository-checks","hacs-validation","hassfest","hero-surface"}
+          results = json.loads(os.environ["NIKAS_JOB_RESULTS"])
           if set(results) != required:
               sys.exit("Required CI job results are missing or unexpected")
           failed = {name: results[name].get("result") for name in sorted(required)
                     if results[name].get("result") != "success"}
           if failed:
               sys.exit(f"Required CI jobs did not succeed: {failed}")
-          print("Repository checks, HACS, and Hassfest succeeded; device acceptance remains separate.")
+          print("All required checks succeeded; device acceptance remains separate.")
           PYGATE
