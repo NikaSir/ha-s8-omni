@@ -1,6 +1,6 @@
-# S8 OMNI v1.0.0 acceptance
+# S8 OMNI current beta acceptance
 
-This checklist is the release gate for integration `v1.0.0` and panel `UI v1.0.0`.
+This checklist targets the published HACS beta `1.0.9-beta004` (source `780b108d415e08e7cbfdf698e393b9e9f41c4086`), runtime integration `v1.0.9-beta004` and panel `UI v1.0.12`. Select the unprefixed release explicitly; see [release policy](RELEASES.md#current-published-beta--2026-11-04). Physical acceptance of this beta remains pending.
 
 Before device-side testing, back up Home Assistant and disable **only S8 OMNI** in LocalTuya. Do not run Smart Life and `ha-s8-omni` as competing local clients during command verification.
 
@@ -14,7 +14,9 @@ The pull request must pass all three independent CI jobs:
 
 Automated browser fixtures do not replace physical robot, Home Assistant registry, iOS safe-area, touch-gesture or installed-cache acceptance.
 
-## Stable baseline already established
+## Historical stable baseline (not current beta acceptance)
+
+These pre-existing baseline results are retained as history. Re-run the unchecked checklist below for the current beta; do not treat these checkmarks as proof of its installation or iPhone acceptance.
 
 - [x] Integration installs through HACS and creates one S8 OMNI device.
 - [x] Local polling returns robot, station, battery, cleaning and consumable telemetry.
@@ -27,7 +29,10 @@ Automated browser fixtures do not replace physical robot, Home Assistant registr
 
 ## Final physical smoke test
 
-Run this sequence after installing the release candidate and restarting Home Assistant:
+Record HA Core, HACS, iOS, Safari/Companion versions, connection route, date and selected HACS tag. Installation, restart and device commands require user approval. Run this sequence after installing the release candidate and restarting Home Assistant:
+
+- [ ] HACS selected tag is `1.0.9-beta004`; installed manifest version is `1.0.9-beta004`.
+- [ ] Panel Diagnostics shows integration `v1.0.9-beta004` and UI `v1.0.12`, matching downloaded integration diagnostics.
 
 1. **At the dock**
    - [ ] Header shows `Локально · Данные актуальны`.
@@ -63,21 +68,25 @@ Run this sequence after installing the release candidate and restarting Home Ass
    - [ ] Restoring the robot returns live data and controls automatically without reloading the config entry.
 
 7. **Installed frontend**
-   - [ ] A cold local-LAN load and a cold Home Assistant Cloud/Nabu Casa load show `UI v1.0.0`.
+   - [ ] A cold local-LAN load and a cold Home Assistant Cloud/Nabu Casa load show `UI v1.0.12`.
    - [ ] Header, fixed Bottom Tab Bar, long vertical scroll, iOS safe areas, pinch/pan and two-finger reset remain correct.
    - [ ] No `Unable to load custom panel`, `Configuration error`, white remount flash or historical panel-module request appears.
    - [ ] The Header title returns to the actual originating NikaS base panel.
+   - [ ] All eleven `hero-*.webp` assets load/decode without 404; observed robot/station scenes match actual states. Do not induce a device fault just to test the Error artwork.
+   - [ ] Telemetry refresh preserves the current tab, scroll and zoom without reloading the panel bundle; verify last-successful-update time against the configured polling interval.
+   - [ ] Repeat in Safari and Companion on iPhone, portrait/landscape, LAN and Nabu Casa. At 100%, scroll only the workspace and reveal its last card above the bottom menu/safe area.
+   - [ ] Pinch/pan affects only the workspace (75–200%); 97–103% snaps to 100%; stationary two-finger double-tap resets scale and position.
 
 ## Diagnostics and privacy
 
 Download diagnostics from **Settings → Devices & services → S8 OMNI** and verify:
 
-- [ ] integration version is `v1.0.0` and dashboard version is `v1.0.0`;
+- [ ] integration version is `v1.0.9-beta004` and dashboard version is `v1.0.12`;
 - [ ] Host/IP, Device ID and Local Key are redacted;
 - [ ] raw map, path, command, timer and account payloads are absent;
 - [ ] normalized robot/station/composite state and known safe scalar datapoints remain available.
 
-## Deliberate v1.0.0 limits
+## Current deliberate limits
 
 - General `vacuum.stop` is not exposed; Pause and the verified station-operation Stop controls remain separate.
 - Map/Rooms, DND schedule, cleaning timers, manual-direction control and consumable resets remain unavailable.
