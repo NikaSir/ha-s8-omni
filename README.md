@@ -1,6 +1,6 @@
 # S8 OMNI for Home Assistant
 
-> Beta candidate: **1.0.9-beta004** / UI **1.0.12**. Rebuilt high-resolution state artwork and crop-safe responsive HERO presentation. Device control behavior is unchanged. Publication is manual as a GitHub pre-release; this notice does not confirm publication.
+> Current published beta for HACS testing: [**1.0.9-beta004**](https://github.com/NikaSir/ha-s8-omni/releases/tag/1.0.9-beta004) / UI **v1.0.12**. Select the release tag **without a `v` prefix**. The historical `v1.0.9-beta004` publication points to the same source commit and is superseded as an installation recommendation; it contains no different fixes or features. Live Home Assistant and iPhone acceptance remains pending; this beta is not a stable release.
 
 <p align="center">
   <img src="custom_components/s8_omni/brand/icon@2x.png" width="180" alt="S8 OMNI integration icon">
@@ -30,7 +30,7 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 
 `ha-s8-omni` owns its full appliance UI instead of exposing a loose collection of Lovelace entities as the primary experience.
 
-Dashboard **v1.0.8** follows **NIKAS Specialized Panel UI Standard v2.2**, **Navigation Contract v1.2** and **NikaS Integration Panel Template v2.2**, with the primary acceptance viewport **iPhone Pro Max portrait**:
+Dashboard **v1.0.12** follows **NIKAS Specialized Panel UI Standard v2.2**, **Navigation Contract v1.2** and **NikaS Integration Panel Template v2.2**, with the primary acceptance viewport **iPhone Pro Max portrait**:
 
 - symmetric Header: 52 px side rails / centred title / matching 44 px Menu and Refresh plaques, reduced to 48 px rails on narrow mobile;
 - the visible center title plaque captures the validated source base panel once and returns to the same Дом / Действия / Инфраструктура route;
@@ -144,7 +144,7 @@ Do **not** keep S8 OMNI active in LocalTuya while testing this integration. Two 
 ### HACS custom repository
 
 1. Add this repository to HACS as a custom **Integration** repository.
-2. Install **S8 OMNI**.
+2. Open Download/Redownload and its version selector. For the current beta, select **`1.0.9-beta004` without `v`** explicitly; expose prereleases if your HACS version requires it. Do not rely on the default selection while both historical labels are published. See [release selection and expected versions](docs/RELEASES.md#current-published-beta--2026-11-04).
 3. Restart Home Assistant.
 4. Go to **Settings → Devices & services → Add integration → S8 OMNI**.
 5. Enter the device IP address, Device ID, Local Key and protocol version (`3.3`).
