@@ -1,5 +1,7 @@
 # S8 OMNI verified Tuya DP contract
 
+> Каноническая база знаний по устройству: [`docs/S8_OMNI_KNOWLEDGE_BASE.md`](S8_OMNI_KNOWLEDGE_BASE.md). Этот файл остаётся узким production-контрактом подтверждённых DP, статусов, связи и уже разрешённых управляющих последовательностей.
+
 This document records datapoints verified through Tuya Developer Platform, LocalTuya observation and controlled physical tests. Names below are internal protocol semantics; UI translations belong in Home Assistant presentation.
 
 | DP | Code / meaning | Type | Verified notes |
