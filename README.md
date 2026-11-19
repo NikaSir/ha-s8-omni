@@ -36,7 +36,7 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 The development dashboard **v1.0.13** follows **NIKAS Specialized Panel UI Standard v2.2**, **Navigation Contract v1.2** and **NikaS Integration Panel Template v2.2**, with the primary acceptance viewport **iPhone Pro Max portrait**:
 
 - symmetric Header: 52 px side rails / centred title / matching 44 px Menu and Refresh plaques, reduced to 48 px rails on narrow mobile;
-- the visible center title plaque captures the validated source base panel once and returns to the same Дом / Действия / Инфраструктура route;
+- the visible center title plaque opens the declared parent `/home/overview`, independent of the entry route or saved browser history;
 - every view keeps the icon-only Home Assistant **Menu** in the Header; user-preset editors open within the panel;
 - Refresh calls the public Home Assistant `button` entity owned by `ha-s8-omni`; the frontend does not write Tuya DP directly;
 - the mobile type scale stays within the accepted **12–25 px** range on iPhone-width layouts;
