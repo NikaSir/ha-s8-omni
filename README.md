@@ -1,9 +1,6 @@
 # S8 OMNI for Home Assistant
 
-> Development candidate: **1.0.9-beta005 / UI v1.0.13** — NikaS variant B header and compact connection/freshness icons. This candidate requires PR review, separate publication and installed-device acceptance. The published beta described below remains the previous package.
-
-
-> Current published beta for HACS testing: [**1.0.9-beta004**](https://github.com/NikaSir/ha-s8-omni/releases/tag/1.0.9-beta004) / UI **v1.0.12**. Select the release tag **without a `v` prefix**. The historical `v1.0.9-beta004` publication points to the same source commit and is superseded as an installation recommendation; it contains no different fixes or features. Live Home Assistant and iPhone acceptance remains pending; this beta is not a stable release.
+> Current HACS beta: [**1.0.9-beta005**](https://github.com/NikaSir/ha-s8-omni/releases/tag/1.0.9-beta005) / UI **v1.0.13**. Select the complete release tag **without a `v` prefix** and enable prereleases in HACS. This beta adds the NikaS variant B header and compact connection/freshness icons. Installed Home Assistant and iPhone acceptance remains pending; this is not a stable/Latest promotion.
 
 <p align="center">
   <img src="custom_components/s8_omni/brand/icon@2x.png" width="180" alt="S8 OMNI integration icon">
@@ -33,13 +30,13 @@ Standalone Home Assistant custom integration for the **S8 OMNI** robot vacuum an
 
 `ha-s8-omni` owns its full appliance UI instead of exposing a loose collection of Lovelace entities as the primary experience.
 
-The development dashboard **v1.0.13** follows **NIKAS Specialized Panel UI Standard v2.2**, **Navigation Contract v1.2** and **NikaS Integration Panel Template v2.2**, with the primary acceptance viewport **iPhone Pro Max portrait**:
+Dashboard **v1.0.13** follows **NIKAS Specialized Panel UI Standard v2.2**, **Navigation Contract v1.3** and **NikaS Integration Panel Template v2.2**, with the primary acceptance viewport **iPhone Pro Max portrait**:
 
 - symmetric Header: 52 px side rails / centred title / matching 44 px Menu and Refresh plaques, reduced to 48 px rails on narrow mobile;
 - the visible center title plaque opens the declared parent `/home/overview`, independent of the entry route or saved browser history;
 - every view keeps the icon-only Home Assistant **Menu** in the Header; user-preset editors open within the panel;
 - Refresh calls the public Home Assistant `button` entity owned by `ha-s8-omni`; the frontend does not write Tuya DP directly;
-- the mobile type scale stays within the accepted **12–25 px** range on iPhone-width layouts;
+- the mobile content type scale stays within **12–25 px**; the complete Header version line uses **11–14 px**;
 - **full-width fixed bottom Tab Bar** is the sole primary navigation between Overview, Cleaning, Station, Maintenance and Diagnostics;
 - the bottom bar spans the useful viewport width, has no floating-card geometry and respects iOS Safe Area;
 - page content reserves enough bottom clearance for the final card to scroll completely above the Tab Bar;
@@ -147,7 +144,7 @@ Do **not** keep S8 OMNI active in LocalTuya while testing this integration. Two 
 ### HACS custom repository
 
 1. Add this repository to HACS as a custom **Integration** repository.
-2. Open Download/Redownload and its version selector. For the current beta, select **`1.0.9-beta004` without `v`** explicitly; expose prereleases if your HACS version requires it. Do not rely on the default selection while both historical labels are published. See [release selection and expected versions](docs/RELEASES.md#current-published-beta--2026-11-04).
+2. Open Download/Redownload and its version selector. For the current beta, select **`1.0.9-beta005` without `v`** explicitly; expose prereleases if your HACS version requires it. Do not rely on the default selection while both historical labels are published. See [release selection and expected versions](docs/RELEASES.md#current-published-beta--2026-11-19).
 3. Restart Home Assistant.
 4. Go to **Settings → Devices & services → Add integration → S8 OMNI**.
 5. Enter the device IP address, Device ID, Local Key and protocol version (`3.3`).

@@ -1,6 +1,6 @@
 # S8 OMNI current beta acceptance
 
-This checklist targets the published HACS beta `1.0.9-beta004` (source `780b108d415e08e7cbfdf698e393b9e9f41c4086`), runtime integration `v1.0.9-beta004` and panel `UI v1.0.12`. Select the unprefixed release explicitly; see [release policy](RELEASES.md#current-published-beta--2026-11-04). Physical acceptance of this beta remains pending.
+This checklist targets the published HACS beta `1.0.9-beta005` (source pinned by the immutable release tag), runtime integration `v1.0.9-beta005` and panel `UI v1.0.13`. Select the unprefixed release explicitly; see [release policy](RELEASES.md#current-published-beta--2026-11-19). Physical acceptance of this beta remains pending.
 
 Before device-side testing, back up Home Assistant and disable **only S8 OMNI** in LocalTuya. Do not run Smart Life and `ha-s8-omni` as competing local clients during command verification.
 
@@ -31,11 +31,11 @@ These pre-existing baseline results are retained as history. Re-run the unchecke
 
 Record HA Core, HACS, iOS, Safari/Companion versions, connection route, date and selected HACS tag. Installation, restart and device commands require user approval. Run this sequence after installing the release candidate and restarting Home Assistant:
 
-- [ ] HACS selected tag is `1.0.9-beta004`; installed manifest version is `1.0.9-beta004`.
-- [ ] Panel Diagnostics shows integration `v1.0.9-beta004` and UI `v1.0.12`, matching downloaded integration diagnostics.
+- [ ] HACS selected tag is `1.0.9-beta005`; installed manifest version is `1.0.9-beta005`.
+- [ ] Panel Diagnostics shows integration `v1.0.9-beta005` and UI `v1.0.13`, matching downloaded integration diagnostics.
 
 1. **At the dock**
-   - [ ] Header shows `Локально · Данные актуальны`.
+   - [ ] Overview shows a green filled connection cloud and a green circled freshness check. Diagnostics says `Локально` and `Данные актуальны`.
    - [ ] Robot state, charge and station idle state match the official application.
    - [ ] Refresh shows immediate busy feedback, completes, and changes no control DP.
 
@@ -62,16 +62,16 @@ Record HA Core, HACS, iOS, Safari/Companion versions, connection route, date and
    - [ ] A failed or unconfirmed write leaves the draft available for retry and shows a visible error.
 
 6. **Connection loss and recovery**
-   - [ ] After a failed local poll the badge becomes `Нет связи` or `Нет данных` and previous telemetry is not shown as current.
+   - [ ] After a failed local poll the connection cloud is orange and crossed out; absent/unconfirmed connection uses a gray question cloud. Preserved stale telemetry uses an orange clock, missing telemetry a gray question clock. Previous telemetry is not shown as current.
    - [ ] Start, Pause, Home, station operations and editable settings are disabled while current truth is unavailable.
    - [ ] The panel remains registered and usable after a Home Assistant restart while the robot is offline.
    - [ ] Restoring the robot returns live data and controls automatically without reloading the config entry.
 
 7. **Installed frontend**
-   - [ ] A cold local-LAN load and a cold Home Assistant Cloud/Nabu Casa load show `UI v1.0.12`.
-   - [ ] Header, fixed Bottom Tab Bar, long vertical scroll, iOS safe areas, pinch/pan and two-finger reset remain correct.
+   - [ ] A cold local-LAN load and a cold Home Assistant Cloud/Nabu Casa load show `UI v1.0.13`.
+   - [ ] Header shows both complete versions `UI v1.0.13 / 1.0.9-beta005` on one line, including at 320px. Verify black refresh on white in light mode and white on a dark neutral surface in dark mode. Fixed Bottom Tab Bar, long vertical scroll, iOS safe areas, pinch/pan and two-finger reset remain correct.
    - [ ] No `Unable to load custom panel`, `Configuration error`, white remount flash or historical panel-module request appears.
-   - [ ] The Header title returns to the actual originating NikaS base panel.
+   - [ ] The Header title opens `/home/overview`, independent of the entry route and saved browser history.
    - [ ] All eleven `hero-*.webp` assets load/decode without 404; observed robot/station scenes match actual states. Do not induce a device fault just to test the Error artwork.
    - [ ] Telemetry refresh preserves the current tab, scroll and zoom without reloading the panel bundle; verify last-successful-update time against the configured polling interval.
    - [ ] Repeat in Safari and Companion on iPhone, portrait/landscape, LAN and Nabu Casa. At 100%, scroll only the workspace and reveal its last card above the bottom menu/safe area.
@@ -81,7 +81,7 @@ Record HA Core, HACS, iOS, Safari/Companion versions, connection route, date and
 
 Download diagnostics from **Settings → Devices & services → S8 OMNI** and verify:
 
-- [ ] integration version is `v1.0.9-beta004` and dashboard version is `v1.0.12`;
+- [ ] integration version is `v1.0.9-beta005` and dashboard version is `v1.0.13`;
 - [ ] Host/IP, Device ID and Local Key are redacted;
 - [ ] raw map, path, command, timer and account payloads are absent;
 - [ ] normalized robot/station/composite state and known safe scalar datapoints remain available.
