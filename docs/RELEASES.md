@@ -46,7 +46,24 @@ The repository uses the normal GitHub source archive; `hacs.json` does not enabl
 
 New protocol work starts from a new prerelease line. Map/Rooms, schedules, manual movement, consumable resets and other complex writes remain excluded until an outbound official-application capture and physical readback prove their exact S8 contract.
 
-## Current published beta — 2026-11-04
+## Current published beta — 2026-11-19
+
+The current HACS beta is [`1.0.9-beta005`](https://github.com/NikaSir/ha-s8-omni/releases/tag/1.0.9-beta005), with UI `v1.0.13`. It contains [PR #148](https://github.com/NikaSir/ha-s8-omni/pull/148): the NikaS variant B header, complete UI/integration versions, theme-specific monochrome refresh and compact independent connection/freshness icons. Device command contracts and telemetry thresholds are unchanged.
+
+| Item | Expected value |
+| --- | --- |
+| HACS tag, GitHub Release title and manifest version | `1.0.9-beta005` |
+| Source | Exact reviewed `main` commit pinned by the immutable `1.0.9-beta005` tag; full SHA in release notes |
+| Runtime integration version | `v1.0.9-beta005` |
+| Panel/diagnostics UI version | `v1.0.13` |
+| Publication | Pre-release; not stable/Latest |
+| Minimum Home Assistant | `2026.8.0` |
+
+Publish only after all six Repository checks jobs are green, including browser-regression, HACS, Hassfest and validate. Local verification includes 122 unittest. Browser fixtures cover the production bundle, 20 viewport/theme combinations, full version visibility at 320px, missing/stale/outage/recovery states and mounted-node/scroll/zoom preservation. These checks do not establish installation or physical iPhone acceptance; follow [TESTING.md](TESTING.md).
+
+The older `1.0.9-beta004` and `v1.0.9-beta004` publications remain historical and unchanged. They do not contain the new Header. Select the complete `1.0.9-beta005` tag in HACS rather than an old alias or a branch name. Delivery uses the standard GitHub source archive; no separate ZIP asset is required.
+
+## Historical published beta — 2026-11-04
 
 The canonical beta installation target is [`1.0.9-beta004`](https://github.com/NikaSir/ha-s8-omni/releases/tag/1.0.9-beta004), published on 2026-09-22. It remains a pre-release, not a stable/Latest promotion.
 
@@ -79,7 +96,7 @@ Repository CI for the source commit passed, including HACS validation, Hassfest 
 ## Beta acceptance in Home Assistant
 
 1. Open this custom Integration repository in HACS and enable beta/prerelease versions in its version selection.
-2. Explicitly select the current published beta `1.0.9-beta004` without `v`, install it after user approval, and restart Home Assistant as required. Do not select the historical prefixed alias or the default branch.
+2. Explicitly select the current published beta `1.0.9-beta005` without `v`, install it after user approval, and restart Home Assistant as required. Do not select the historical prefixed alias or the default branch.
 3. Confirm the loaded integration version and panel UI version against the selected release; reopen the panel from a cold client/cache.
 4. Verify the fixed header and bottom menu, device selectors, black Refresh button and completion feedback, scrolling, pinch zoom and reset. Verify telemetry updates without a full panel redraw.
 5. Record the installed version, Home Assistant/HACS versions, device/client, checks performed and any errors. Do not mark acceptance complete without this evidence.
