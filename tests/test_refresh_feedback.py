@@ -39,7 +39,7 @@ vm.runInContext(fs.readFileSync('custom_components/s8_omni/frontend/s8-omni-pane
     assert.equal(panel._refreshPending, true); release();
   }
   assert.equal(await pending, mode !== 'error');
-  assert.ok(Date.now() - started >= 700);
+  assert.ok(Date.now() - started >= 900);
   assert.equal(panel._refreshPending, false);
   assert.doesNotMatch(panel._header(), /refresh is-refreshing/);
   assert.equal(panel._refreshResult, mode === 'error' ? 'error' : 'success');

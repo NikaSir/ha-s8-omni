@@ -1,3 +1,10 @@
+## 1.0.9-beta005 / UI v1.0.13 — 2026-11-19
+
+- Apply the approved NikaS variant B header: restrained title surface, complete UI / integration versions on one line, black refresh arrow on white in light mode and white arrow on a dark neutral surface in dark mode.
+- Replace the large connection plaque with independent compact connection and freshness icons. Unknown and missing data remain gray; stale data use an orange clock. Expose full statuses in Diagnostics and accessible names.
+- Keep the existing Header, icons, work scroll and zoom mounted during telemetry and refresh. Match the 900 ms minimum refresh feedback interval.
+- Device commands and telemetry thresholds retain their existing contracts. Installed HA and iPhone acceptance remains pending.
+
 ## Repository audit maintenance — 2026-10-17
 
 - Include the HERO regression in the required validate gate while preserving the separately required browser regression, HACS and Hassfest.

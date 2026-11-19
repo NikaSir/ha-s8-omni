@@ -1,4 +1,4 @@
-const UI_VERSION = "v1.0.12";
+const UI_VERSION = "v1.0.13";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.75;
 const VIEW_SCALE_MAX = 2.00;
@@ -444,8 +444,9 @@ class S8OmniPanel extends HTMLElement {
   }
   _connectionState() {
     const obj = this._state("local_connection");
-    if (!obj || ["unknown", "unavailable"].includes(obj.state)) return "unknown";
-    return obj.state === "on" ? "connected" : "disconnected";
+    if (obj?.state === "on") return "connected";
+    if (obj?.state === "off") return "disconnected";
+    return "unknown";
   }
   _connectionLabel() {
     const state = this._connectionState();
@@ -482,7 +483,10 @@ class S8OmniPanel extends HTMLElement {
       state,
       label: state === "connected" ? "Локально" : state === "disconnected" ? "Нет связи" : "Нет данных",
       tone: state === "connected" ? "local" : state === "disconnected" ? "offline" : "unknown",
+      icon: state === "connected" ? "mdi:cloud" : state === "disconnected" ? "mdi:cloud-off-outline" : "mdi:cloud-question-outline",
+      accessibleLabel: state === "connected" ? "Связь есть · Локально" : state === "disconnected" ? "Связь потеряна" : "Связь неизвестна",
       freshness,
+      freshnessIcon: freshness === "current" ? "mdi:check-circle-outline" : freshness === "stale" ? "mdi:clock-alert-outline" : "mdi:clock-outline",
       freshnessLabel: freshness === "current" ? "Данные актуальны" : freshness === "stale" ? "Данные устарели" : "Нет данных",
       freshnessTone: freshness === "current" ? "current" : freshness === "stale" ? "stale" : "no-data",
     };
@@ -987,11 +991,8 @@ class S8OmniPanel extends HTMLElement {
       :host{display:block;height:100%;min-height:0;background:var(--primary-background-color);color:var(--primary-text-color);font-family:var(--ha-font-family-body,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);overflow-x:hidden}
       *{box-sizing:border-box;min-width:0}button,input,select{font:inherit}button{-webkit-tap-highlight-color:transparent}h1,h2,h3,p{margin:0}
       main{min-height:0;padding-bottom:calc(82px + env(safe-area-inset-bottom))}
-      .app-header{position:sticky;top:0;z-index:60;display:grid;grid-template-columns:48px minmax(0,1fr) 48px;align-items:center;gap:8px;min-height:calc(64px + env(safe-area-inset-top));padding:max(8px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) 8px max(12px,env(safe-area-inset-left));background:color-mix(in srgb,var(--primary-background-color) 97%,transparent);border-bottom:1px solid color-mix(in srgb,var(--divider-color) 70%,transparent);backdrop-filter:blur(18px) saturate(130%)}
-      .header-action{width:48px;height:48px;border:0;border-radius:15px;display:grid;place-items:center;background:var(--card-background-color);color:var(--primary-text-color);box-shadow:0 3px 12px rgba(0,0,0,.07)}.header-action.refresh{color:var(--primary-text-color)}.header-action:disabled{opacity:.38}.header-action ha-icon{--mdc-icon-size:28px}.header-action.is-refreshing ha-icon{animation:spin .8s linear infinite}
-      .header-title{text-align:center;display:flex;flex-direction:column;gap:2px;overflow:hidden}.header-title strong{font-size:22px;line-height:1.05;white-space:nowrap}.header-title span{color:var(--secondary-text-color);font-size:12px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .content{width:min(100%,900px);margin:0 auto;padding:12px 10px 18px}.card{background:var(--card-background-color);border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:22px;padding:15px;margin-bottom:12px;box-shadow:0 6px 18px rgba(0,0,0,.04)}.eyebrow{display:block;color:var(--secondary-text-color);font-size:12px;font-weight:800;letter-spacing:.13em;text-transform:uppercase}
-      .hero{position:relative;overflow:hidden;background:color-mix(in srgb,var(--card-background-color,#fff) 95%,var(--primary-color,#03a9d9) 5%)}.hero::after{content:"";position:absolute;width:205px;height:205px;right:-70px;top:-92px;border-radius:50%;background:color-mix(in srgb,var(--primary-color,#03a9d9) 12%,var(--card-background-color,#fff));pointer-events:none}.hero-top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:10px;position:relative;z-index:2}.hero h1{margin-top:5px;font-size:25px;line-height:1.02;letter-spacing:-.035em}.hero-hint{margin-top:6px;color:var(--secondary-text-color);font-size:13px;line-height:1.28}.connection-indicator{justify-self:end;display:grid;grid-template-columns:10px minmax(0,1fr);align-items:center;column-gap:11px;min-height:58px;padding:12px 14px;border-radius:18px;background:var(--card-background-color);border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);box-shadow:0 4px 14px rgba(0,0,0,.055);white-space:nowrap}.connection-lamp{display:block;width:10px;height:10px;border-radius:50%;background:var(--disabled-text-color)}.connection-copy{display:flex;flex-direction:column;gap:3px;min-width:0}.connection-copy strong{font-size:15.5px;line-height:1.05;font-weight:700;color:var(--disabled-text-color)}.connection-copy small{font-size:12.5px;line-height:1.05;font-weight:550;color:var(--secondary-text-color)}.connection-indicator.local .connection-lamp{background:var(--success-color,#43a047)}.connection-indicator.local .connection-copy strong{color:var(--success-color,#43a047)}.connection-indicator.offline .connection-lamp{background:var(--error-color,#db4437)}.connection-indicator.offline .connection-copy strong{color:var(--error-color,#db4437)}.connection-indicator.unknown .connection-lamp{background:var(--disabled-text-color)}.connection-copy small.stale{color:var(--warning-color,#f6a623);font-weight:600}.connection-copy small.no-data{color:var(--secondary-text-color)}
+      .hero{position:relative;overflow:hidden;background:color-mix(in srgb,var(--card-background-color,#fff) 95%,var(--primary-color,#03a9d9) 5%)}.hero::after{content:"";position:absolute;width:205px;height:205px;right:-70px;top:-92px;border-radius:50%;background:color-mix(in srgb,var(--primary-color,#03a9d9) 12%,var(--card-background-color,#fff));pointer-events:none}.hero-top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:10px;position:relative;z-index:2}.hero h1{margin-top:5px;font-size:25px;line-height:1.02;letter-spacing:-.035em}.hero-hint{margin-top:6px;color:var(--secondary-text-color);font-size:13px;line-height:1.28}
       .omni-scene{position:relative;z-index:1;height:210px;margin-top:12px;border-radius:22px;border:1px solid color-mix(in srgb,var(--divider-color) 64%,transparent);background:linear-gradient(145deg,#ffffff 0%,#f7fbfd 56%,#edf8fc 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.98),0 8px 24px rgba(18,56,72,.035);overflow:hidden}.omni-scene::before{content:"";position:absolute;left:12px;right:102px;bottom:8px;height:42px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(161,177,186,.26) 0%,rgba(161,177,186,.06) 58%,rgba(161,177,186,0) 78%)}.omni-scene::after{content:"";position:absolute;right:-16px;top:-24px;width:184px;height:184px;border-radius:50%;background:radial-gradient(circle,rgba(211,243,255,.78) 0%,rgba(223,244,253,0) 68%)}.omni-art{position:absolute;left:4px;top:7px;bottom:7px;width:73%;display:grid;place-items:center;z-index:2}.product-art{display:block;width:100%;height:100%;max-height:100%;object-fit:cover;object-position:center;border-radius:18px;filter:drop-shadow(0 9px 13px rgba(43,62,70,.11));transition:opacity .2s ease,filter .2s ease}.omni-art.muted .product-art{opacity:.52;filter:grayscale(.3) drop-shadow(0 8px 11px rgba(43,62,70,.08))}.omni-legend{position:absolute;right:8px;top:10px;bottom:10px;width:26%;z-index:5;display:flex;flex-direction:column;justify-content:center;gap:7px;padding:9px 8px;border-radius:19px;background:rgba(255,255,255,.98);border:1px solid rgba(101,112,118,.11);box-shadow:0 10px 26px rgba(0,0,0,.075);backdrop-filter:blur(14px) saturate(115%)}.legend-row{display:grid;grid-template-columns:21px minmax(0,1fr);gap:6px;align-items:center;min-height:31px;padding:5px 4px;color:#4b5359;font-size:12px;font-weight:800;line-height:1.12;border-radius:11px;background:rgba(248,250,251,.96);border:1px solid rgba(91,101,107,.065)}.legend-row ha-icon{--mdc-icon-size:19px;color:#667078}.legend-row.active{color:#20272c;background:#ffffff;border-color:rgba(72,82,88,.10);box-shadow:0 2px 7px rgba(0,0,0,.045)}.legend-row.water.active{background:#edf8ff;color:#166d96;border-color:#c8e9f7}.legend-row.water.active ha-icon{color:#16a9e5}.legend-row.dust.active{background:#f1f3f4;color:#454d53;border-color:#d8dde0}.legend-row.dust.active ha-icon{color:#626c74}.legend-row.dry.active{background:#fff3e9;color:#a85d22;border-color:#f5d7bd}.legend-row.dry.active ha-icon{color:#ee914c}.legend-row.charge.active{background:#edf9f0;color:#2e914b;border-color:#bfe3c8}.legend-row.charge.active ha-icon{color:#32aa56}
       .hero-metrics{position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.hero-metrics>div{min-height:68px;border-radius:18px;padding:10px;background:rgba(255,255,255,.90);border:1px solid rgba(92,108,116,.10);box-shadow:0 4px 12px rgba(20,52,66,.045);overflow:hidden}.hero-metrics span{display:block;color:var(--secondary-text-color);font-size:12px;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}.hero-metrics strong{display:block;margin-top:4px;font-size:19px;line-height:1.05;white-space:nowrap}.battery-bar{height:4px;border-radius:999px;background:var(--divider-color);margin-top:8px;overflow:hidden}.battery-bar i{display:block;height:100%;border-radius:inherit;background:var(--primary-color)}
       .trust-banner{display:flex;gap:10px;padding:11px 13px;margin:0 0 10px;border-radius:17px;background:color-mix(in srgb,var(--error-color,#db4437) 9%,var(--card-background-color));border:1px solid color-mix(in srgb,var(--error-color,#db4437) 32%,transparent)}.trust-banner ha-icon{color:var(--error-color,#db4437);--mdc-icon-size:22px}.trust-banner strong{display:block;font-size:14px}.trust-banner span{display:block;color:var(--secondary-text-color);font-size:12px;margin-top:2px}.command-feedback.is-hidden{display:none!important}.command-feedback.busy{background:color-mix(in srgb,var(--primary-color) 9%,var(--card-background-color));border-color:color-mix(in srgb,var(--primary-color) 32%,transparent)}.command-feedback.busy ha-icon{color:var(--primary-color)}
@@ -1095,7 +1096,6 @@ class S8OmniPanel extends HTMLElement {
       /* Stable iOS gesture canvas; the host owns the visual viewport. */
       :host{height:100%;min-height:0;max-height:100%;overflow:hidden;overscroll-behavior:none;position:relative;width:100%}
       main{height:100%;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;overscroll-behavior:none;padding-bottom:0}
-      .app-header{position:relative;top:auto;z-index:60}
       nav{position:relative;left:auto;right:auto;bottom:auto;z-index:70}
       .work-viewport{position:relative;min-height:0;overflow:hidden;overscroll-behavior:none;touch-action:none;background:var(--primary-background-color)}
       .work-canvas{position:absolute;left:0;top:0;width:100%;min-height:100%;transform-origin:0 0;will-change:transform;touch-action:none;-webkit-user-select:none;user-select:none}
@@ -1110,12 +1110,6 @@ class S8OmniPanel extends HTMLElement {
       .service-toggle-row .toggle-copy small{display:block;font-size:12px;line-height:1.18;color:var(--secondary-text-color);white-space:normal}
       .service-toggle-row .toggle{justify-self:end;align-self:center;flex:0 0 auto}
       @media(max-width:430px){.service-toggle-row{column-gap:14px;min-height:72px}.service-toggle-row .toggle-copy strong{font-size:14.5px}.service-toggle-row .toggle-copy small{font-size:12px}}
-      /* v0.7.17: NIKAS Specialized Panel UI Standard v1.5 shell. */
-      .app-header{grid-template-columns:52px minmax(0,1fr) 52px;gap:8px;min-height:calc(62px + env(safe-area-inset-top));padding:env(safe-area-inset-top) max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left))}
-      .header-action{width:44px;height:44px;justify-self:center;border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:16px;background:var(--card-background-color);box-shadow:0 7px 20px rgba(23,45,76,.08);color:var(--primary-text-color)}
-      .header-action.refresh{color:var(--primary-text-color)}.header-action ha-icon{--mdc-icon-size:25px}
-      .header-action.refresh.refresh-success{color:#43a047}.header-action.refresh.refresh-error{color:#e53935}
-      .header-title strong{font-size:21px;font-weight:800}.header-title span{font-size:12px;font-weight:560;color:var(--secondary-text-color)}
       .work-viewport.is-native{overflow-x:hidden;overflow-y:auto;overscroll-behavior-x:none;overscroll-behavior-y:none;touch-action:pan-y;-webkit-overflow-scrolling:touch}
       .work-viewport.is-native .work-canvas{position:relative;left:auto;top:auto;min-height:100%;touch-action:pan-y;-webkit-user-select:auto;user-select:auto;will-change:auto}
       .work-viewport.is-zoomed{overflow:hidden;overscroll-behavior:none;touch-action:none}
@@ -1128,22 +1122,14 @@ class S8OmniPanel extends HTMLElement {
       @media(max-width:520px){
         :host{position:relative;width:100%;height:100%;min-height:0;max-height:100%}
         main{position:relative;width:100%;height:100%;min-height:0}
-        .app-header{grid-template-columns:48px minmax(0,1fr) 48px;min-height:calc(60px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top)}
-        .header-action{width:44px;height:44px;border-radius:16px}.header-action ha-icon{--mdc-icon-size:25px}
-        .header-title strong{font-size:21px}.header-title span{font-size:13px}
         .state-scene{height:292px}
         nav button{min-height:52px;border-radius:14px}nav button ha-icon{--mdc-icon-size:26px}
       }
       /* v0.7.22: NIKAS Specialized Panel UI Standard v1.6. */
       .stable-view[hidden],.trust-banner.is-hidden{display:none!important}
-      .header-title strong{font-size:23px;font-weight:800}.header-title span{font-size:14px;font-weight:560}
       .hero h1,.state-hero h1,.station-hero h2,.view-heading h2{font-size:25px}
-      .connection-copy strong{font-size:16px;font-weight:700}.connection-copy small{font-size:13px;font-weight:600}
-      .connection-indicator.local{background:color-mix(in srgb,var(--success-color,#43a047) 11%,var(--card-background-color));border-color:color-mix(in srgb,var(--success-color,#43a047) 30%,var(--divider-color))}
-      .connection-indicator.offline{background:color-mix(in srgb,var(--error-color,#db4437) 10%,var(--card-background-color));border-color:color-mix(in srgb,var(--error-color,#db4437) 30%,var(--divider-color))}
-      .connection-indicator.unknown{background:color-mix(in srgb,var(--secondary-text-color) 8%,var(--card-background-color));border-color:color-mix(in srgb,var(--secondary-text-color) 28%,var(--divider-color))}
       .state-hero{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto;align-content:start;width:100%;min-width:0}
-      .state-hero .hero-top{grid-row:1;grid-template-columns:minmax(0,1fr) minmax(168px,max-content);width:100%;isolation:isolate}
+      .state-hero .hero-top{grid-row:1;grid-template-columns:minmax(0,1fr) auto;width:100%;isolation:isolate}
       .state-hero>.hero-top,.state-hero>.state-scene,.state-hero>.resource-strip,.state-hero>.hero-metrics{grid-column:1;justify-self:stretch;width:100%;min-width:0;max-width:100%}
       .state-hero .state-scene{grid-row:2;width:100%;min-width:0;contain:layout paint;isolation:isolate}
       .state-hero .state-image{position:absolute;inset:0;width:100%;height:100%;max-width:none}
@@ -1156,7 +1142,6 @@ class S8OmniPanel extends HTMLElement {
       .state-hero .hero-metrics strong{grid-column:2;grid-row:2;margin-top:3px}
       .state-hero .hero-metrics small{grid-column:2;grid-row:3;margin-top:3px;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.08}
       .state-hero .hero-metrics .battery-bar{grid-column:1/-1;grid-row:4;margin:6px 0 0}
-      .state-hero .connection-indicator{min-width:168px;max-width:100%}
       .eyebrow,.hero-metrics span,.hero-metrics small,.action .action-sub,.segment,.station-summary-item span,.diagnostic-strip span,.resource-chip strong,.resource-chip small,.service-toggle-row .toggle-copy small,.status-card strong,.status-card span.meta,.legend-row,.legend-copy strong,.legend-copy small{font-size:12px}
       /* v0.7.28: lock the state-aware Overview to one explicit grid column across live state transitions. */
       .state-hero .hero-top{align-items:center;margin-bottom:10px}
@@ -1171,30 +1156,23 @@ class S8OmniPanel extends HTMLElement {
       .action.ready .action-icon{background:color-mix(in srgb,var(--primary-color) 10%,transparent)}
       .action:disabled{opacity:.32}
       @media(max-width:430px){.action{min-height:82px}.state-hero .hero-hint{font-size:13px}}
-      /* NikaS Specialized Panel UI Standard v2.2 host-bound shell. */
-      .header-title{justify-self:center;min-width:min(290px,100%);max-width:100%;min-height:44px;padding:5px 14px;border:1px solid color-mix(in srgb,var(--primary-color,#03a9d9) 24%,var(--divider-color,#dfe3e8));border-radius:16px;background:color-mix(in srgb,var(--primary-color,#03a9d9) 5%,var(--card-background-color,#fff));box-shadow:0 5px 16px rgba(23,45,76,.06);color:var(--primary-text-color);cursor:pointer;-webkit-appearance:none;appearance:none}
-      .header-title:focus-visible{outline:2px solid var(--primary-color,#03a9d9);outline-offset:2px}
-      .header-title:active{transform:scale(.985);background:color-mix(in srgb,var(--primary-color,#03a9d9) 13%,var(--card-background-color,#fff));border-color:color-mix(in srgb,var(--primary-color,#03a9d9) 42%,var(--divider-color,#dfe3e8));box-shadow:0 2px 7px rgba(23,45,76,.05)}
       .state-hero{grid-template-rows:auto auto auto;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;overflow:visible;margin-bottom:10px}
       .state-hero::after{display:none}
       .state-hero>.hero-primary,.state-hero>.resource-strip,.state-hero>.hero-metrics{grid-column:1;justify-self:stretch;width:100%;min-width:0;max-width:100%}
       .state-hero>.hero-primary{grid-row:1;position:relative;padding:14px;overflow:hidden;background:color-mix(in srgb,var(--card-background-color,#fff) 95%,var(--primary-color,#03a9d9) 5%);border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:22px;box-shadow:0 6px 18px rgba(0,0,0,.04)}
       .state-hero>.hero-primary::after{content:"";position:absolute;width:205px;height:205px;right:-70px;top:-92px;border-radius:50%;background:color-mix(in srgb,var(--primary-color,#03a9d9) 12%,var(--card-background-color,#fff));pointer-events:none}
-      .state-hero .hero-top{grid-row:auto;grid-template-columns:minmax(0,1fr) minmax(168px,42%);min-height:96px;align-items:start;gap:12px;margin-bottom:10px}
+      .state-hero .hero-top{grid-row:auto;grid-template-columns:minmax(0,1fr) auto;min-height:96px;align-items:start;gap:12px;margin-bottom:10px}
       .state-hero .hero-top>div:first-child{display:flex;min-height:92px;flex-direction:column;justify-content:center;padding-top:0}
       .state-hero .state-scene{grid-row:auto;height:360px}
       .state-hero .resource-strip{grid-row:2;margin-top:10px;background:var(--card-background-color)}
       .state-hero .hero-metrics{grid-row:3;margin-top:10px;background:var(--card-background-color)}
-      .state-hero .connection-indicator{width:100%;min-width:0;max-width:100%;padding:12px;column-gap:9px}
-      .state-hero .connection-copy{display:grid;grid-template-rows:auto auto;row-gap:4px}
-      .state-hero .connection-copy strong,.state-hero .connection-copy small{display:block;white-space:nowrap}
       .state-hero .hero-metrics>div{grid-template-columns:24px minmax(0,1fr);column-gap:5px;padding:8px 6px 7px}
       .state-hero .hero-metrics .metric-icon{--mdc-icon-size:23px}
       .state-hero .hero-metrics strong{font-size:17px;white-space:normal;overflow-wrap:normal}
       .state-hero .hero-metrics small{font-size:12px}
       .state-hero .battery-bar i{background:#079fd1}
-      @media(max-width:520px){.header-title{min-width:0;width:100%;padding-inline:8px}.header-title strong{font-size:21px}.header-title span{font-size:13px}.state-hero .state-scene{height:264px}.state-hero .hero-top{grid-template-columns:minmax(0,1fr) minmax(168px,44%)}.state-hero>.hero-primary{padding:13px}.state-hero .hero-metrics strong{font-size:16px}}
-      @media(min-width:521px){.state-hero .hero-top{grid-template-columns:minmax(0,1fr) minmax(168px,max-content)}.state-hero .connection-indicator{width:auto;min-width:168px;max-width:240px}}
+      @media(max-width:520px){.state-hero .state-scene{height:264px}.state-hero .hero-top{grid-template-columns:minmax(0,1fr) auto}.state-hero>.hero-primary{padding:13px}.state-hero .hero-metrics strong{font-size:16px}}
+      @media(min-width:521px){.state-hero .hero-top{grid-template-columns:minmax(0,1fr) auto}}
       /* UI v1.0.12: Retina state artwork with crop-safe desktop presentation. */
       .state-hero .state-scene{isolation:isolate;background:#e7e2d9}
       .state-hero .state-scene::before{content:"";position:absolute;inset:-24px;z-index:0;background-image:var(--state-image);background-position:center;background-size:cover;filter:blur(18px) saturate(.82);opacity:.58;transform:scale(1.05);pointer-events:none}
@@ -1204,9 +1182,6 @@ class S8OmniPanel extends HTMLElement {
       /* NikaS Shell v2.1 authoritative host-bound geometry. */
       :host{display:block;position:relative;inline-size:100%;block-size:100%;min-inline-size:0;min-block-size:0;max-height:100%;overflow:hidden;overscroll-behavior:none;container:nikas-panel / inline-size}
       main{position:relative;inline-size:100%;block-size:100%;min-inline-size:0;min-block-size:0;display:grid;grid-template-rows:calc(60px + env(safe-area-inset-top,0px)) minmax(0,1fr) calc(64px + env(safe-area-inset-bottom,0px));overflow:hidden;overscroll-behavior:none;padding:0}
-      .app-header{position:relative;height:auto;min-height:0;padding:env(safe-area-inset-top,0px) calc(12px + env(safe-area-inset-right,0px)) 0 calc(12px + env(safe-area-inset-left,0px));grid-template-columns:52px minmax(0,1fr) 52px}
-      .header-title{justify-self:center;width:min(360px,100%);min-width:0;height:52px;min-height:52px;padding:5px 14px}
-      .header-title strong{font-size:23px}.header-title span{font-size:14px}
       .work-viewport{min-width:0;min-height:0;overscroll-behavior-x:none;overscroll-behavior-y:none}
       .content{width:100%;max-width:1280px;min-height:100%;margin:0 auto;padding:12px 12px 20px}
       nav{position:relative;left:auto;right:auto;bottom:auto;height:auto;min-height:0;padding:6px calc(6px + env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) calc(6px + env(safe-area-inset-left,0px));grid-template-columns:repeat(5,minmax(0,1fr));gap:2px}
@@ -1215,9 +1190,25 @@ class S8OmniPanel extends HTMLElement {
       nav button span{display:block;flex:0 0 14px;max-width:100%;font-size:12px;font-weight:700;line-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       @container nikas-panel (min-width:600px){.content{padding-inline:16px}}
       @container nikas-panel (min-width:1024px){.content{padding-inline:24px}}
-      @container nikas-panel (max-width:359px){.app-header{grid-template-columns:48px minmax(0,1fr) 48px;padding-inline:8px}.header-title strong{font-size:21px}.header-title span{font-size:13px}}
+
+      /* NikaS header amendment, 2026-11-19: variant B and compact status icons. */
+      .app-header{position:relative;z-index:60;display:grid;grid-template-columns:52px minmax(0,1fr) 52px;align-items:center;gap:8px;min-height:0;padding:env(safe-area-inset-top,0px) calc(12px + env(safe-area-inset-right,0px)) 0 calc(12px + env(safe-area-inset-left,0px));background:color-mix(in srgb,var(--primary-background-color) 97%,transparent);border-bottom:1px solid color-mix(in srgb,var(--divider-color) 70%,transparent);backdrop-filter:blur(18px) saturate(130%);--s8-refresh-color:#000000;--s8-refresh-background:#ffffff}
+      .app-header[data-theme="dark"]{--s8-refresh-color:#ffffff;--s8-refresh-background:color-mix(in srgb,var(--card-background-color) 8%,#1c1c1c)}
+      .header-action{width:44px;height:44px;justify-self:center;border:1px solid color-mix(in srgb,var(--divider-color) 72%,transparent);border-radius:16px;display:grid;place-items:center;background:var(--card-background-color);box-shadow:0 7px 20px rgba(23,45,76,.08);color:var(--primary-text-color)}
+      .header-action.refresh{color:var(--s8-refresh-color);background:var(--s8-refresh-background)}.header-action:disabled{opacity:.38}.header-action ha-icon{--mdc-icon-size:25px}.header-action.is-refreshing ha-icon{animation:spin .9s linear infinite}
+      .header-action.refresh.refresh-success{color:#43a047}.header-action.refresh.refresh-error{color:#e53935}
+      .header-title{justify-self:center;width:min(360px,100%);min-width:0;height:52px;min-height:52px;padding:5px 14px;border:1px solid color-mix(in srgb,var(--primary-color,#03a9d9) 12%,var(--divider-color,#dfe3e8));border-radius:16px;background:color-mix(in srgb,var(--primary-color,#03a9d9) 3%,var(--card-background-color,#fff));box-shadow:0 5px 16px rgba(23,45,76,.06);color:var(--primary-text-color);cursor:pointer;-webkit-appearance:none;appearance:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;font-family:inherit}
+      .header-title strong{font-size:22px;font-weight:700;line-height:1.05;white-space:nowrap}
+      .header-title span{font-size:clamp(11px,calc(2.72727cqw + 2.27273px),14px);font-weight:500;line-height:1.15;color:var(--secondary-text-color);white-space:nowrap;overflow:visible;text-overflow:clip}
+      .header-title:focus-visible{outline:2px solid var(--primary-color,#03a9d9);outline-offset:2px}
+      .header-title:active{transform:scale(.985);background:color-mix(in srgb,var(--primary-color,#03a9d9) 13%,var(--card-background-color,#fff));border-color:color-mix(in srgb,var(--primary-color,#03a9d9) 42%,var(--divider-color,#dfe3e8));box-shadow:0 2px 7px rgba(23,45,76,.05)}
+      @container nikas-panel (max-width:359px){.app-header{grid-template-columns:48px minmax(0,1fr) 48px}.header-title{width:100%;padding-inline:8px}.header-title strong{font-size:20px}}
+      .connection-indicator{justify-self:end;display:flex;align-items:center;gap:8px;width:56px;min-width:56px;height:24px;margin-top:5px;white-space:nowrap}
+      .status-icon{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:0 0 24px;width:24px;height:24px;color:var(--secondary-text-color)}.status-icon ha-icon{--mdc-icon-size:24px}
+      .status-icon.local,.status-icon.current{color:var(--success-color,#43a047)}.status-icon.offline,.status-icon.stale{color:var(--warning-color,#f6a623)}
+      .question-badge{display:none;position:absolute;right:-2px;bottom:-2px;width:12px;height:12px;align-items:center;justify-content:center;border-radius:50%;background:var(--card-background-color);font:700 12px/12px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}.status-icon.no-data .question-badge{display:flex}
       @keyframes spin{to{transform:rotate(360deg)}}
-      @media(max-width:360px){.hero-top,.state-hero .hero-top{grid-template-columns:1fr}.connection-indicator{justify-self:start}.status-grid{grid-template-columns:repeat(2,1fr)}.segments.four{grid-template-columns:repeat(2,1fr)}.diagnostic-strip{grid-template-columns:1fr}.omni-legend{width:30%}.omni-art{width:69%}}
+      @media(max-width:360px){.status-grid{grid-template-columns:repeat(2,1fr)}.segments.four{grid-template-columns:repeat(2,1fr)}.diagnostic-strip{grid-template-columns:1fr}.omni-legend{width:30%}.omni-art{width:69%}}
       @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
     `;
   }
@@ -1226,7 +1217,9 @@ class S8OmniPanel extends HTMLElement {
     const result = this._refreshPending ? "" : this._refreshResult;
     const icon = result === "success" ? "mdi:check" : result === "error" ? "mdi:alert-circle-outline" : "mdi:refresh";
     const label = this._refreshPending ? "Обновление…" : result === "success" ? "Запрос обновления выполнен" : result === "error" ? "Не удалось обновить данные" : "Обновить";
-    return `<header class="app-header"><button class="header-action" type="button" data-header-primary aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button><button class="header-title" type="button" data-header-home aria-label="Вернуться на главную панель"><strong>Пылесос</strong><span>UI v${UI_VERSION.replace(/^v/, "")}</span></button><button class="header-action refresh${this._refreshPending ? " is-refreshing" : result ? ` refresh-${result}` : ""}" type="button" data-refresh aria-label="${label}" aria-busy="${this._refreshPending}" ${this._entityId("refresh") && !this._refreshPending && this._busyCommands.size === 0 ? "" : "disabled"}><ha-icon icon="${icon}"></ha-icon></button></header>`;
+    const integration = String(this._panel?.config?.integration_version || "—").replace(/^v/, "");
+    const versions = `UI v${UI_VERSION.replace(/^v/, "")} / ${integration}`;
+    return `<header class="app-header" data-theme="${this._hass?.themes?.darkMode ? "dark" : "light"}"><button class="header-action" type="button" data-header-primary aria-label="Меню Home Assistant"><ha-icon icon="mdi:menu"></ha-icon></button><button class="header-title" type="button" data-header-home aria-label="Вернуться на главную панель"><strong>Пылесос</strong><span title="${escapeHtml(versions)}">${escapeHtml(versions)}</span></button><button class="header-action refresh${this._refreshPending ? " is-refreshing" : result ? ` refresh-${result}` : ""}" type="button" data-refresh aria-label="${label}" aria-busy="${this._refreshPending}" ${this._entityId("refresh") && !this._refreshPending && this._busyCommands.size === 0 ? "" : "disabled"}><ha-icon icon="${icon}"></ha-icon></button></header>`;
   }
 
   async _refresh() {
@@ -1250,7 +1243,7 @@ class S8OmniPanel extends HTMLElement {
       updated = (await this._call("button", "press", "refresh")) === true;
       return updated;
     } finally {
-      const remaining = 700 - (Date.now() - startedAt);
+      const remaining = 900 - (Date.now() - startedAt);
       if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
       this._refreshPending = false;
       this._refreshResult = updated ? "success" : "error";
@@ -1351,7 +1344,7 @@ class S8OmniPanel extends HTMLElement {
       : stationLabel === "Заряжает" ? "Идёт зарядка"
       : stationLabel === "Ожидает" ? "На связи"
       : "Операция активна";
-    return `<section class="card hero state-hero ${state.tone || ""}" data-more="composite_status"><div class="hero-primary"><div class="hero-top"><div><h1>${escapeHtml(state.title)}</h1><p class="hero-hint">${escapeHtml(state.hint)}</p></div><div class="connection-indicator ${connection.tone}" data-more="local_connection" role="status" aria-label="${escapeHtml(connection.label)} · ${escapeHtml(connection.freshnessLabel)}"><i class="connection-lamp"></i><span class="connection-copy"><strong>${escapeHtml(connection.label)}</strong><small class="${connection.freshnessTone}">${escapeHtml(connection.freshnessLabel)}</small></span></div></div><div class="state-scene ${snap.unreliable ? "muted" : ""}" style="--state-image:url(&quot;${escapeHtml(image)}&quot;)"><img class="state-image" src="${image}" alt="S8 OMNI — ${escapeHtml(state.title)}" loading="eager" decoding="sync" fetchpriority="high" /></div></div>${this._resourceStrip(snap)}<div class="hero-metrics"><div data-more="battery"><ha-icon class="metric-icon battery${batteryTone}" icon="${batteryIcon}"></ha-icon><span>АКБ</span><strong>${battery}</strong><small>Текущий заряд</small><div class="battery-bar"><i style="width:${snap.battery ?? 0}%"></i></div></div><div data-more="mode"><ha-icon class="metric-icon mode" icon="${modeIcon}"></ha-icon><span>Режим</span><strong>${escapeHtml(mode)}</strong><small>${escapeHtml(modeMeta)}</small></div><div class="${stationTone ? `station-${stationTone}` : ""}" data-more="station_status"><ha-icon class="metric-icon station ${stationTone}" icon="${stationIcon}"></ha-icon><span>Станция</span><strong>${escapeHtml(stationLabel)}</strong><small>${escapeHtml(stationMeta)}</small></div></div></section>`;
+    return `<section class="card hero state-hero ${state.tone || ""}" data-more="composite_status"><div class="hero-primary"><div class="hero-top"><div><h1>${escapeHtml(state.title)}</h1><p class="hero-hint">${escapeHtml(state.hint)}</p></div><div class="connection-indicator" data-more="local_connection" role="group" aria-label="Связь и свежесть данных"><span class="status-icon ${connection.tone}" role="img" data-connection-icon aria-label="${escapeHtml(connection.accessibleLabel)}" title="${escapeHtml(connection.accessibleLabel)}"><ha-icon icon="${connection.icon}" aria-hidden="true"></ha-icon></span><span class="status-icon ${connection.freshnessTone}" role="img" data-freshness-icon aria-label="${escapeHtml(connection.freshnessLabel)}" title="${escapeHtml(connection.freshnessLabel)}"><ha-icon icon="${connection.freshnessIcon}" aria-hidden="true"></ha-icon><span class="question-badge" aria-hidden="true">?</span></span></div></div><div class="state-scene ${snap.unreliable ? "muted" : ""}" style="--state-image:url(&quot;${escapeHtml(image)}&quot;)"><img class="state-image" src="${image}" alt="S8 OMNI — ${escapeHtml(state.title)}" loading="eager" decoding="sync" fetchpriority="high" /></div></div>${this._resourceStrip(snap)}<div class="hero-metrics"><div data-more="battery"><ha-icon class="metric-icon battery${batteryTone}" icon="${batteryIcon}"></ha-icon><span>АКБ</span><strong>${battery}</strong><small>Текущий заряд</small><div class="battery-bar"><i style="width:${snap.battery ?? 0}%"></i></div></div><div data-more="mode"><ha-icon class="metric-icon mode" icon="${modeIcon}"></ha-icon><span>Режим</span><strong>${escapeHtml(mode)}</strong><small>${escapeHtml(modeMeta)}</small></div><div class="${stationTone ? `station-${stationTone}` : ""}" data-more="station_status"><ha-icon class="metric-icon station ${stationTone}" icon="${stationIcon}"></ha-icon><span>Станция</span><strong>${escapeHtml(stationLabel)}</strong><small>${escapeHtml(stationMeta)}</small></div></div></section>`;
   }
 
   _quickActions() {
@@ -1478,7 +1471,7 @@ class S8OmniPanel extends HTMLElement {
     const device = snap.connected ? "Доступно" : snap.connection === "disconnected" ? "Недоступно" : "Не подтверждено";
     const stationData = snap.unreliable || !Array.isArray(attrs.missing_station_dps) ? "Нет данных"
       : snap.missingStationDps.length ? `Нет DP: ${snap.missingStationDps.join(", ")}` : "Получены";
-    return `<section class="view-heading"><span class="eyebrow">Технический экран</span><h2>Диагностика</h2><p>Нормализованные и raw-значения интеграции.</p></section><div class="diagnostic-strip"><div><span>Локальная связь</span><strong>${escapeHtml(this._connectionLabel())}</strong></div><div><span>Устройство</span><strong>${device}</strong></div><div><span>Возраст данных</span><strong>${snap.age === null ? "—" : escapeHtml(this._formatDuration(snap.age))}</strong></div></div><section class="card"><div class="section-title"><h2>Состояния</h2></div><div class="info-list"><div class="info-row fault-status${fault.active ? " error" : ""}" data-more="fault"><span>Ошибки</span><strong>${escapeHtml(fault.text)}</strong></div>${this._diagRow("Composite",snap.connected ? this._stateValue("composite_status") : "unavailable")}${this._diagRow("Robot status",snap.connected ? this._stateValue("robot_status") : "unavailable")}${this._diagRow("Station status",snap.connected ? this._stateValue("station_status") : "unavailable")}${this._diagRow("Данные станции",stationData)}</div></section><section class="card"><div class="section-title"><h2>Tuya Raw</h2></div><div class="info-list">${this._diagRow("DP5 status",attrs.raw_status)}${this._diagRow("DP4 mode",attrs.mode)}${this._diagRow("DP41 work_mode",snap.connected ? this._stateValue("work_mode") : "unavailable")}${this._diagRow("DP1 power_go",attrs.power_go)}${this._diagRow("DP2 pause",attrs.pause)}${this._diagRow("DP28 fault",attrs.fault)}${this._diagRow("DP134 dp_dust",attrs.dp_dust)}${this._diagRow("DP135 dp_roll_clean",attrs.dp_roll_clean)}${this._diagRow("DP136 dp_roll_hot",attrs.dp_roll_hot)}</div></section><section class="card"><div class="section-title"><h2>Панель</h2></div><div class="info-list">${this._diagRow("Версия интеграции",this._panel?.config?.integration_version || "—")}${this._diagRow("Версия UI",UI_VERSION)}${this._diagRow("Bundle","standalone")}${this._diagRow("Route","/dashboard-s8-omni")}</div></section>`;
+    return `<section class="view-heading"><span class="eyebrow">Технический экран</span><h2>Диагностика</h2><p>Нормализованные и raw-значения интеграции.</p></section><div class="diagnostic-strip"><div><span>Локальная связь</span><strong>${escapeHtml(this._connectionLabel())}</strong></div><div><span>Устройство</span><strong>${device}</strong></div><div><span>Свежесть данных</span><strong>${escapeHtml(this._connectionIndicatorState().freshnessLabel)}</strong></div><div><span>Возраст данных</span><strong>${snap.age === null ? "—" : escapeHtml(this._formatDuration(snap.age))}</strong></div></div><section class="card"><div class="section-title"><h2>Состояния</h2></div><div class="info-list"><div class="info-row fault-status${fault.active ? " error" : ""}" data-more="fault"><span>Ошибки</span><strong>${escapeHtml(fault.text)}</strong></div>${this._diagRow("Composite",snap.connected ? this._stateValue("composite_status") : "unavailable")}${this._diagRow("Robot status",snap.connected ? this._stateValue("robot_status") : "unavailable")}${this._diagRow("Station status",snap.connected ? this._stateValue("station_status") : "unavailable")}${this._diagRow("Данные станции",stationData)}</div></section><section class="card"><div class="section-title"><h2>Tuya Raw</h2></div><div class="info-list">${this._diagRow("DP5 status",attrs.raw_status)}${this._diagRow("DP4 mode",attrs.mode)}${this._diagRow("DP41 work_mode",snap.connected ? this._stateValue("work_mode") : "unavailable")}${this._diagRow("DP1 power_go",attrs.power_go)}${this._diagRow("DP2 pause",attrs.pause)}${this._diagRow("DP28 fault",attrs.fault)}${this._diagRow("DP134 dp_dust",attrs.dp_dust)}${this._diagRow("DP135 dp_roll_clean",attrs.dp_roll_clean)}${this._diagRow("DP136 dp_roll_hot",attrs.dp_roll_hot)}</div></section><section class="card"><div class="section-title"><h2>Панель</h2></div><div class="info-list">${this._diagRow("Версия интеграции",this._panel?.config?.integration_version || "—")}${this._diagRow("Версия UI",UI_VERSION)}${this._diagRow("Bundle","standalone")}${this._diagRow("Route","/dashboard-s8-omni")}</div></section>`;
   }
 
   _body() {

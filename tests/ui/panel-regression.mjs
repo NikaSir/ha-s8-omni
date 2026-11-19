@@ -76,7 +76,7 @@ try {
   await page.setViewportSize({width:1024,height:768});
   await patch();
   const desktopConnectionWidth = await active.locator(".connection-indicator").evaluate(element => element.getBoundingClientRect().width);
-  assert.ok(desktopConnectionWidth <= 240,`desktop connection indicator is ${desktopConnectionWidth}px wide`);
+  assert.ok(desktopConnectionWidth === 56,`desktop connection indicator is ${desktopConnectionWidth}px wide`);
   const desktopArtwork = await active.locator(".state-scene").evaluate(scene => {
     const image = scene.querySelector(".state-image");
     const background = getComputedStyle(scene,"::before");
@@ -138,7 +138,7 @@ try {
       await page.evaluate(() => window.fixture.releaseRefresh());
     }
     await page.waitForFunction(() => !window.fixture.panel._refreshPending);
-    assert.ok(await page.evaluate(() => performance.now() - window.fixture.refreshStartedAt >= 700));
+    assert.ok(await page.evaluate(() => performance.now() - window.fixture.refreshStartedAt >= 900));
     await patch();
     assert.equal(await refresh.getAttribute("aria-busy"), "false");
     assert.equal(await refresh.isEnabled(), true);
