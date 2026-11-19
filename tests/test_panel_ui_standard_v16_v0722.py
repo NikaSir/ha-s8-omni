@@ -26,12 +26,12 @@ class PanelUiStandardV16V0722Tests(unittest.TestCase):
         ):
             self.assertIn(marker, self.source)
 
-    def test_indicator_is_pointwise_and_lider_styled(self) -> None:
+    def test_compact_indicators_preserve_pointwise_rendering(self) -> None:
         self.assertIn("class=\"connection-indicator", self.source)
-        self.assertIn(".connection-indicator.local{background:color-mix(in srgb,var(--success-color,#43a047) 11%,var(--card-background-color))", self.source)
-        self.assertIn("border-color:color-mix(in srgb,var(--success-color,#43a047) 30%,var(--divider-color))", self.source)
-        self.assertIn(".connection-copy strong{font-size:16px", self.source)
-        self.assertIn(".connection-copy small{font-size:13px", self.source)
+        self.assertIn('data-connection-icon', self.source)
+        self.assertIn('data-freshness-icon', self.source)
+        self.assertIn('role="img"', self.source)
+        self.assertNotIn('connection-copy', self.source)
         key = self.source.split("  _stableStructureKey() {", 1)[1].split("_bindStableContent", 1)[0]
         self.assertNotIn("telemetry_age", key)
         self.assertNotIn("this._hass.states", key)
@@ -53,7 +53,7 @@ class PanelUiStandardV16V0722Tests(unittest.TestCase):
     def test_header_and_bottom_bar_remain_shell_siblings(self) -> None:
         self.assertIn('icon="mdi:menu"', self.source)
         self.assertIn('new CustomEvent("hass-toggle-menu"', self.source)
-        self.assertIn("<header class=\"app-header\">", self.source)
+        self.assertIn('<header class="app-header" data-theme=', self.source)
         self.assertIn("<nav aria-label=\"Основные разделы\">", self.source)
         self.assertIn("grid-template-rows:auto minmax(0,1fr) auto", self.source)
 
@@ -67,7 +67,7 @@ class PanelUiStandardV16V0722Tests(unittest.TestCase):
             self.source,
         )
         self.assertIn(
-            ".state-hero .hero-top{grid-row:auto;grid-template-columns:minmax(0,1fr) minmax(168px,42%)",
+            ".state-hero .hero-top{grid-row:auto;grid-template-columns:minmax(0,1fr) auto",
             self.source,
         )
         self.assertIn(
@@ -86,24 +86,11 @@ class PanelUiStandardV16V0722Tests(unittest.TestCase):
             ".state-hero .hero-metrics{grid-row:3",
             self.source,
         )
-        self.assertIn(
-            ".state-hero .connection-indicator{width:100%;min-width:0;max-width:100%",
-            self.source,
-        )
+        self.assertIn(".connection-indicator{justify-self:end;display:flex", self.source)
 
-    def test_desktop_connection_indicator_is_capped_without_changing_mobile_grid(self) -> None:
-        self.assertIn(
-            "@media(min-width:521px){.state-hero .hero-top{grid-template-columns:minmax(0,1fr) minmax(168px,max-content)}",
-            self.source,
-        )
-        self.assertIn(
-            ".state-hero .connection-indicator{width:auto;min-width:168px;max-width:240px}",
-            self.source,
-        )
-        self.assertIn(
-            "@media(max-width:520px){.header-title{min-width:0;width:100%",
-            self.source,
-        )
+    def test_desktop_and_mobile_use_the_same_compact_indicator(self) -> None:
+        self.assertIn("gap:8px;width:56px;min-width:56px;height:24px", self.source)
+        self.assertNotIn(".state-hero .connection-indicator", self.source)
 
     def test_resource_strip_is_a_separate_hero_row(self) -> None:
         hero = self.source.split("  _hero() {", 1)[1].split("  _quickActions() {", 1)[0]

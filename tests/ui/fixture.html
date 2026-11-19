@@ -73,6 +73,7 @@
   function publish() {
     panel.hass = {
       states,
+      themes:{darkMode:Boolean(fixture.darkMode)},
       callWS:async () => registry,
       callService:async (domain,service,data) => {
         calls.push({domain,service,data:{...data}});
@@ -95,6 +96,12 @@
     states = {...states,[entity]:{...states[entity],state:String(state),attributes:attributes ?? states[entity].attributes}};
     publish();
   };
+  fixture.setTheme = dark => {
+    fixture.darkMode = dark;
+    const values = dark ? {"primary-text-color":"#f1f1f1","secondary-text-color":"#b5b5b5","divider-color":"#464646","card-background-color":"#202020","primary-background-color":"#111111"} : {"primary-text-color":"#151515","secondary-text-color":"#606060","divider-color":"#dedede","card-background-color":"#ffffff","primary-background-color":"#fafafa"};
+    for (const [name,value] of Object.entries(values)) document.body.style.setProperty(`--${name}`,value);
+    publish();
+  };
   fixture.flushReadbacks = () => { readbacks.splice(0).forEach(update => update()); showReadout(); };
   if (new URLSearchParams(location.search).has("tools")) document.body.classList.add("with-tools");
   document.querySelectorAll("[data-fixture-status]").forEach(button => button.onclick = () => {
@@ -110,7 +117,7 @@
   document.querySelector("#automatic-readback").onchange = event => { fixture.autoReadback = event.target.checked; };
   document.querySelector("#flush-readbacks").onclick = fixture.flushReadbacks;
   document.querySelector("#clear-calls").onclick = () => { calls.splice(0); showReadout(); };
-  panel.panel = {config:{entry_id:entryId}};
+  panel.panel = {config:{entry_id:entryId,integration_version:"v1.0.9-beta005"}};
   publish();
   document.body.appendChild(panel);
   window.fixture = fixture;

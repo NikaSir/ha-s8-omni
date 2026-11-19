@@ -37,21 +37,21 @@ class PanelUiStandardV22V0731Tests(unittest.TestCase):
             self.source,
         )
         self.assertIn(
-            "border:1px solid color-mix(in srgb,var(--primary-color,#03a9d9) 24%,var(--divider-color,#dfe3e8))",
+            "border:1px solid color-mix(in srgb,var(--primary-color,#03a9d9) 12%,var(--divider-color,#dfe3e8))",
             self.source,
         )
         self.assertIn(
-            "background:color-mix(in srgb,var(--primary-color,#03a9d9) 5%,var(--card-background-color,#fff))",
+            "background:color-mix(in srgb,var(--primary-color,#03a9d9) 3%,var(--card-background-color,#fff))",
             self.source,
         )
         self.assertIn("box-shadow:0 5px 16px rgba(23,45,76,.06)", self.source)
         self.assertIn(".header-title:focus-visible{outline:2px", self.source)
         self.assertIn(".header-title:active{transform:scale(.985)", self.source)
         self.assertIn(
-            "@media(max-width:520px){.header-title{min-width:0;width:100%;padding-inline:8px}.header-title strong{font-size:21px}.header-title span{font-size:13px}",
+            "@container nikas-panel (max-width:359px){.app-header{grid-template-columns:48px minmax(0,1fr) 48px}.header-title{width:100%;padding-inline:8px}.header-title strong{font-size:20px}}",
             self.source,
         )
-        self.assertIn('<strong>Пылесос</strong><span>UI v${UI_VERSION.replace(/^v/, "")}</span>', self.source)
+        self.assertIn('const versions = `UI v${UI_VERSION.replace(/^v/, "")} / ${integration}`', self.source)
 
     def test_manifest_declares_v22_contract(self) -> None:
         navigation = self.panel["navigation"]

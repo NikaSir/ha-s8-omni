@@ -55,9 +55,9 @@ class PanelMobileAuditUiV0729Tests(unittest.TestCase):
 
     def test_phone_geometry_and_indicator_are_stable(self) -> None:
         self.assertIn(".state-hero .state-scene{height:264px}", self.source)
-        self.assertIn("grid-template-columns:minmax(0,1fr) minmax(168px,42%)", self.source)
-        self.assertIn(".state-hero .connection-copy{display:grid;grid-template-rows:auto auto", self.source)
-        self.assertIn(".state-hero .connection-copy strong,.state-hero .connection-copy small{display:block", self.source)
+        self.assertIn("grid-template-columns:minmax(0,1fr) auto", self.source)
+        self.assertIn("gap:8px;width:56px;min-width:56px;height:24px", self.source)
+        self.assertNotIn("connection-copy", self.source)
 
     def test_header_center_returns_to_parent(self) -> None:
         self.assertIn('data-header-home aria-label="Вернуться на главную панель"', self.source)

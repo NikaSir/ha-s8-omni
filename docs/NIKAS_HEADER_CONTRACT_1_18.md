@@ -100,3 +100,31 @@ Verify at `430×932`, `932×430`, `768×1024`, `1024×768`, and
 - scrolling and zoom affect only the work viewport;
 - a multi-device selector stays immediately above the Bottom Tab Bar;
 - repeated telemetry updates do not flash, remount chrome, or lose navigation.
+
+
+## Product amendment — S8 OMNI, 2026-11-19
+
+This requested S8 update adopts the later approved variant B header from
+[NikaS UI Standard §2/§11.1](https://github.com/NikaSir/ha-contract-generated-ui/blob/f04fdc8904472008878a81dceaca39066f11cf75/docs/NIKAS_SPECIALIZED_PANEL_UI_STANDARD.md):
+52px title, 22px/700 name (20px below 360px), restrained 3% background / 12%
+border mixes, and complete `UI vX.Y.Z / A.B.C` versions in one line at 11–14px/500.
+Keep the existing 60px shell, 44px menu/refresh actions and `/home/overview`
+title destination. Refresh is black on white in light mode and white on a dark
+neutral surface in dark mode. Busy lasts at least 900ms; results last 1400ms.
+
+The user explicitly requested compact status icons in place of the S8 plaque.
+The approved [16.11 amendment, PR #195](https://github.com/NikaSir/ha-contract-generated-ui/pull/195),
+source `0f3d6676e7fc6432cd6dd8f7b8d828fa66643d63`, specifies connection then freshness:
+green filled cloud / orange crossed-out cloud / gray question cloud;
+green circled check / orange alert clock / gray clock with a question badge.
+PR #195 is still open at verification; adoption here follows the recorded user
+choice, not an assertion that it is already merged into the central registry.
+The old 168×58 plaque geometry does not apply to this explicitly requested
+compact product variant. Full connection/freshness text remains in Diagnostics
+and separate accessible labels. Icons patch in place; telemetry truth and
+thresholds keep their existing integration contract.
+
+The older pinned v2.2 baseline remains unchanged for unrelated shell rules.
+This amendment supersedes only this document's old version-only line and the
+plaque presentation for S8. Browser fixtures certify local rendering only;
+installation and physical iPhone acceptance remain separate.
