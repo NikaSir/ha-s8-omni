@@ -1,3 +1,7 @@
+## 1.0.9-beta006 / UI v1.0.14
+
+- Link compact indicators to the NikaS UI standard and remove the unused unsupported icon.
+
 ## 1.0.9-beta005 / UI v1.0.13 — 2026-11-19
 
 - Apply the approved NikaS variant B header: restrained title surface, complete UI / integration versions on one line, black refresh arrow on white in light mode and white arrow on a dark neutral surface in dark mode.

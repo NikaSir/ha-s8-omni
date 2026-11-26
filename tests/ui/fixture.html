@@ -117,7 +117,7 @@
   document.querySelector("#automatic-readback").onchange = event => { fixture.autoReadback = event.target.checked; };
   document.querySelector("#flush-readbacks").onclick = fixture.flushReadbacks;
   document.querySelector("#clear-calls").onclick = () => { calls.splice(0); showReadout(); };
-  panel.panel = {config:{entry_id:entryId,integration_version:"v1.0.9-beta005"}};
+  panel.panel = {config:{entry_id:entryId,integration_version:"v1.0.9-beta006"}};
   publish();
   document.body.appendChild(panel);
   window.fixture = fixture;

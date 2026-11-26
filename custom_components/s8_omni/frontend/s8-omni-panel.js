@@ -1,4 +1,4 @@
-const UI_VERSION = "v1.0.13";
+const UI_VERSION = "v1.0.14";
 const ASSET_ROOT = "/s8_omni/frontend/assets";
 const VIEW_SCALE_MIN = 0.75;
 const VIEW_SCALE_MAX = 2.00;
@@ -549,13 +549,6 @@ class S8OmniPanel extends HTMLElement {
       part: "mdi:shape-outline",
     };
     return icons[mode] || "mdi:tune-variant";
-  }
-
-  _telemetryIcon(_snap) {
-    const freshness = this._telemetryFreshnessState();
-    if (freshness === "current") return "mdi:clock-check-outline";
-    if (freshness === "stale") return "mdi:clock-alert-outline";
-    return "mdi:clock-question-outline";
   }
 
   _telemetryMeta(_snap) {
