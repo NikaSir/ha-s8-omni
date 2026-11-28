@@ -73,7 +73,7 @@ try {
     assert.equal(m.titleHeight,52);
     assert.ok(m.centered < 0.5,JSON.stringify(m));
     assert.deepEqual(m.actions,[44,44,44,44]);
-    assert.equal(m.versions,"UI v1.0.13 / 1.0.9-beta005");
+    assert.equal(m.versions,"UI v1.0.14 / 1.0.9-beta006");
     assert.ok(m.font >= 10.99 && m.font <= 14.01);
     assert.ok(m.lineFits,`version clipped at ${width}/${sidebar}: ${JSON.stringify(m)}`);
     assert.equal(m.whiteSpace,"nowrap");
